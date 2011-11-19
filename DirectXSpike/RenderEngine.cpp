@@ -169,7 +169,8 @@ void CRenderEngine::RenderScene()
 		m_device->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
 		m_device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
 		m_device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
-		m_device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+		m_device->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
+		m_device->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
 
 		Matrix4x4 world;
 		CDoubleLinkedList<IRenderable> sphereList;
@@ -189,6 +190,14 @@ void CRenderEngine::RenderScene()
 			Sphere_PosRad sphere = s->item->GetBoundingSphere();
 			DrawDebugSphere(sphere, clr);
 		}
+
+		m_device->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
+		for(CDoubleLinkedList<IRenderable>::DoubleLinkedListItem* s = sphereList.first; s != NULL; s = s->next)
+		{
+			Sphere_PosRad sphere = s->item->GetBoundingSphere();
+			DrawDebugSphere(sphere, clr);
+		}
+
 	}
 
 	m_device->EndScene();

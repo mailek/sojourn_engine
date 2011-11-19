@@ -1,14 +1,16 @@
 #include "StdAfx.h"
 #include "FileIO.h"
 
-void FileIO::OpenFile(FileNameType name, bool binary, InputFileType* in_file)
+bool FileIO::OpenFile(FileNameType name, bool binary, InputFileType* in_file)
 {
 	in_file->open(name, (binary ? std::ios_base::binary : 0));
+	return !in_file->fail();
 }
 
-void FileIO::ReadBytes(InputFileType* in, char* out_stream, size_t read_sz)
+bool FileIO::ReadBytes(InputFileType* in, char* out_stream, size_t read_sz)
 {
 	in->read(out_stream, read_sz);
+	return !in->fail();
 }
 
 void FileIO::CloseFile(InputFileType* file)

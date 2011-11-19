@@ -16,9 +16,9 @@ typedef struct
 class FileIO
 {
 public:
-	static void OpenFile(FileNameType name, bool binary, InputFileType* in_file);
+	static bool OpenFile(FileNameType name, bool binary, InputFileType* in_file);
 	static void CloseFile(InputFileType* file);
-	static void ReadBytes(InputFileType* in, char* out_stream, size_t read_sz);
+	static bool ReadBytes(InputFileType* in, char* out_stream, size_t read_sz);
 
 	static void ReadInt16(InputFileType* file, __int16* int16);
 	static void ReadInt32(InputFileType* file, __int32* int32);

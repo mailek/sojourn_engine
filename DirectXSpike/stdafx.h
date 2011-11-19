@@ -31,9 +31,12 @@
 #define SCREEN_RES_H	(1280)
 #define SCREEN_RES_V	(1024)
 
-#define ENGINE_FOLDER	".\\"
+#define ENGINE_FOLDER	"\\"
 #define SHADERS_FOLDER	ENGINE_FOLDER"Shaders\\"
 #define RESOURCE_FOLDER ENGINE_FOLDER"Resources\\"
+#define ENGINE_FOLDER_DX	"./"
+#define SHADERS_FOLDER_DX	ENGINE_FOLDER_DX"Shaders/"
+#define RESOURCE_FOLDER_DX ENGINE_FOLDER_DX"Resources/"
 
 //////////////////////////////////////
 // Forward Declarations
@@ -43,6 +46,13 @@ extern inline void COM_SAFERELEASE(IUnknown* ptr);
 //////////////////////////////////////
 // Macros
 //////////////////////////////////////
+
+/* assert */
+#ifndef _DEBUG
+#define VERIFY(x) x
+#else
+#define VERIFY(x) assert(x)
+#endif
 
 /* memory */
 #define PTR_SAFEDELETE(p) \
