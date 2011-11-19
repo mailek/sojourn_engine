@@ -36,16 +36,16 @@ void CShaderManager::Setup()
 	////// FLAT SHADE PASS
 	ShaderPass flatShadePass;
 	::ZeroMemory(&flatShadePass, sizeof(flatShadePass));
-	CreateVertexShader(flatShadePass, "Shaders//FlatShadeVS.fx");
-	CreatePixelShader(flatShadePass, "Shaders//FlatShadePS.fx");
+	CreateVertexShader(flatShadePass, SHADERS_FOLDER"FlatShadeVS.fx");
+	CreatePixelShader(flatShadePass, SHADERS_FOLDER"FlatShadePS.fx");
 	m_vecPasses.push_back(flatShadePass);
 
 	////// PLAIN RT PASS
 	ShaderPass plainRTPass;
 	::ZeroMemory(&plainRTPass, sizeof(plainRTPass));
-	CreateVertexShader(plainRTPass, "Shaders//PlainRTVS.fx");
+	CreateVertexShader(plainRTPass, SHADERS_FOLDER"PlainRTVS.fx");
 	//CreatePixelShader(plainRTPass, "Shaders//BlurRTPS.fx");
-	CreatePixelShader(plainRTPass, "Shaders//PlainRTPS.fx");
+	CreatePixelShader(plainRTPass, SHADERS_FOLDER"PlainRTPS.fx");
 	m_vecPasses.push_back(plainRTPass);
 
 	////// RENDERTARGET BLUR HORZ PASS
@@ -71,14 +71,14 @@ void CShaderManager::Setup()
 	////// PRIMITIVE SHADE PASS
 	ShaderPass primShadePass;
 	::ZeroMemory(&primShadePass, sizeof(primShadePass));
-	CreateVertexShader(primShadePass, "Shaders//PrimitiveVS.fx");
-	CreatePixelShader(primShadePass, "Shaders//PrimitivePS.fx");
+	CreateVertexShader(primShadePass, SHADERS_FOLDER"PrimitiveVS.fx");
+	CreatePixelShader(primShadePass, SHADERS_FOLDER"PrimitivePS.fx");
 	m_vecPasses.push_back(primShadePass);
 
 	/////// PRIMITIVE COLORED PASS
 	ShaderPass primColoredPass;
 	::ZeroMemory(&primColoredPass, sizeof(primColoredPass));
-	CreateVertexShader(primColoredPass, "Shaders//PrimitiveColoredVS.fx");
+	CreateVertexShader(primColoredPass, SHADERS_FOLDER"PrimitiveColoredVS.fx");
 	primColoredPass.pPS = m_vecPasses[PASS_PRIMITIVE].pPS;
 	primColoredPass.pPS->AddRef();
 	primColoredPass.pPSConstTable = m_vecPasses[PASS_PRIMITIVE].pPSConstTable;
@@ -88,11 +88,11 @@ void CShaderManager::Setup()
 	// DIRECTIONAL LIGHTS
 	D3DXCOLOR lightColor = D3DXCOLOR(1.f, 1.0f, 1.0f, 1.0f);
 	::ZeroMemory(&m_DirectionalLight, sizeof(m_DirectionalLight));
-	m_DirectionalLight.Type		= D3DLIGHT_DIRECTIONAL;
-	m_DirectionalLight.Ambient	= lightColor * 0.5f;
-	m_DirectionalLight.Diffuse	= lightColor;
-	m_DirectionalLight.Specular   = lightColor * 0.3f;
-	m_DirectionalLight.Direction  = D3DXVECTOR3(0.0f, -1.0f, 0.0f);//D3DXVECTOR3(-0.7f, -1.0f, -0.7f);
+	m_DirectionalLight.Type			= D3DLIGHT_DIRECTIONAL;
+	m_DirectionalLight.Ambient		= lightColor * 0.5f;
+	m_DirectionalLight.Diffuse		= lightColor;
+	m_DirectionalLight.Specular		= lightColor * 0.3f;
+	m_DirectionalLight.Direction	= D3DXVECTOR3(0.0f, -1.0f, 0.0f);//D3DXVECTOR3(-0.7f, -1.0f, -0.7f);
 }	
 	
 void CShaderManager::CreatePixelShader(ShaderPass &pass, LPCSTR psFileName)

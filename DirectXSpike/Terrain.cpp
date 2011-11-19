@@ -70,7 +70,7 @@ bool CTerrain::LoadTerrain(LPCSTR pFilename, LPCSTR pTextureFilename, int rows, 
 	HR(D3DXCreateTextureFromFile(device, pTextureFilename, &m_texGroundTexture));
 
 	//Load the ground texture
-	HR(D3DXCreateTextureFromFile(device, "Resources\\dirtTexture.dds", &m_texDirtTexture));
+	HR(D3DXCreateTextureFromFile(device, RESOURCE_FOLDER"dirtTexture.dds", &m_texDirtTexture));
 	
 	// read the height info in from a grayscale image (white is high vertical, dark is low)
 	std::vector<BYTE> arrBinary(m_numOfVerts);

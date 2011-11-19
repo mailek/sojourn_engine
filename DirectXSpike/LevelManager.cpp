@@ -65,7 +65,7 @@ bool CLevelManager::LoadDefaultLevel(CRenderEngine *renderEngine, CTerrain **ret
 		*retTerrain = m_pTerrain;
 
 	m_pTerrain->SetYOffset(0.0f);
-	if(!m_pTerrain->LoadTerrain("Resources\\heightMap.raw", "Resources\\groundTexture.dds", 128, 128, 20.0f, 0.9f, 30.0f, device ))
+	if(!m_pTerrain->LoadTerrain(RESOURCE_FOLDER"heightMap.raw", RESOURCE_FOLDER"groundTexture.dds", 128, 128, 20.0f, 0.9f, 30.0f, device ))
 		return false;
 
 	renderEngine->GetSceneManager().Setup(device, *m_pTerrain, meshMgr);

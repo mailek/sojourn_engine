@@ -31,6 +31,10 @@
 #define SCREEN_RES_H	(1280)
 #define SCREEN_RES_V	(1024)
 
+#define ENGINE_FOLDER	".\\"
+#define SHADERS_FOLDER	ENGINE_FOLDER"Shaders\\"
+#define RESOURCE_FOLDER ENGINE_FOLDER"Resources\\"
+
 //////////////////////////////////////
 // Forward Declarations
 //////////////////////////////////////
