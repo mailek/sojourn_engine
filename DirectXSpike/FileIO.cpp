@@ -3,6 +3,16 @@
 
 bool FileIO::OpenFile(FileNameType name, bool binary, InputFileType* in_file)
 {
+	// replace forward slashes with backslashes
+	char filename[MAX_FILENAME_LEN], f[MAX_FILENAME_LEN], *nextToken;
+	f[0] = 0;
+	strcpy_s(filename, name);
+	for( char* stok = strtok_s(filename, "/", &nextToken); stok != NULL; stok = strtok_s(NULL, "/", &nextToken) )
+	{
+		strcat_s(f, stok);
+		if(strlen(nextToken)) strcat_s(f, "\\");
+	}
+
 	in_file->open(name, (binary ? std::ios_base::binary : 0));
 	return !in_file->fail();
 }

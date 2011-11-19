@@ -26,7 +26,7 @@ CSkybox::~CSkybox(void)
 
 bool CSkybox::LoadSkyDome(LPDIRECT3DDEVICE9 device, float radius, UINT slices, UINT stacks)
 {
-	HR(D3DXCreateTextureFromFile(device, RESOURCE_FOLDER_DX"skyTexture.dds", &m_texSkyTexture));
+	HR(D3DXCreateTextureFromFile(device, RESOURCE_FOLDER"skyTexture.dds", &m_texSkyTexture));
 	HR(D3DXCreateSphere(device, radius, slices, stacks, &m_mesh, NULL));
 	m_sphereRadius = radius;
 

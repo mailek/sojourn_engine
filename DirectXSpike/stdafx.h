@@ -31,12 +31,10 @@
 #define SCREEN_RES_H	(1280)
 #define SCREEN_RES_V	(1024)
 
-#define ENGINE_FOLDER	"\\"
-#define SHADERS_FOLDER	ENGINE_FOLDER"Shaders\\"
-#define RESOURCE_FOLDER ENGINE_FOLDER"Resources\\"
-#define ENGINE_FOLDER_DX	"./"
-#define SHADERS_FOLDER_DX	ENGINE_FOLDER_DX"Shaders/"
-#define RESOURCE_FOLDER_DX ENGINE_FOLDER_DX"Resources/"
+#define ENGINE_FOLDER	"./"
+#define SHADERS_FOLDER	ENGINE_FOLDER"Shaders/"
+#define RESOURCE_FOLDER ENGINE_FOLDER"Resources/"
+#define MAX_FILENAME_LEN	200
 
 //////////////////////////////////////
 // Forward Declarations

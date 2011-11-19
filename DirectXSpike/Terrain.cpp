@@ -70,20 +70,19 @@ bool CTerrain::LoadTerrain(LPCSTR pFilename, LPCSTR pTextureFilename, int rows, 
 
 	char textureFilename[200];
 	textureFilename[0] = 0;
-	strcat_s(textureFilename, RESOURCE_FOLDER_DX);
+	strcat_s(textureFilename, RESOURCE_FOLDER);
 	strcat_s(textureFilename, pTextureFilename);
 
 	//Load the height texture
 	HR(D3DXCreateTextureFromFile(device, textureFilename, &m_texGroundTexture));
 
 	//Load the ground texture
-	HR(D3DXCreateTextureFromFile(device, RESOURCE_FOLDER_DX"dirtTexture.dds", &m_texDirtTexture));
+	HR(D3DXCreateTextureFromFile(device, RESOURCE_FOLDER"dirtTexture.dds", &m_texDirtTexture));
 	
 	// read the height info in from a grayscale image (white is high vertical, dark is low)
 	std::vector<BYTE> arrBinary(m_numOfVerts);
 	InputFileType terrainFile;
-	//VERIFY(FileIO::OpenFile(m_strFilename.c_str(), true, &terrainFile));
-	VERIFY(FileIO::OpenFile(".\\Resources\\heightMap.raw" , true, &terrainFile));
+	VERIFY(FileIO::OpenFile(m_strFilename.c_str(), true, &terrainFile));
 	VERIFY(FileIO::ReadBytes(&terrainFile, (char*)&arrBinary[0], arrBinary.size()));
 	FileIO::CloseFile(&terrainFile);
 
