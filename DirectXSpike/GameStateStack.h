@@ -7,6 +7,7 @@
 // Includes
 //////////////////////////////////////
 #include "GameState.h"
+#include "doublelinkedlist.h"
 
 //////////////////////////////////////
 // Forward Declarations
@@ -35,6 +36,7 @@ public:
 	void Update( LPDIRECT3DDEVICE9 device, float elapsedMillis );
 	void PushNewState( const UINT stateId );
 	void PopCurrentState();
+	IGameState* GetCurrentState();
 	bool Init( CRenderEngine *renderEngine );
 	CPlayer* GetPlayer();
 	void ShutDown();
@@ -42,7 +44,7 @@ public:
 	virtual bool HandleEvent( UINT eventId, void* data, UINT data_sz );
 
 private:
-	std::vector<IGameState*>    m_stateStack;
+	CDoubleLinkedList<IGameState>    m_stateStack;
 
 	IGameState* GetGameState( const UINT stateId );
 };

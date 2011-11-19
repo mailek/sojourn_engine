@@ -38,7 +38,6 @@ private:
 	CSceneManager					m_sceneMgr;
 	
 	int								m_nBlurPasses;
-	bool							m_bShowHUD;
 
 	LPDIRECT3DDEVICE9				m_device;
 	BaseModel*						m_renderQuadGeo;
@@ -53,6 +52,7 @@ private:
 	CHUD*							m_pHud;					/* pointer to HUD manager */
 
 	bool Setup(unsigned int viewportWidth, unsigned int viewportHeight);
+	void DrawDebugSphere(Sphere_PosRad& sphere, ColorRGBA32 color);
 
 public:
 	void SetDevice(LPDIRECT3DDEVICE9 device, unsigned int viewportWidth, unsigned int viewportHeight);
@@ -64,10 +64,8 @@ public:
 	inline CMeshManager &GetMeshManager() {return m_meshMgr;}
 	inline void SetBlur(int blurs) {m_nBlurPasses = blurs;}
 	inline void SetHUD(CHUD *hud) {m_pHud = hud;}
-	inline void DrawDebugQuadTree(bool draw) {m_sceneMgr.DrawDebugQuadTree(draw);}
 	inline D3DXVECTOR3 GetLightDirection(void) {return m_shaderMgr.GetLightDirection();}
-	inline void SetDebugRotateLight(bool rotate) {m_shaderMgr.SetDebugRotateLight(rotate);}
-	inline void SetShowHUD(bool show) {m_bShowHUD = show;}
+
 	inline void ToggleClipMethod() {m_sceneMgr.SetNextClipStrategy();}
 	inline LPDIRECT3DDEVICE9 GetDevice() {return m_device;}
 	inline CSceneManager &GetSceneManager() {return m_sceneMgr;}

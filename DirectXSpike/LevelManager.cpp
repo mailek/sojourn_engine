@@ -5,6 +5,7 @@
 #include "Terrain.h"
 #include "mathutil.h"
 #include "RenderEngine.h"
+#include "CollisionManager.h"
 
 #define NUM_OF_TREES	50
 
@@ -33,8 +34,12 @@ CLevelManager::CLevelManager(void)
 
 CLevelManager::~CLevelManager(void)
 {
-	for(std::list<SceneObject*>::iterator it = m_staticLevelObjects.begin(), _it = m_staticLevelObjects.end(); it != _it; it++)
-		PTR_SAFEDELETE(*it);
+	/*for(std::list<SceneObject*>::iterator it = m_staticLevelObjects.begin(), _it = m_staticLevelObjects.end(); it != _it; it++)
+		PTR_SAFEDELETE(*it);*/
+	for( CDoubleLinkedList<SceneObject>::DoubleLinkedListItem* it = m_staticLevelObjects.first; it != NULL; it = it->next)
+	{
+		PTR_SAFEDELETE(it->item);
+	}
 }
 
 bool CLevelManager::LoadDefaultLevel(CRenderEngine *renderEngine, CTerrain **retTerrain, CSkybox **retSkybox)
@@ -115,7 +120,8 @@ bool CLevelManager::LoadDefaultLevel(CRenderEngine *renderEngine, CTerrain **ret
 		obj->m_boundSphere.radius = sphere.radius*3*radiusScale; // HACK HACK HACK : this coefficient of 3 is a magic radius multiplier because sphere calc is giving bad radius FIX ASAP
 		
 		//then add to scene mgr draw list
-		m_staticLevelObjects.push_back(obj);
+		//m_staticLevelObjects.push_back(obj);
+		m_staticLevelObjects.AddItemToEnd(obj);
 		sceneMgr.AddRenderableObjectToScene(reinterpret_cast<IRenderable*>(obj));
 	}
 
@@ -125,8 +131,17 @@ bool CLevelManager::LoadDefaultLevel(CRenderEngine *renderEngine, CTerrain **ret
 	meshMgr.GetMesh(CMeshManager::eWell, &obj->m_pMesh);
 	obj->m_boundSphere = obj->m_pMesh->GetSphereBounds();
 	D3DXVec3TransformCoord(&obj->m_boundSphere.pos, &obj->m_boundSphere.pos, &obj->m_transform);
-	m_staticLevelObjects.push_back(obj);
+	//m_staticLevelObjects.push_back(obj);
+	m_staticLevelObjects.AddItemToEnd(obj);
 	sceneMgr.AddRenderableObjectToScene(reinterpret_cast<IRenderable*>(obj));
 
 	return true;
+}
+
+void CLevelManager::RegisterStaticCollision(CCollisionManager* cm)
+{
+	for(CDoubleLinkedList<SceneObject>::DoubleLinkedListItem* it = m_staticLevelObjects.first; it != NULL; it = it->next)
+	{
+		cm->RegisterCollidable(it->item);
+	}
 }

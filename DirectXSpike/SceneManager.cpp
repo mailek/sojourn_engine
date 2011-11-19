@@ -13,7 +13,6 @@
 //////////////////////////////////////////////////////////////////////////
 
 CSceneManager::CSceneManager(void) : m_debugMesh(NULL),
-									m_bDrawDebugQuadTree(false),
 									m_clipStrategy(FRUSTUMCLIP)
 {
 	
@@ -26,7 +25,7 @@ CSceneManager::~CSceneManager(void)
 
 void CSceneManager::Setup(LPDIRECT3DDEVICE9 device, CTerrain& terrain, CMeshManager& meshMgr)
 {
-	meshMgr.GetGlobalMesh(CMeshManager::eCenteredABB, &m_debugMesh);
+	meshMgr.GetGlobalMesh(CMeshManager::eCenteredUnitABB, &m_debugMesh);
 
 	// Create the quad tree for frustum culling acceleration
 	ABB_MaxMin abb = terrain.CalculateBoundingBox();
@@ -54,20 +53,21 @@ void CSceneManager::UpdateDrawLists()
 	m_transparentList.clear();
 	
 	/* add any non-clippable objects to the lists */
-	for(std::vector<IRenderable*>::iterator it = m_noClipList.begin(), _it = m_noClipList.end(); it != _it; it++)
+	for(CDoubleLinkedList<IRenderable>::DoubleLinkedListItem* it = m_noClipList.first; it != NULL; it = it->next)
 	{
-		if( (*it)->IsTransparent() )
+		IRenderable* r = it->item;
+		if( r->IsTransparent() )
 		{
 			ZSortableRenderable zsr;
 			::ZeroMemory(&zsr, sizeof(zsr));
-			zsr.p = (*it);
+			zsr.p = r;
 			D3DXVECTOR3 v(0,0,0);
-			D3DXVec3TransformCoord(&v, &v, &D3DXMATRIX((*it)->GetWorldTransform() * currentViewSpace));
+			D3DXVec3TransformCoord(&v, &v, &D3DXMATRIX(r->GetWorldTransform() * currentViewSpace));
 			zsr.viewSpaceZ = v.z;
 			m_transparentList.push_back(zsr);
 		}
 		else
-			m_opaqueList.push_back(*it);
+			m_opaqueList.push_back(r);
 	}
 
 	/* using the chosen strategy, build the draw lists from the quad tree */
@@ -127,7 +127,7 @@ void CSceneManager::GetTransparentDrawListB2F(SceneMgrSortList &list)
 void CSceneManager::AddNonclippableObjectToScene(IRenderable* obj)
 {
 	assert(obj);
-	m_noClipList.push_back(obj);
+	m_noClipList.AddItemToEnd(obj);
 }
 
 void CSceneManager::AddRenderableObjectToScene(IRenderable* obj)
@@ -142,8 +142,8 @@ void CSceneManager::AddRenderableObjectToScene(IRenderable* obj)
 
 void CSceneManager::Render( CRenderEngine &rndr )
 {
-	if(!m_bDrawDebugQuadTree )
-		return;
+	/*if(!m_bDrawDebugQuadTree )
+		return;*/
 
 	assert(m_debugMesh);
 	CShaderManager &shaderMgr = rndr.GetShaderManager();

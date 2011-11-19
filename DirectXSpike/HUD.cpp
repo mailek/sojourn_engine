@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "HUD.h"
+#include "Settings.h"
 
 //////////////////////////////////////////////////////////////////////////
 // Setup Functions
@@ -7,8 +8,7 @@
 
 CHUD::CHUD(void) : m_debugFont(NULL),
 					m_currentPlayerPos(D3DXVECTOR3(0,0,0)),
-					m_currentFPS(0.0f),
-					m_bShowLightDir(false)
+					m_currentFPS(0.0f)
 {
 }
 
@@ -71,7 +71,9 @@ void CHUD::Render()
 	rect.bottom	= 100; rect.right = 500;
 	m_debugFont->DrawTextA(0, szOutput, -1, &rect, DT_TOP | DT_LEFT, D3DCOLOR_ARGB(255,255,220,200));
 
-	if(m_bShowLightDir)
+	bool settingsBool;
+	Settings_GetBool(HUD_SHOW_LIGHT_DIR, settingsBool);
+	if(settingsBool == true)
 	{
 		// Debug Light Position
 		rect.top = 75; rect.left = 25;

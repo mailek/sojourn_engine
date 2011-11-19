@@ -6,6 +6,7 @@
 #include "Terrain.h"
 #include "Keyboard.h"
 #include "mathutil.h"
+#include "collisionmanager.h"
 
 CMainGameState::CMainGameState(void) :  m_pPlayer(NULL),
 										m_pLevelMgr(NULL),
@@ -31,6 +32,9 @@ bool CMainGameState::HandleEvent( UINT eventId, void* data, UINT data_sz )
 		assert( data_sz == sizeof(float) );
 		assert( data != NULL );
 		Update( *(float*)data );
+		break;
+	case EVT_DESTROY:
+		Destroy();
 		break;
 	case EVT_RENDER:
 		break;
@@ -72,6 +76,7 @@ bool CMainGameState::Init( CRenderEngine *renderEngine )
 	m_pLevelMgr = new CLevelManager();
 	m_pSceneMgr = &renderEngine->GetSceneManager();
 	m_pCamera = &m_pSceneMgr->GetDefaultCamera();
+	m_pCollision = CCollisionManager::GetInstance();
 
 	// level objects
 	CTerrain*				pTerrain;
@@ -82,10 +87,13 @@ bool CMainGameState::Init( CRenderEngine *renderEngine )
 		return false;	
 	}
 
+	m_pLevelMgr->RegisterStaticCollision(m_pCollision);
+
 	// player
 	m_pPlayer = new CPlayer();
 	m_pPlayer->Setup(*meshMgr);
 	m_pSceneMgr->AddNonclippableObjectToScene(m_pPlayer);
+	m_pCollision->RegisterCollidable(m_pPlayer);
 	
 	// camera
 	//m_pSceneMgr->SetCamera(camera);
@@ -95,14 +103,36 @@ bool CMainGameState::Init( CRenderEngine *renderEngine )
 	pSkyDome->SetCameraObjectToFollow(m_pCamera);
 
 	// terrain clamping
+	m_pCollision->RegisterCollidable(pTerrain);
 	m_pPlayer->SetGroundClampTerrain(*pTerrain);
 
 	return true;
 }
+void CMainGameState::Destroy()
+{
+	if(m_pLevelMgr)
+	{
+		delete m_pLevelMgr;
+		m_pLevelMgr = NULL;
+	}
+
+	if(m_pPlayer)
+	{
+		delete m_pPlayer;
+		m_pPlayer = NULL;
+	}
+
+	m_pCollision->UnregisterCollidable(m_pPlayer);
+	CCollisionManager::DestroySingleton();
+}
 
 void CMainGameState::Update( float elapsedMillis )
 {
-	// send update msg  
+	// check collisions
+	CollisionPair collisions[50];
+	int numCollisions = 0;
+	m_pCollision->GetCollisionPairs(collisions, &numCollisions);
+
 	if(m_pPlayer)
 	{
 		m_pPlayer->Update(elapsedMillis);

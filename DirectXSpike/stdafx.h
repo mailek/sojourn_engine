@@ -48,6 +48,7 @@ extern inline void COM_SAFERELEASE(IUnknown* ptr);
 #define cnt_of_array(type) \
 	( sizeof(type) / sizeof(type[0]) )
 
+/* verify hresult */
 #define HR(com) \
 	if( FAILED(com) ) \
 		{assert(false);}
@@ -55,12 +56,21 @@ extern inline void COM_SAFERELEASE(IUnknown* ptr);
 //////////////////////////////////////
 // Events
 //////////////////////////////////////
-#define EVT_UPDATE		1
-#define EVT_RENDER		2
-#define EVT_INIT		3
-#define EVT_DESTROY		4
-#define EVT_GETPLAYER	5
-#define EVT_KEYUP		6
-#define EVT_KEYDOWN		7
-#define EVT_MOUSE_MOVED	8
-#define EVT_MOUSE_WHEEL 9
+typedef enum {
+	EVT_UPDATE		 = 1,
+	EVT_RENDER,     
+	EVT_INIT,       
+	EVT_DESTROY,    
+	EVT_GETPLAYER,  
+	EVT_KEYUP,      
+	EVT_KEYDOWN,    
+	EVT_MOUSE_MOVED,
+	EVT_MOUSE_WHEEL,
+
+	EVT_CNT
+};
+
+//////////////////////////////////////
+// Types
+//////////////////////////////////////
+#define ColorRGBA32 D3DCOLORVALUE

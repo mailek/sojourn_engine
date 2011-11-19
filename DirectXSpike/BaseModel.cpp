@@ -394,14 +394,11 @@ void BaseModel::RecurseFillOutBone( Bone* bone, unsigned int parentIndex )
 
 }
 
-bool BaseModel::LoadTeapot(IDirect3DDevice9* pDevice)
+void BaseModel::LoadTeapot(IDirect3DDevice9* pDevice)
 {
 	assert(pDevice);
 
-	HRESULT hr = D3DXCreateTeapot(pDevice, &m_mesh, 0);
-	if(FAILED(hr))
-		return false;
-
+	HR(D3DXCreateTeapot(pDevice, &m_mesh, 0));
 	m_meshType = eSimpleMesh;
 	
 	// Teapot Material
@@ -412,27 +409,13 @@ bool BaseModel::LoadTeapot(IDirect3DDevice9* pDevice)
 
 	m_arrMats.push_back(teapotMaterial);
 	m_arrTexs.push_back(0);
-
-#ifdef _DEBUG
-	//hr = pDevice->CreateVertexBuffer(6*sizeof(DebugAxesVertex), D3DUSAGE_WRITEONLY, DebugAxesVertex::FVF, D3DPOOL_MANAGED, &m_debugAxesVB, 0);
-	//if(FAILED(hr))
-	//	return false;
-	//
-	//CreateDebugAxes();
-#endif
-
-	return true;
 }
 
-bool BaseModel::LoadCenteredCube(IDirect3DDevice9* pDevice)
+void BaseModel::LoadCenteredUnitCube(IDirect3DDevice9* pDevice)
 {
 	assert(pDevice);
 
-	HRESULT hr = D3DXCreateBox( pDevice, 1,1,1/*0.999f, 0.999f, 0.999f*/, &m_mesh, NULL );
-
-	if(FAILED(hr))
-		return false;
-
+	HR(D3DXCreateBox( pDevice, 1.0f, 1.0f, 1.0f, &m_mesh, NULL ));
 	m_meshType = eSimpleMesh;
 
 	// Cube Material
@@ -443,30 +426,39 @@ bool BaseModel::LoadCenteredCube(IDirect3DDevice9* pDevice)
 
 	m_arrMats.push_back(cubeMaterial);
 	m_arrTexs.push_back(0);
-
-	return true;
 }
 
-bool BaseModel::LoadScreenOrientedQuad(IDirect3DDevice9* pDevice)
+void BaseModel::LoadCenteredUnitSphere(IDirect3DDevice9* pDevice)
+{
+	assert(pDevice);
+
+	HR(D3DXCreateSphere( pDevice, 1.0f, 16, 16, &m_mesh, NULL ));
+	m_meshType = eSimpleMesh;
+
+	// Sphere Material
+	D3DXCOLOR matColor = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
+	D3DMATERIAL9 sphereMaterial;
+	sphereMaterial.Ambient		= matColor;
+	sphereMaterial.Diffuse		= matColor;
+
+	m_arrMats.push_back(sphereMaterial);
+	m_arrTexs.push_back(0);
+}
+
+void BaseModel::LoadScreenOrientedQuad(IDirect3DDevice9* pDevice)
 {
 	assert(pDevice);
 
 	D3DVERTEXELEMENT9 vertDecl[10];
-	D3DXDeclaratorFromFVF( RenderQuadVertex::FVF, vertDecl );
-	HRESULT hr = D3DXCreateMesh( 2, 6, 0, vertDecl , pDevice, &m_mesh );
-	if(FAILED(hr))
-		return false;
-
+	HR(D3DXDeclaratorFromFVF( RenderQuadVertex::FVF, vertDecl ));
+	HR(D3DXCreateMesh( 2, 6, 0, vertDecl , pDevice, &m_mesh ));
 	m_meshType = eSimpleMesh;
 
 	RenderQuadVertex* coord = NULL;
 	LPDIRECT3DVERTEXBUFFER9 vb =NULL;
 	m_mesh->GetVertexBuffer(&vb);
-
-	hr = vb->Lock(0, 0, (void**)&coord, 0);
-	if(FAILED(hr))
-		return false;
-
+	HR(vb->Lock(0, 0, (void**)&coord, 0));
+	
 	coord[0]._p  = D3DXVECTOR3(-1.0f, -1.0f, 1.0f);
 	coord[1]._p  = D3DXVECTOR3(-1.0f, 1.0f, 1.0f);
 	coord[2]._p  = D3DXVECTOR3(1.0f, 1.0f, 1.0f);
@@ -478,8 +470,6 @@ bool BaseModel::LoadScreenOrientedQuad(IDirect3DDevice9* pDevice)
 
 	vb->Unlock();
 	COM_SAFERELEASE(vb);
-
-	return true;
 }
 
 void BaseModel::CreateDebugAxes()
@@ -737,4 +727,19 @@ void BaseModel::SetAnimation( DWORD animationId )
 		m_animController->SetTrackAnimationSet(0, animSet);
 		COM_SAFERELEASE(animSet);
 	}
+}
+
+void BaseModel::SetDrawColor( ColorRGBA32 clr )
+{
+	assert( m_meshType == eSimpleMesh );
+
+	m_arrMats.clear();
+	m_arrTexs.clear();
+
+	D3DMATERIAL9 mat;
+	mat.Ambient = clr;
+	mat.Diffuse = clr;
+
+	m_arrMats.push_back(mat);
+	m_arrTexs.push_back(0);
 }

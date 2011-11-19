@@ -8,6 +8,7 @@
 //////////////////////////////////////
 #include "BaseModel.h"
 #include "IRenderable.h"
+#include "ICollidable.h"
 
 //////////////////////////////////////
 // Forward Declarations
@@ -26,10 +27,15 @@ typedef enum {
 	MOVE_RIGHT =	(1<<3)
 	};
 
+typedef struct {
+	float collideSphereRadius;	// size of collide sphere
+	float maxRotateSpeed;		// radians per sec
+	} PlayerProperties;
+
 //////////////////////////////////////
 // Class Definition
 //////////////////////////////////////
-class CPlayer : public IRenderable
+class CPlayer : public IRenderable, public ICollidable
 {
 public:
 	CPlayer(void);
@@ -46,6 +52,7 @@ private:
 
 	BaseModel*				m_pModel;
 	CTerrain*				m_pTerrain;
+	PlayerProperties		m_properties;
 
 public:
 	void Update(float deltaTime);
@@ -63,11 +70,15 @@ public:
 	inline void SetScale(D3DXVECTOR3 &scale) {m_vecScale = scale;}
 	inline void SetGroundClampTerrain(CTerrain &terrain) {m_pTerrain = &terrain; GroundClampTerrain();}
 
+	// IRenderable
 	virtual void Render( CRenderEngine &rndr );
 	virtual D3DXMATRIX GetWorldTransform();
 	virtual bool IsTransparent() { if(m_pModel==NULL) return false; return m_pModel->IsTransparent();}
 	virtual void SetLastRenderFrame(UINT frameNum) {};
 	virtual UINT GetLastRenderFrame() {return 0;}
-	virtual Sphere_PosRad GetBoundingSphere() { Sphere_PosRad s; ::ZeroMemory(&s, sizeof(s)); return s; }
+	virtual Sphere_PosRad GetBoundingSphere() { Sphere_PosRad s = m_pModel->GetSphereBounds(); s.pos = m_vecPos; return s; }
+
+	// ICollidable
+	virtual void GetCollideSphere( Sphere_PosRad& out ) { ::ZeroMemory(&out, sizeof(out)); out.pos = m_vecPos; out.radius = m_properties.collideSphereRadius;}
 
 };

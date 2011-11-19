@@ -87,7 +87,6 @@ public:
 private:
 	std::vector<ShaderPass>		m_vecPasses;
 	D3DLIGHT9					m_DirectionalLight;
-	bool						m_bDebugRotateLight;
 	std::stack<ShaderStackItem> m_shaderStack;
 	ePassID						m_currentVS;
 	ePassID						m_currentPS;
@@ -124,5 +123,4 @@ public:
 	
 	inline void SetViewDimensions(unsigned int width, unsigned int height) { m_iViewportWidth=width; m_iViewportHeight=height;}
 	inline D3DXVECTOR3 GetLightDirection(void) {return D3DXVECTOR3(m_DirectionalLight.Direction.x, m_DirectionalLight.Direction.y, m_DirectionalLight.Direction.z);}
-	inline void SetDebugRotateLight(bool rotate) {m_bDebugRotateLight = rotate;}
 };

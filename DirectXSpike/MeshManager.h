@@ -31,7 +31,7 @@ public:
 	bool LoadMeshes(void);
 
 	typedef enum { eTinyX, eAnimTiny, eMultiAnimTiny, eWell, eCherryTreeLow } EMeshType;
-	typedef enum { eTeapot, eCenteredABB, eScreenQuad } EGlobalMeshType;
+	typedef enum { eUnitSphere, eTeapot, eCenteredUnitABB, eScreenQuad } EGlobalMeshType;
 
 private:
 	LPDIRECT3DDEVICE9					m_device;

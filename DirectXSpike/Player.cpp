@@ -5,8 +5,6 @@
 #include "mathutil.h"
 #include "renderengine.h"
 
-static const float MAXROTATIONRATE = 2*D3DX_PI;// in radians per sec
-
 //////////////////////////////////////////////////////////////////////////
 // Setup Functions
 //////////////////////////////////////////////////////////////////////////
@@ -17,9 +15,13 @@ CPlayer::CPlayer(void) : m_pModel(NULL),
 {
 	::ZeroMemory(m_vecPos, sizeof(m_vecPos));
 	::ZeroMemory(m_vecEuler, sizeof(m_vecEuler));
+	::ZeroMemory(&m_properties, sizeof(m_properties));
 	m_vecVelocity = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	m_vecRotationVelocity = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	m_vecScale = D3DXVECTOR3(1.0f, 1.0f, 1.0f);
+
+	m_properties.collideSphereRadius = 5.0f;
+	m_properties.maxRotateSpeed = 2*D3DX_PI; 
 }
 
 CPlayer::~CPlayer(void)

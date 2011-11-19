@@ -7,6 +7,8 @@
 // Include
 //////////////////////////////////////
 #include "IRenderable.h"
+#include "doublelinkedlist.h"
+#include "ICollidable.h"
 
 //////////////////////////////////////
 // Forward Declarations
@@ -17,13 +19,14 @@ class CSceneManager;
 class CTerrain;
 class CSkybox;
 class CRenderEngine;
+class CCollisionManager;
 
 //////////////////////////////////////
 // Class Definition
 //////////////////////////////////////
 class CLevelManager
 {
-	class SceneObject : public IRenderable {
+	class SceneObject : public IRenderable, public ICollidable {
 	public:
 		SceneObject(void);
 		virtual void Render( CRenderEngine &rndr );
@@ -38,16 +41,20 @@ class CLevelManager
 		bool				m_bTransparent;
 		UINT				m_lastFrame;
 		Sphere_PosRad		m_boundSphere;
+
+		// ICollidable
+		virtual void GetCollideSphere( Sphere_PosRad& out ) {out = m_boundSphere;}
 	};
 
 private:
-	std::list<SceneObject*>		m_staticLevelObjects;
-	CTerrain				   *m_pTerrain;
-	CSkybox					   *m_pSkyDome;
+	CDoubleLinkedList<SceneObject>	m_staticLevelObjects;
+	CTerrain					   *m_pTerrain;
+	CSkybox					       *m_pSkyDome;
 
 public:
 	CLevelManager(void);
 	~CLevelManager(void);
 
 	bool LoadDefaultLevel(CRenderEngine *renderEngine, CTerrain **retTerrain, CSkybox **retSkybox);
+	void RegisterStaticCollision(CCollisionManager* cm);
 };

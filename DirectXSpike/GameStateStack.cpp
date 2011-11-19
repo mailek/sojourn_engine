@@ -17,16 +17,16 @@ bool CGameStateStack::Init( CRenderEngine *renderEngine )
 {
 	CMainGameState *mainGame = new CMainGameState();
 	mainGame->HandleEvent( EVT_INIT, &renderEngine, sizeof(CRenderEngine*) );
-	m_stateStack.push_back( mainGame );
+	m_stateStack.AddItemToEnd( mainGame );
 	
 	return true;
 }
 
 void CGameStateStack::Update( LPDIRECT3DDEVICE9 device, float elapsedMillis )
 {
-	for( std::vector<IGameState*>::iterator it = m_stateStack.begin(), _it = m_stateStack.end(); it != _it; it++ )
+	for( CDoubleLinkedList<IGameState>::DoubleLinkedListItem* it = m_stateStack.first; it != NULL; it = it->next )
 	{
-		(*it)->HandleEvent( EVT_UPDATE, &elapsedMillis, sizeof(float) );
+		it->item->HandleEvent( EVT_UPDATE, &elapsedMillis, sizeof(float) );
 	}
 
 }
@@ -34,23 +34,36 @@ void CGameStateStack::Update( LPDIRECT3DDEVICE9 device, float elapsedMillis )
 void CGameStateStack::PushNewState( const UINT stateId )
 {
 	IGameState* state = GetGameState( stateId );
-	m_stateStack.push_back( state );
+	m_stateStack.AddItemToEnd( state );
+}
+
+IGameState* CGameStateStack::GetCurrentState()
+{
+	IGameState* ret = NULL;
+	CDoubleLinkedList<IGameState>::DoubleLinkedListItem* i = m_stateStack.last;
+	if(i != NULL)
+	{
+		ret = i->item;
+	}
+
+	return ret;
 }
 
 void CGameStateStack::PopCurrentState()
 {
-	IGameState* state = *m_stateStack.end();
+	IGameState* state = GetCurrentState();
 	if(state)
 	{
 		state->HandleEvent( EVT_DESTROY, NULL, 0 );
-		m_stateStack.pop_back();
+		m_stateStack.RemoveItem(state);
 	}
 }
 
 CPlayer* CGameStateStack::GetPlayer()
 {
 	CPlayer*	player = NULL;
-	IGameState* state = m_stateStack.back();
+	
+	IGameState* state = GetCurrentState();
 	if( state )
 	{
 		state->HandleEvent( EVT_GETPLAYER, &player, sizeof(void*) );
@@ -69,7 +82,7 @@ bool CGameStateStack::HandleEvent( UINT eventId, void* data, UINT data_sz )
 	case EVT_KEYUP:
 		{
 		// forward event to top state on stack
-		IGameState* state = m_stateStack.back();
+		IGameState* state = GetCurrentState();
 		if( state )
 		{
 			state->HandleEvent( eventId, data, data_sz );
@@ -85,9 +98,9 @@ bool CGameStateStack::HandleEvent( UINT eventId, void* data, UINT data_sz )
 
 void CGameStateStack::ShutDown()
 {
-	for( std::vector<IGameState*>::iterator it = m_stateStack.begin(), _it = m_stateStack.end(); it != _it; _it-- )
+	for( CDoubleLinkedList<IGameState>::DoubleLinkedListItem* it = m_stateStack.first; it != NULL; it = it->next )
 	{
-		(*it)->HandleEvent( EVT_DESTROY, NULL, 0 );
+		it->item->HandleEvent( EVT_DESTROY, NULL, 0 );
 	}
 }
 

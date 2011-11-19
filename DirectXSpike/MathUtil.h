@@ -48,6 +48,9 @@ typedef D3DXMATRIX	Matrix4x4;
 #define Matrix4x4_Translate( mat_out, x_offset, y_offset, z_offset ) \
 	D3DXMatrixTranslation( mat_out, x_offset, y_offset, z_offset )
 
+#define Matrix4x4_LoadIdentity( mat_in_out ) \
+	D3DXMatrixIdentity( mat_in_out )
+
 /* Geometry Types */
 typedef struct {
 	Vector_3		a;
@@ -59,6 +62,16 @@ typedef struct {
 	Vector_3		max;
 	Vector_3		min;
 } ABB_MaxMin;
+
+typedef struct {
+	Vector_3		origin;
+	Vector_3		normal;
+} Ray_Vec3Pt;
+
+typedef struct {
+	Vector_3		origin;
+	Vector_3		normal;
+} Plane_Vec3PtNorm;
 
 typedef struct {
 	Vector_3		pos;
@@ -109,6 +122,12 @@ extern inline float frand(void);
 extern inline float fclamp(float x, float min, float max);
 extern inline bool fcompare(float a, float b);
 
+/* Spheres */
+extern inline void Sphere_CalcXfmHalfUnitSphere( Sphere_PosRad &in, Matrix4x4 &out );
+
+/* Bounds Computation */
+//extern inline Sphere_PosRad Bounds_CalcSphereBounds
+
 /* ABB Routines */
 extern inline ABB_MaxMin ABB_Scale( const ABB_MaxMin &abb, float xScale, float yScale, float zScale );
 extern inline float ABB_CalcDepth( const ABB_MaxMin &abb );
@@ -126,9 +145,17 @@ IntersectType Collide_SphereToFrustum(const Sphere_PosRad &s, const Frustum_Came
 bool Collide_SphereToBox(const Sphere_PosRad &s, const ABB_MaxMin &abb);
 bool Collide_SphereToSphere(const Sphere_PosRad &s1, const Sphere_PosRad &s2);
 bool Collide_SphereToCapsule(const Sphere_PosRad &s, const Capsule &c);
+IntersectType Collide_SphereToPlane(const Sphere_PosRad &s, const Plane_Vec3PtNorm p, /*out*/Point_3D* sphereIntersect);
+bool Collide_RayToPlane(const Ray_Vec3Pt &r, const Plane_Vec3PtNorm p);
 
 /* Points and Lines */
 float DistSq_Point3DFromLineSeg(Point_3D p, Point_3D a, Point_3D b);
 
 /* Polygons */
-Vector_3 Polygon_NormalVec( const Polygon_ABC &p );
+Vector_3 Polygon_CalcNormalVec( const Polygon_ABC &p );
+
+/* Closest Computations */
+inline Point_3D ClosestPoint_PlaneFromPoint(Point_3D pt, Plane_Vec3PtNorm plane)
+{
+ return Point_3D();
+}

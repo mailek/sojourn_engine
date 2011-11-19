@@ -27,24 +27,28 @@ bool CMeshManager::LoadGlobalMeshes(void)
 {
 	assert(m_device);
 
+	/* Warning - these must maintain the same order as EGlobalMeshType */
+
+	// Create the unit sphere
+	BaseModel* sphere = new BaseModel();
+	sphere->LoadCenteredUnitSphere(m_device);
+	m_arrGlobalMeshes.push_back(sphere);
+
 	// Create the teapot
 	BaseModel* teapot = new BaseModel();
-	if(teapot->LoadTeapot(m_device))
-		m_arrGlobalMeshes.push_back(teapot);
-	else return false;
+	teapot->LoadTeapot(m_device);
+	m_arrGlobalMeshes.push_back(teapot);
 
 	// Create Debug Centered ABB Cube
 	BaseModel* abbCube = new BaseModel();
-	if(abbCube->LoadCenteredCube(m_device))
-		m_arrGlobalMeshes.push_back(abbCube);
-	else return false;
+	abbCube->LoadCenteredUnitCube(m_device);
+	m_arrGlobalMeshes.push_back(abbCube);
 
 	// Create Screen Oriented Quad
 	BaseModel* screenQuad = new BaseModel();
-	if(screenQuad->LoadScreenOrientedQuad(m_device))
-		m_arrGlobalMeshes.push_back(screenQuad);
-	else return false;
-
+	screenQuad->LoadScreenOrientedQuad(m_device);
+	m_arrGlobalMeshes.push_back(screenQuad);
+	
 	return true;
 }
 

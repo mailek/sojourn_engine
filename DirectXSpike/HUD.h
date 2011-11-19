@@ -19,7 +19,6 @@ private:
 	D3DXVECTOR3				m_currentLightDir;
 	D3DXVECTOR2				m_currentMousePos;
 	float					m_currentFPS;
-	bool					m_bShowLightDir;
 
 	bool Setup();
 
@@ -31,5 +30,4 @@ public:
 	inline void SetCurrentLightDir(D3DXVECTOR3 dir) {m_currentLightDir = dir;}
 	inline void SetCurrentMousePos(float x, float y) {m_currentMousePos = D3DXVECTOR2(x,y);}
 	inline void SetCurrentFPS(float fps) {m_currentFPS = fps;}
-	inline void DisplayLightDirection(bool show) {m_bShowLightDir = show;}
 };

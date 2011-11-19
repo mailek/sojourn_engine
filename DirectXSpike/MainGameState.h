@@ -9,6 +9,7 @@ class CRenderEngine;
 class CLevelManager;
 class CSceneManager;
 class CCamera;
+class CCollisionManager;
 
 //////////////////////////////////////
 // Class Definition
@@ -26,9 +27,11 @@ private:
 	CLevelManager			   *m_pLevelMgr;
 	CSceneManager			   *m_pSceneMgr;
 	CCamera					   *m_pCamera;
+	CCollisionManager		   *m_pCollision;
 
 	bool Init( CRenderEngine *renderEngine );
 	void Update( float elapsedMillis );
+	void Destroy();
 	void KeyUp( UINT vk );
 	void KeyDown( UINT vk );
 	void MouseMoved( D3DXVECTOR2 mouseDisplacement );

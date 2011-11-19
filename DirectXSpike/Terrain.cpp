@@ -7,6 +7,7 @@
 #include "mathutil.h"
 #include "vertextypes.h"
 #include "renderengine.h"
+#include "fileio.h"
 
 // Uncomment this to draw surface normals
 //#define DEBUGTERRAIN
@@ -50,6 +51,7 @@ ABB_MaxMin CTerrain::CalculateBoundingBox(void)
 	return m_abbBounds;
 }
 
+/* Deprecated - Use LevelLoader::LoadTerrain for future work */
 bool CTerrain::LoadTerrain(LPCSTR pFilename, LPCSTR pTextureFilename, int rows, int cols, float vertSpacing, float fYScale, float uvScale, LPDIRECT3DDEVICE9 device)
 {
 	assert(device);
@@ -72,12 +74,10 @@ bool CTerrain::LoadTerrain(LPCSTR pFilename, LPCSTR pTextureFilename, int rows, 
 	
 	// read the height info in from a grayscale image (white is high vertical, dark is low)
 	std::vector<BYTE> arrBinary(m_numOfVerts);
-	std::ifstream terrainFile(m_strFilename.c_str(), std::ios_base::binary);
-	if(terrainFile == NULL)
-		return false;
-
-	terrainFile.read((char*)&arrBinary[0], arrBinary.size());
-	terrainFile.close();
+	InputFileType terrainFile;
+	FileIO::OpenFile(m_strFilename.c_str(), true, &terrainFile);
+	FileIO::ReadBytes(&terrainFile, (char*)&arrBinary[0], arrBinary.size());
+	FileIO::CloseFile(&terrainFile);
 
 	m_heightMap.resize(m_numOfVerts);
 	for(int i = 0, j = m_heightMap.size(); i < j; i++)
@@ -206,7 +206,7 @@ bool CTerrain::SetupMesh(LPDIRECT3DDEVICE9 device)
 		poly.b = vertices[indexVert1]._p;
 		poly.c = vertices[indexVert2]._p;
 
-		D3DXVECTOR3 vecNorm = Polygon_NormalVec( poly );
+		D3DXVECTOR3 vecNorm = Polygon_CalcNormalVec( poly );
 		vertices[indexVert0]._n += vecNorm;
 		vertices[indexVert1]._n += vecNorm;
 		vertices[indexVert2]._n += vecNorm;

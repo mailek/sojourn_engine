@@ -2,6 +2,7 @@
 #include "RenderEngine.h"
 #include "Hud.h"
 #include "vertextypes.h"
+#include "Settings.h"
 
 //////////////////////////////////////////////////////////////////////////
 // Setup Functions
@@ -17,8 +18,7 @@ CRenderEngine::CRenderEngine(void) : m_device(NULL),
 									m_surRenderTarget3(NULL),
 									m_surBackBuffer(NULL),
 									m_nBlurPasses(0),
-									m_pHud(NULL),
-									m_bShowHUD(false)
+									m_pHud(NULL)
 {
 }
 
@@ -96,9 +96,19 @@ void CRenderEngine::RenderScene()
 		m_device->SetRenderTarget(0, m_surBackBuffer);
 		
 	m_device->Clear(0, 0, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00000000/*black*/, 1.0f, 0);
-	
-	// QUAD TREE RENDER (DEBUG)
-	m_sceneMgr.Render( *this ); // render the debug quad tree
+
+	/* =============================== **
+	**      3D Environment View        **
+	** =============================== */
+
+	// ** DEBUG ** 
+	// Render quadtree cell lines
+	bool settingBool;
+	Settings_GetBool(DEBUG_DRAW_SCENE_TREE, settingBool);
+	if( settingBool == true)
+	{
+		m_sceneMgr.Render( *this );
+	}
 
 	m_shaderMgr.SetVertexShader(PASS_DEFAULT);
 	m_shaderMgr.SetPixelShader(PASS_DEFAULT);
@@ -110,6 +120,7 @@ void CRenderEngine::RenderScene()
 	m_device->BeginScene();
 	typedef std::list<IRenderable*> RenderList;
 
+	RenderList opaqueList;
 	{// OPAQUE OBJECTS
 	m_device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
 	m_device->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
@@ -117,30 +128,74 @@ void CRenderEngine::RenderScene()
 	m_device->SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
 	m_device->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
 	
-	RenderList opaqueList;
 	m_sceneMgr.GetOpaqueDrawListF2B(opaqueList);
 	for(RenderList::iterator it = opaqueList.begin(), _it = opaqueList.end(); it != _it; it++)
 		(*it)->Render(*this);
 	}
-	
+
+	SceneMgrSortList transList;
 	{// TRANSPARENT OBJECTS
-	//m_device->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
+	
+	// keyed transparency
 	m_device->SetRenderState( D3DRS_ALPHATESTENABLE, TRUE); 
 	m_device->SetRenderState( D3DRS_ALPHAREF, 0x16);
 	m_device->SetRenderState( D3DRS_ALPHAFUNC, D3DCMP_GREATEREQUAL);
-	m_device->SetRenderState( D3DRS_CULLMODE, D3DCULL_NONE);
 	m_device->SetRenderState( D3DRS_ALPHABLENDENABLE, FALSE);
-	m_device->SetRenderState( D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-	m_device->SetRenderState( D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
 	m_device->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+	
+	// blending
+	m_device->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+	m_device->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
+	m_device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+	m_device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
 
-	SceneMgrSortList transList;
+	m_device->SetRenderState( D3DRS_CULLMODE, D3DCULL_NONE);
+	//m_device->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
+
+	// TODO:: Split up keyed transparencies and alpha blend transparencies for quicker processing
+
 	m_sceneMgr.GetTransparentDrawListB2F(transList);
 	for(SceneMgrSortList::iterator it = transList.begin(), _it = transList.end(); it != _it; it++)
 		(*it).p->Render(*this);
 	}
 
+	// ** (DEBUG) **
+	// Render the sphere camera clipping geometry for each scene object
+	bool showClipBounds = false;
+	Settings_GetBool(DEBUG_SHOW_CLIP_BOUNDS, showClipBounds);
+	if(showClipBounds)
+	{
+		m_device->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+		m_device->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
+		m_device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+		m_device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+		m_device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+
+		Matrix4x4 world;
+		CDoubleLinkedList<IRenderable> sphereList;
+		for(RenderList::iterator it = opaqueList.begin(), _it = opaqueList.end(); it != _it; it++)
+			sphereList.AddItemToEnd(*it);
+
+		for(SceneMgrSortList::iterator it = transList.begin(), _it = transList.end(); it != _it; it++)
+			sphereList.AddItemToEnd(it->p);
+
+		ColorRGBA32 clr;
+		clr.r = 1.0f;
+		clr.g = 1.0f;
+		clr.b = 1.0f;
+		clr.a = 0.4f;
+		for(CDoubleLinkedList<IRenderable>::DoubleLinkedListItem* s = sphereList.first; s != NULL; s = s->next)
+		{
+			Sphere_PosRad sphere = s->item->GetBoundingSphere();
+			DrawDebugSphere(sphere, clr);
+		}
+	}
+
 	m_device->EndScene();
+
+	/* =============================== **
+	**        Post Processing          **
+	** =============================== */
 
 	// BLUR PASSES
 	if(m_nBlurPasses > 0)
@@ -185,6 +240,10 @@ void CRenderEngine::RenderScene()
 		COM_SAFERELEASE(vertices);
 	}
 
+	/* =============================== **
+	**              HUD                **
+	** =============================== */
+
 	// HUD PASS
 	m_shaderMgr.SetVertexShader(PASS_DEFAULT);
 	m_shaderMgr.SetPixelShader(PASS_DEFAULT);
@@ -197,8 +256,12 @@ void CRenderEngine::RenderScene()
 	m_device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
 	m_device->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_NONE);
 
-	if(m_bShowHUD)
+	bool settingsBool;
+	Settings_GetBool(HUD_SHOW_HUD, settingsBool);
+	if(settingsBool == true)
+	{
 		m_pHud->Render();
+	}
 
 	m_device->EndScene();
 }
@@ -212,4 +275,25 @@ void CRenderEngine::Update( LPDIRECT3DDEVICE9 device, float elapsedMillis)
 	m_sceneMgr.GetDefaultCamera().Update(elapsedMillis);
 	m_shaderMgr.Update(elapsedMillis);
 	m_meshMgr.Update( device, elapsedMillis);
+}
+
+
+//////////////////////////////////////////////////////////////////////////
+// Debug Draw Functions
+//////////////////////////////////////////////////////////////////////////
+void CRenderEngine::DrawDebugSphere(Sphere_PosRad& sphere, ColorRGBA32 color)
+{
+	Matrix4x4 scaling, translation, world;
+
+	float r = sphere.radius;
+	Matrix4x4_Scale(&scaling, r, r, r);
+	Matrix4x4_Translate(&translation, sphere.pos.x, sphere.pos.y, sphere.pos.z);
+
+	world = scaling * translation;
+
+	BaseModel *model;
+	m_meshMgr.GetGlobalMesh(CMeshManager::eUnitSphere, &model);
+
+	model->SetDrawColor(color);
+	model->Render(m_device, world, m_shaderMgr);
 }

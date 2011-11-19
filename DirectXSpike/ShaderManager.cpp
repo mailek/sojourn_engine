@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "ShaderManager.h"
+#include "Settings.h"
 
 const float LightXRotationRateRadianSec = 1.0f;
 
@@ -9,8 +10,7 @@ const float LightXRotationRateRadianSec = 1.0f;
 
 CShaderManager::CShaderManager(void) : m_iViewportWidth(0),
 										m_iViewportHeight(0),
-										m_device(NULL),
-										m_bDebugRotateLight(false)
+										m_device(NULL)
 {
 }
 
@@ -145,7 +145,9 @@ void CShaderManager::CreateVertexShader(ShaderPass &pass, LPCSTR vsFileName)
 
 void CShaderManager::Update(float elapsed)
 {
-	if(m_bDebugRotateLight)
+	bool settingsBool;
+	Settings_GetBool(DEBUG_ROTATE_SUN, settingsBool);
+	if( settingsBool == true)
 	{
 		float rotationAmount = elapsed * LightXRotationRateRadianSec;
 		D3DXVECTOR3 direction = m_DirectionalLight.Direction, outDir;

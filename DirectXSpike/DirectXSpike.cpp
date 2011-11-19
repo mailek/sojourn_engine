@@ -13,6 +13,7 @@
 #include "InputManager.h"
 #include "GameStateStack.h"
 #include "Player.h"
+#include "Settings.h"
 
 //////////////////////////////////////
 // Global Constants
@@ -316,31 +317,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					}
 					break;
 				case VK_F3:
-					{
-						static bool toggle = true;
-						s_renderEngine.DrawDebugQuadTree(toggle);
-						toggle = !toggle;
-					}
+					Settings_ToggleBool(DEBUG_DRAW_SCENE_TREE);
 					break;
 				case VK_F4:
-					{
-						static bool toggle = true;
-						s_hud.DisplayLightDirection(true);
-						s_renderEngine.SetDebugRotateLight(toggle);
-						toggle = !toggle;
-					}
+					Settings_ToggleBool(HUD_SHOW_LIGHT_DIR);
+					Settings_ToggleBool(DEBUG_ROTATE_SUN);
 					break;
 				case VK_F5:
-					{
-						static bool toggle = true;
-						s_renderEngine.SetShowHUD(toggle);
-						toggle = !toggle;
-					}
+					Settings_ToggleBool(HUD_SHOW_HUD);
 					break;
 				case VK_F6:
-					{
-						s_renderEngine.ToggleClipMethod();
-					}
+					s_renderEngine.ToggleClipMethod();
+					break;
+				case VK_F7:
+					Settings_ToggleBool(DEBUG_SHOW_CLIP_BOUNDS);
 					break;
 				case KB_W: // w key
 				case KB_S: // s key
@@ -464,6 +454,8 @@ void InitD3D(HINSTANCE hInstance,
 
 bool Setup(LPDIRECT3DDEVICE9 device)
 {
+	Settings_Init();
+
 	// register the mouse for high res input
     RAWINPUTDEVICE Rid[1];
     Rid[0].usUsagePage = (USHORT) 0x01; 

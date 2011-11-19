@@ -8,6 +8,7 @@
 //////////////////////////////////////
 #include "MathUtil.h"
 #include "IRenderable.h"
+#include "ICollidable.h"
 
 //////////////////////////////////////
 // Forward Declarations
@@ -17,7 +18,7 @@ class CShaderManager;
 //////////////////////////////////////
 // Class Definition
 //////////////////////////////////////
-class CTerrain : public IRenderable
+class CTerrain : public IRenderable, public ICollidable
 {
 public:
 	CTerrain(void);
@@ -49,7 +50,7 @@ private:
 	
 public:
 	float GetTerrainHeightAtXZ(float xCoord, float ZCoord);
-	bool LoadTerrain(LPCSTR pFilename, LPCSTR pTextureFilename, int rows, int cols, float vertSpacing, float fYScale, float uvScale, LPDIRECT3DDEVICE9 device);
+	/*Deprecated*/bool LoadTerrain(LPCSTR pFilename, LPCSTR pTextureFilename, int rows, int cols, float vertSpacing, float fYScale, float uvScale, LPDIRECT3DDEVICE9 device);
 	void SetYOffset(float offset) {m_fYOffset = offset;}
 	ABB_MaxMin CalculateBoundingBox(void);
 	
@@ -59,4 +60,7 @@ public:
 	virtual void SetLastRenderFrame(UINT frameNum) {};
 	virtual UINT GetLastRenderFrame() {return 0;}
 	virtual Sphere_PosRad GetBoundingSphere() { Sphere_PosRad s; ::ZeroMemory(&s, sizeof(s)); return s; }
+
+	// ICollidable
+	virtual void GetCollideSphere( Sphere_PosRad& out ) {out = GetBoundingSphere();}
 	};

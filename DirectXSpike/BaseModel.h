@@ -73,13 +73,15 @@ private:
 public:
 	bool LoadXMeshFromFile(LPCSTR pFilename, IDirect3DDevice9* pDevice);
 	bool LoadXMeshHierarchyFromFile(LPCSTR pFilename, IDirect3DDevice9* pDevice);
-	bool LoadTeapot(IDirect3DDevice9* pDevice);
-	bool LoadCenteredCube(IDirect3DDevice9* device);
-	bool LoadScreenOrientedQuad(IDirect3DDevice9* pDevice);
+	void LoadTeapot(IDirect3DDevice9* pDevice);
+	void LoadCenteredUnitCube(IDirect3DDevice9* device);
+	void LoadCenteredUnitSphere(IDirect3DDevice9* pDevice);
+	void LoadScreenOrientedQuad(IDirect3DDevice9* pDevice);
 	void Render(LPDIRECT3DDEVICE9 device, D3DXMATRIX worldTransform, CShaderManager &shaderMgr) const;
 	Sphere_PosRad GetSphereBounds();
 	void Update( LPDIRECT3DDEVICE9 device, float elapsedMillis );
 	void SetAnimation( DWORD animationId );
+	void SetDrawColor( ColorRGBA32 clr );
 	
 	inline DWORD GetFVF( void ) { assert(m_meshType == eSimpleMesh); return m_mesh->GetFVF(); }
 	inline HRESULT GetVertexBuffer(LPDIRECT3DVERTEXBUFFER9* buffer) { assert(m_meshType == eSimpleMesh); return m_mesh->GetVertexBuffer(buffer); }

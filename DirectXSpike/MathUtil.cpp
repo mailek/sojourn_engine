@@ -312,6 +312,24 @@ IntersectType Collide_SphereToFrustum(
 	return COLLIDE_INTERSECT;
 }
 
+/* Collide Ray with Plane */
+bool Collide_RayToPlane(const Ray_Vec3Pt &r, const Plane_Vec3PtNorm p)
+{
+	assert(false);
+	return false;
+}
+
+/* Collide Sphere with Plane */
+IntersectType Collide_SphereToPlane(const Sphere_PosRad &s, const Plane_Vec3PtNorm p, /*out*/Point_3D* sphereIntersect)
+{
+	*sphereIntersect = Point_3D(0,0,0);
+	assert(false);
+
+	
+
+	return COLLIDE_OUTSIDE;
+}
+
 //////////////////////////////////////////////////////////////////////////
 // Points and Lines
 //////////////////////////////////////////////////////////////////////////
@@ -341,7 +359,7 @@ float DistSq_Point3DFromLineSeg(Point_3D p, Point_3D a, Point_3D b)
 // Polygons
 //////////////////////////////////////////////////////////////////////////
 /* Find the normal unit vector of the given polygon */
-Vector_3 Polygon_NormalVec( const Polygon_ABC &p )
+Vector_3 Polygon_CalcNormalVec( const Polygon_ABC &p )
 {
 	Vector_3 v1 = p.a - p.b;
 	Vector_3 v2 = p.a - p.c;
