@@ -76,7 +76,7 @@ public:
 	virtual bool IsTransparent() { if(m_pModel==NULL) return false; return m_pModel->IsTransparent();}
 	virtual void SetLastRenderFrame(UINT frameNum) {};
 	virtual UINT GetLastRenderFrame() {return 0;}
-	virtual Sphere_PosRad GetBoundingSphere() { Sphere_PosRad s = m_pModel->GetSphereBounds(); s.pos = m_vecPos; return s; }
+	virtual Sphere_PosRad GetBoundingSphere() { Sphere_PosRad s = m_pModel->GetSphereBounds(); s.pos += m_vecPos; return s; }
 
 	// ICollidable
 	virtual void GetCollideSphere( Sphere_PosRad& out ) { ::ZeroMemory(&out, sizeof(out)); out.pos = m_vecPos; out.radius = m_properties.collideSphereRadius;}

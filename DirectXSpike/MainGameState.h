@@ -10,6 +10,7 @@ class CLevelManager;
 class CSceneManager;
 class CCamera;
 class CCollisionManager;
+class CTextureManager;
 
 //////////////////////////////////////
 // Class Definition
@@ -28,6 +29,8 @@ private:
 	CSceneManager			   *m_pSceneMgr;
 	CCamera					   *m_pCamera;
 	CCollisionManager		   *m_pCollision;
+	int							m_texContext;
+	CTextureManager*			m_pTextureMgr;
 
 	bool Init( CRenderEngine *renderEngine );
 	void Update( float elapsedMillis );

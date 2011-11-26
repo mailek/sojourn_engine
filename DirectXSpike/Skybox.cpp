@@ -4,6 +4,8 @@
 #include "Camera.h"
 #include "vertextypes.h"
 #include "renderengine.h"
+#include "texturemanager.h"
+#include "gamestatestack.h"
 
 // tweak variables
 #define PULL_DOWN_MOD	(0.8f) // 'pulls' the texture uv's down over the round edge to crop outside ring of texture
@@ -26,7 +28,13 @@ CSkybox::~CSkybox(void)
 
 bool CSkybox::LoadSkyDome(LPDIRECT3DDEVICE9 device, float radius, UINT slices, UINT stacks)
 {
-	HR(D3DXCreateTextureFromFile(device, RESOURCE_FOLDER"skyTexture.dds", &m_texSkyTexture));
+	// texture
+	TextureContextIdType texContext;
+	CGameStateStack::GetInstance()->GetCurrentState()->HandleEvent(EVT_GETTEXCONTEXT, &texContext, sizeof(texContext));
+	CTextureManager* texMgr = CTextureManager::GetInstance();
+	m_texSkyTexture = texMgr->GetTexture(texContext, "skyTexture.dds");
+
+	// model
 	HR(D3DXCreateSphere(device, radius, slices, stacks, &m_mesh, NULL));
 	m_sphereRadius = radius;
 

@@ -8,6 +8,7 @@
 //////////////////////////////////////
 #include "GameState.h"
 #include "doublelinkedlist.h"
+#include "singleton.h"
 
 //////////////////////////////////////
 // Forward Declarations
@@ -27,12 +28,14 @@ enum {
 //////////////////////////////////////
 // Class Definition
 //////////////////////////////////////
-class CGameStateStack : public IGameState
+class CGameStateStack : public SingleThreadSingleton<CGameStateStack>, public IGameState
 {
-public:
+	friend class SingleThreadSingleton<CGameStateStack>;
+private:
 	CGameStateStack(void);
 	~CGameStateStack(void);
 
+public:
 	void Update( LPDIRECT3DDEVICE9 device, float elapsedMillis );
 	void PushNewState( const UINT stateId );
 	void PopCurrentState();

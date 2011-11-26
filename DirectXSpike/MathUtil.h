@@ -24,7 +24,10 @@ typedef D3DXMATRIX	Matrix4x4;
 #define Vec3_Length( vec3d ) \
 	D3DXVec3Length( vec3d )
 
-#define Vec3_Sub( outvec3d, vec1, vec2 ) \
+#define Vec3_LengthSq( vec3d ) \
+	D3DXVec3LengthSq( vec3d )
+
+#define Vec3_Sub( /* Vector_3* */outvec3d, /* Vector_3* */vec1, /* Vector_3* */vec2 ) \
 	D3DXVec3Subtract( outvec3d, vec1, vec2 )
 
 #define Vec3_Add( outvec3d, vec1, vec2 ) \
@@ -41,6 +44,9 @@ typedef D3DXMATRIX	Matrix4x4;
 
 #define Vec3_Cross( vec3d_o, vec3d_a, vec3d_b ) \
 	D3DXVec3Cross( vec3d_o, vec3d_a, vec3d_b )
+
+#define Vec3_TransformCoord( vec3d_o, vec3d, matrix ) \
+	D3DXVec3TransformCoord( vec3d_o, vec3d, matrix )
 
 #define Matrix4x4_Scale( mat_out, x_scale, y_scale, z_scale ) \
 	D3DXMatrixScaling( mat_out, x_scale, y_scale, z_scale )
@@ -129,6 +135,7 @@ extern inline void Sphere_CalcXfmHalfUnitSphere( Sphere_PosRad &in, Matrix4x4 &o
 //extern inline Sphere_PosRad Bounds_CalcSphereBounds
 
 /* ABB Routines */
+extern inline int ABB_Divide( const ABB_MaxMin target, int xDivs, int yDivs, int zDivs, ABB_MaxMin* out );
 extern inline ABB_MaxMin ABB_Scale( const ABB_MaxMin &abb, float xScale, float yScale, float zScale );
 extern inline float ABB_CalcDepth( const ABB_MaxMin &abb );
 extern inline float ABB_CalcWidth( const ABB_MaxMin &abb );
@@ -153,6 +160,9 @@ float DistSq_Point3DFromLineSeg(Point_3D p, Point_3D a, Point_3D b);
 
 /* Polygons */
 Vector_3 Polygon_CalcNormalVec( const Polygon_ABC &p );
+
+/* Spheres */
+Sphere_PosRad Sphere_GrowSphereToContainSphere( Sphere_PosRad a, Sphere_PosRad b );
 
 /* Closest Computations */
 inline Point_3D ClosestPoint_PlaneFromPoint(Point_3D pt, Plane_Vec3PtNorm plane)

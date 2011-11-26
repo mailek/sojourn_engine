@@ -8,6 +8,8 @@
 #include "vertextypes.h"
 #include "renderengine.h"
 #include "fileio.h"
+#include "texturemanager.h"
+#include "gamestatestack.h"
 
 // Uncomment this to draw surface normals
 //#define DEBUGTERRAIN
@@ -41,9 +43,9 @@ CTerrain::~CTerrain(void)
 {
 	COM_SAFERELEASE(m_VertexBuffer);
 	COM_SAFERELEASE(m_IndexBuffer);
-	COM_SAFERELEASE(m_texGroundTexture);
+	//COM_SAFERELEASE(m_texGroundTexture);
 	//COM_SAFERELEASE(m_texHeightTexture);
-	COM_SAFERELEASE(m_texDirtTexture);
+	//COM_SAFERELEASE(m_texDirtTexture);
 }
 
 ABB_MaxMin CTerrain::CalculateBoundingBox(void)
@@ -68,16 +70,15 @@ bool CTerrain::LoadTerrain(LPCSTR pFilename, LPCSTR pTextureFilename, int rows, 
 	m_fUVScale			= uvScale;
 	m_numTriangles		= 2 * (m_numVertsPerRow-1)*(m_numOfRows-1);
 
-	char textureFilename[200];
-	textureFilename[0] = 0;
-	strcat_s(textureFilename, RESOURCE_FOLDER);
-	strcat_s(textureFilename, pTextureFilename);
-
 	//Load the height texture
-	HR(D3DXCreateTextureFromFile(device, textureFilename, &m_texGroundTexture));
+	// texture
+	TextureContextIdType texContext;
+	CGameStateStack::GetInstance()->GetCurrentState()->HandleEvent(EVT_GETTEXCONTEXT, &texContext, sizeof(texContext));
+	CTextureManager* texMgr = CTextureManager::GetInstance();
+	m_texGroundTexture = texMgr->GetTexture(texContext, pTextureFilename);
 
 	//Load the ground texture
-	HR(D3DXCreateTextureFromFile(device, RESOURCE_FOLDER"dirtTexture.dds", &m_texDirtTexture));
+	m_texDirtTexture = texMgr->GetTexture(texContext, "dirtTexture.dds");
 	
 	// read the height info in from a grayscale image (white is high vertical, dark is low)
 	std::vector<BYTE> arrBinary(m_numOfVerts);

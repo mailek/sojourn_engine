@@ -27,20 +27,22 @@ class CCollisionManager;
 class CLevelManager
 {
 	class SceneObject : public IRenderable, public ICollidable {
+		friend class CLevelManager;
 	public:
 		SceneObject(void);
 		virtual void Render( CRenderEngine &rndr );
+		virtual Sphere_PosRad GetBoundingSphere();
 		virtual D3DXMATRIX GetWorldTransform() {return m_transform;}
-		virtual bool IsTransparent() {return m_bTransparent;}
+		virtual bool IsTransparent();
 		virtual void SetLastRenderFrame(UINT frameNum) {m_lastFrame = frameNum;}
 		virtual UINT GetLastRenderFrame() {return m_lastFrame;}
-		virtual Sphere_PosRad GetBoundingSphere() {return m_boundSphere;}
 
+	private:
+		Sphere_PosRad		m_boundSphere;
 		D3DXMATRIX			m_transform;
 		BaseModel			*m_pMesh;
 		bool				m_bTransparent;
 		UINT				m_lastFrame;
-		Sphere_PosRad		m_boundSphere;
 
 		// ICollidable
 		virtual void GetCollideSphere( Sphere_PosRad& out ) {out = m_boundSphere;}

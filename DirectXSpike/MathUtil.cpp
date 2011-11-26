@@ -38,7 +38,76 @@ bool fcompare(float a, float b)
 // ABB Routines
 //////////////////////////////////////////////////////////////////////////
 
-/* Scale an ABB about it's center */
+/* Divide an input ABB by the requested plane divisions 
+   Note: Using this to divide an ABB ensures that the space is covered and
+     is free from floating point error. 
+   Return: number of ABBs in (out) */
+
+inline int ABB_Divide( const ABB_MaxMin target, int xDivs, int yDivs, int zDivs, ABB_MaxMin* out )
+{
+#define MAX_DIVS (5)
+#define X_PTS    (0)
+#define Y_PTS    (1)
+#define Z_PTS    (2)
+
+	// note: probably not the most efficient implementation, but it should be easy to debug
+	const int numXPts = 2 + xDivs;
+	const int numYPts = 2 + yDivs;
+	const int numZPts = 2 + zDivs;
+	const int numOutAbbs = (xDivs+1) * (yDivs+1) * (zDivs+1);
+
+	float XYZPts[3][MAX_DIVS+2];
+
+#if defined(_DEBUG)
+	::ZeroMemory(&XYZPts, sizeof(XYZPts));
+	assert((xDivs < MAX_DIVS) && (yDivs < MAX_DIVS) && (zDivs < MAX_DIVS));
+#endif
+
+	/* Build the array of unique points (for each axis) */
+	XYZPts[X_PTS][0] = target.min.x;
+	XYZPts[Y_PTS][0] = target.min.y;
+	XYZPts[Z_PTS][0] = target.min.z;
+
+	float xDelta = (target.max.x - target.min.x) / (xDivs+1);
+	float yDelta = (target.max.y - target.min.y) / (yDivs+1);
+	float zDelta = (target.max.z - target.min.z) / (zDivs+1);
+
+	for(int i = 0; i < xDivs; i++) XYZPts[X_PTS][(i+1)] = XYZPts[X_PTS][i] + xDelta;		
+	for(int i = 0; i < yDivs; i++) XYZPts[Y_PTS][(i+1)] = XYZPts[Y_PTS][i] + yDelta;
+	for(int i = 0; i < zDivs; i++) XYZPts[Z_PTS][(i+1)] = XYZPts[Z_PTS][i] + zDelta;
+
+	XYZPts[X_PTS][numXPts-1] = target.max.x;
+	XYZPts[Y_PTS][numYPts-1] = target.max.y;
+	XYZPts[Z_PTS][numZPts-1] = target.max.z;
+
+	int cnt = 0;
+	for(int x = 0; x < numXPts-1; x++)
+	{
+		for(int y = 0; y < numYPts-1; y++)
+		{
+			for(int z = 0; z < numZPts-1; z++)
+			{
+				out->min.x = XYZPts[X_PTS][x];
+				out->max.x = XYZPts[X_PTS][x+1];
+
+				out->min.y = XYZPts[Y_PTS][y];
+				out->max.y = XYZPts[Y_PTS][y+1];
+
+				out->min.z = XYZPts[Z_PTS][z];
+				out->max.z = XYZPts[Z_PTS][z+1];
+
+				out++;
+				cnt++;
+			}
+		}
+	}
+
+	assert(cnt == numOutAbbs);
+
+	return numOutAbbs;
+}
+
+/* Scale an ABB about its center */
 inline ABB_MaxMin ABB_Scale( const ABB_MaxMin &abb, float xScale, float yScale, float zScale )
 {
 	D3DXVECTOR3 v1 = abb.max - abb.min;
@@ -147,7 +216,7 @@ bool Collide_PointToBox(
 	)
 {
 	return abb.max.x >= p.x && abb.max.y >= p.y && abb.max.z >= p.z &&
-		abb.min.x <= p.x && abb.min.y <= p.y && abb.min.z <= p.z;
+		abb.min.x < p.x && abb.min.y < p.y && abb.min.z < p.z;
 }
 
 /* Collide Sphere to ABB */
@@ -368,4 +437,40 @@ Vector_3 Polygon_CalcNormalVec( const Polygon_ABC &p )
 	Vec3_Cross( &n, &v1, &v2 );
 
 	return n;
+}
+
+//////////////////////////////////////////////////////////////////////////
+// Spheres
+//////////////////////////////////////////////////////////////////////////
+
+/* Find a new sphere that contains spheres A and B */
+Sphere_PosRad Sphere_GrowSphereToContainSphere( Sphere_PosRad a, Sphere_PosRad b )
+{
+	assert(a.radius >= 0 && b.radius >= 0);
+
+	Sphere_PosRad ret;
+	Vector_3 ab;
+	Vec3_Sub(&ab, &b.pos, &a.pos);
+
+	Vector_3 ab_norm;
+	Vec3_Normalize(&ab_norm, &ab);
+
+	// Do the calculation in AB space
+	float ab_len = Vec3_Dot(&ab_norm, &ab);
+	
+	Vector_3 a_outer;
+	Vec3_Scale(&a_outer, &ab_norm, a.radius);
+	float outer = fmax(ab_len + b.radius, Vec3_Dot(&ab_norm, &a_outer));
+
+	Vector_3 a_inner;
+	Vec3_Scale(&a_inner, &a_outer, -1);
+	float inner = fmin(ab_len - b.radius, Vec3_Dot(&ab_norm, &a_inner));
+
+	ret.radius = (outer - inner)/2;
+	float center = inner + ret.radius;
+
+	Vec3_Scale(&ret.pos, &ab_norm, center);
+	Vec3_Add(&ret.pos, &ret.pos, &a.pos);
+	
+	return ret;
 }

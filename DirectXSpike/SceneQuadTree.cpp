@@ -5,7 +5,7 @@
 
 static const int FARPLANEDISTMOD				= 500; // draw distance of camera
 static const int DEPTHOFSPHERETEST				= 4;
-static const bool OptimizeCollisionFor2D		= true;
+static const bool OptimizeCollisionFor2D		= true; // perform collision only in XZ plane
 static const int MAX_OBJECT_NODES				= 4000;
 
 //////////////////////////////////////////////////////////////////////////
@@ -34,6 +34,7 @@ void CSceneQuadTree::AddObjectToTree(IRenderable* obj)
 	D3DXVECTOR3 pos(0,0,0);
 	D3DXVec3TransformCoord(&pos, &pos, &obj->GetWorldTransform());
 	int index = FindLeafQuadByPoint(pos);
+
 	obj->SetLastRenderFrame(m_currentFrame);
 
 	if(m_quadTreeArray[index].objects == NULL)

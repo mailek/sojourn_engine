@@ -16,8 +16,8 @@ CGameStateStack::~CGameStateStack(void)
 bool CGameStateStack::Init( CRenderEngine *renderEngine )
 {
 	CMainGameState *mainGame = new CMainGameState();
-	mainGame->HandleEvent( EVT_INIT, &renderEngine, sizeof(CRenderEngine*) );
 	m_stateStack.AddItemToEnd( mainGame );
+	mainGame->HandleEvent( EVT_INIT, &renderEngine, sizeof(CRenderEngine*) );
 	
 	return true;
 }

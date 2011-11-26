@@ -34,6 +34,7 @@ typedef std::vector<IDirect3DTexture9*>::iterator		TexIterator;
 //////////////////////////////////////
 class BaseModel
 {
+	friend class CMeshManager;
 public:
 	BaseModel(void);
 	virtual ~BaseModel(void);
@@ -41,6 +42,7 @@ public:
 private:
 	std::vector<LPDIRECT3DTEXTURE9>		m_arrTexs;
 	std::vector<D3DMATERIAL9>			m_arrMats;
+	D3DXMATRIX							m_meshMatrix;
 	D3DXVECTOR3							m_vecScale;
 	D3DXVECTOR3							m_vecRotation;		/* in radians */
 	D3DXVECTOR3							m_vecPos;			/* local offsets in model coordinate space */
@@ -54,6 +56,7 @@ private:
 	DWORD								m_activeAnimation;/* id of current animation playing */
 	bool								m_isAnimating;		/* stop or start the animation updates */
 	bool								m_sphereCalculated;
+	char								m_filename[MAX_FILENAME_LEN]; /* filename of the model */
 
 	EMeshType							m_meshType;
 	/* ///////// if simple mesh /////////// */
@@ -69,6 +72,7 @@ private:
 	void RecurseCalculateBoneMatrices( Bone* bone, LPD3DXMATRIX parentTransform, SkeletonVertex* arrVertices, WORD* arrIndices );
 	void UpdateBoneMatrices();
 	void UpdateSkinnedMeshes( LPDIRECT3DDEVICE9 device );
+	void CalculateMeshMatrix();
 
 public:
 	bool LoadXMeshFromFile(LPCSTR pFilename, IDirect3DDevice9* pDevice);
@@ -89,11 +93,11 @@ public:
 	inline DWORD GetVertexSizeInBytes() { assert(m_meshType == eSimpleMesh); return m_mesh->GetNumBytesPerVertex(); }
 	inline UINT GetNumVertices() { assert(m_meshType == eSimpleMesh); return m_mesh->GetNumVertices(); }
 
-	inline void Set3DPosition(D3DXVECTOR3 &translation) {m_vecPos=translation;}
-	inline void SetScale(D3DXVECTOR3 &scale) {m_vecScale = scale; CreateDebugAxes();}
-	inline void SetXRotationRadians(float xRot) {m_vecRotation.x = xRot;}
-	inline void SetYRotationRadians(float yRot) {m_vecRotation.y = yRot;}
-	inline void SetZRotationRadians(float zRot) {m_vecRotation.z = zRot;}
+	inline void Set3DPosition(D3DXVECTOR3 &translation) {m_vecPos=translation; CalculateMeshMatrix();}
+	inline void SetScale(D3DXVECTOR3 &scale) {m_vecScale = scale; CreateDebugAxes(); CalculateMeshMatrix();}
+	inline void SetXRotationRadians(float xRot) {m_vecRotation.x = xRot; CalculateMeshMatrix();}
+	inline void SetYRotationRadians(float yRot) {m_vecRotation.y = yRot; CalculateMeshMatrix();}
+	inline void SetZRotationRadians(float zRot) {m_vecRotation.z = zRot; CalculateMeshMatrix();}
 	inline void SetTransparency(bool transparent) {m_bTransparency = transparent;}
 	inline bool IsTransparent() {return m_bTransparency;}
 

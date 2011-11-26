@@ -44,7 +44,7 @@ static CRenderEngine		s_renderEngine;
 static CHUD					s_hud;
 static CInputManager		s_inputMgr;
 static APPLICATIONSTATE		m_appState;
-static CGameStateStack		s_gameState;
+static CGameStateStack*		s_gameState;
 
 //////////////////////////////////////
 // Forward Declarations
@@ -454,6 +454,8 @@ void InitD3D(HINSTANCE hInstance,
 
 bool Setup(LPDIRECT3DDEVICE9 device)
 {
+	s_gameState = CGameStateStack::GetInstance();
+
 	Settings_Init();
 
 	// register the mouse for high res input
@@ -466,8 +468,8 @@ bool Setup(LPDIRECT3DDEVICE9 device)
 
 	// setup the renderer
 	s_renderEngine.SetDevice(device, WIDTH, HEIGHT);
-	s_gameState.Init( &s_renderEngine );
-	s_inputMgr.SetGameState(&s_gameState);
+	s_gameState->Init( &s_renderEngine );
+	s_inputMgr.SetGameState(s_gameState);
 
 	s_hud.SetDevice(device);
 	s_renderEngine.SetHUD(&s_hud);
@@ -477,7 +479,7 @@ bool Setup(LPDIRECT3DDEVICE9 device)
 
 void Cleanup()
 {
-	s_gameState.ShutDown();
+	s_gameState->ShutDown();
 }
 
 void Display(float elapsedmills, LPDIRECT3DDEVICE9 device)
@@ -493,7 +495,7 @@ void Update( LPDIRECT3DDEVICE9 device, float elapsedmills )
 	D3DXVECTOR2 mousePos = s_inputMgr.GetMousePos();
 	s_hud.SetCurrentMousePos(mousePos.x, mousePos.y);
 	s_hud.SetCurrentFPS(m_appState.frameCount);
-	CPlayer *player = s_gameState.GetPlayer();
+	CPlayer *player = s_gameState->GetPlayer();
 	if( player )
 	{
 		s_hud.SetCurrentPlayerPos(player->GetPosition3D());
@@ -503,7 +505,7 @@ void Update( LPDIRECT3DDEVICE9 device, float elapsedmills )
 
 	s_inputMgr.Update();
 	s_renderEngine.Update( device, elapsedmills);
-	s_gameState.Update( device, elapsedmills);
+	s_gameState->Update( device, elapsedmills);
 }
 
 void CalculateFPS(float timeDelta)

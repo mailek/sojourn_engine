@@ -61,8 +61,10 @@ bool CMeshManager::LoadMeshes(void)
 
 	// Create tiny
 	BaseModel* tiny = new BaseModel();
-	if(tiny->LoadXMeshFromFile("Resources\\tiny.x", m_device))
+	if(tiny->LoadXMeshFromFile(RESOURCE_FOLDER"tiny.x", m_device))
 	{
+		strcpy_s(tiny->m_filename, "tiny.x");
+
 		// NOTE: IN HERE GOES ANY CORRECTIONS NEEDED TO THE MODEL, THESE WILL BE APPLIED BEFORE ANY OTHER TRANFORMS
 
 		float scaleFactor(0.025f);
@@ -74,8 +76,9 @@ bool CMeshManager::LoadMeshes(void)
 
 	// Create animated tiny
 	BaseModel* animTiny = new BaseModel();
-	if(animTiny->LoadXMeshHierarchyFromFile("Resources\\tiny_2.x", m_device))
+	if(animTiny->LoadXMeshHierarchyFromFile(RESOURCE_FOLDER"tiny_2.x", m_device))
 	{
+		strcpy_s(animTiny->m_filename, "tiny_2.x");
 		// NOTE: IN HERE GOES ANY CORRECTIONS NEEDED TO THE MODEL, THESE WILL BE APPLIED BEFORE ANY OTHER TRANFORMS
 
 		float scaleFactor(0.025f);
@@ -86,8 +89,9 @@ bool CMeshManager::LoadMeshes(void)
 	} else return false;
 
 	BaseModel* multiAnimTiny = new BaseModel();
-	if(multiAnimTiny->LoadXMeshHierarchyFromFile("Resources\\brokentiny.x", m_device))
+	if(multiAnimTiny->LoadXMeshHierarchyFromFile(RESOURCE_FOLDER"brokentiny.x", m_device))
 	{
+		strcpy_s(multiAnimTiny->m_filename, "brokentiny.x");
 		// NOTE: IN HERE GOES ANY CORRECTIONS NEEDED TO THE MODEL, THESE WILL BE APPLIED BEFORE ANY OTHER TRANFORMS
 
 		float scaleFactor(0.025f);
@@ -99,11 +103,13 @@ bool CMeshManager::LoadMeshes(void)
 
 	// Create well
 	BaseModel* well = new BaseModel();
-	if(well->LoadXMeshFromFile("Resources\\well.x", m_device))
+	if(well->LoadXMeshFromFile(RESOURCE_FOLDER"well.x", m_device))
 	{
+		strcpy_s(well->m_filename, "well.x");
 		// NOTE: IN HERE GOES ANY CORRECTIONS NEEDED TO THE MODEL, THESE WILL BE APPLIED BEFORE ANY OTHER TRANFORMS
 
-		float scaleFactor(12.0f);
+		//float scaleFactor(12.0f);
+		float scaleFactor(1.0f);
 		well->SetScale(D3DXVECTOR3(scaleFactor, scaleFactor, scaleFactor));
 		well->Set3DPosition(D3DXVECTOR3(0.0f, 0.0f, 0.0f));
 		m_arrMeshes.push_back(well);
@@ -111,8 +117,9 @@ bool CMeshManager::LoadMeshes(void)
 
 	// Create cherry tree low
 	BaseModel* cherryLow = new BaseModel();
-	if(cherryLow->LoadXMeshFromFile("Resources\\cherryTreeLow.x", m_device))
+	if(cherryLow->LoadXMeshFromFile(RESOURCE_FOLDER"cherryTreeLow.x", m_device))
 	{
+		strcpy_s(cherryLow->m_filename, "cherryTreeLow.x");
 		// NOTE: IN HERE GOES ANY CORRECTIONS NEEDED TO THE MODEL, THESE WILL BE APPLIED BEFORE ANY OTHER TRANFORMS
 
 		float scaleFactor(4.0f);

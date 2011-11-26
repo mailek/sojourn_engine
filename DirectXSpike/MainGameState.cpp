@@ -7,10 +7,12 @@
 #include "Keyboard.h"
 #include "mathutil.h"
 #include "collisionmanager.h"
+#include "texturemanager.h"
 
 CMainGameState::CMainGameState(void) :  m_pPlayer(NULL),
 										m_pLevelMgr(NULL),
 										m_pSceneMgr(NULL),
+										m_pTextureMgr(NULL),
 										m_pCamera(NULL)
 {
 }
@@ -41,7 +43,7 @@ bool CMainGameState::HandleEvent( UINT eventId, void* data, UINT data_sz )
 	case EVT_INIT:
 		assert( data_sz == sizeof(CRenderEngine*) );
 		assert( data != NULL );
-		Init( *(CRenderEngine**)data );
+		assert(Init( *(CRenderEngine**)data ));
 		break;
 	case EVT_KEYDOWN:
 		assert( data_sz == sizeof(UINT) );
@@ -63,6 +65,11 @@ bool CMainGameState::HandleEvent( UINT eventId, void* data, UINT data_sz )
 		assert( data != NULL );
 		MouseWheel( *(int*)data );
 		break;
+	case EVT_GETTEXCONTEXT:
+		assert( data_sz == sizeof(TextureContextIdType) );
+		assert( data != NULL );
+		*(TextureContextIdType*)data = m_texContext;
+		break;
 	}
 
 	return true;
@@ -77,6 +84,10 @@ bool CMainGameState::Init( CRenderEngine *renderEngine )
 	m_pSceneMgr = &renderEngine->GetSceneManager();
 	m_pCamera = &m_pSceneMgr->GetDefaultCamera();
 	m_pCollision = CCollisionManager::GetInstance();
+	
+	m_pTextureMgr = &renderEngine->GetTextureManager();
+	m_texContext = m_pTextureMgr->CreateTextureContext("MainGame");
+	
 
 	// level objects
 	CTerrain*				pTerrain;
@@ -124,14 +135,19 @@ void CMainGameState::Destroy()
 
 	m_pCollision->UnregisterCollidable(m_pPlayer);
 	CCollisionManager::DestroySingleton();
+
+	m_pTextureMgr->UnloadTextureContext(m_texContext);
+	
 }
 
 void CMainGameState::Update( float elapsedMillis )
 {
 	// check collisions
-	CollisionPair collisions[50];
+	CollisionPair collisions[MAX_COLLISION_PAIRS];
+	::ZeroMemory(&collisions, sizeof(collisions));
+
 	int numCollisions = 0;
-	m_pCollision->GetCollisionPairs(collisions, &numCollisions);
+//	m_pCollision->GetCollisionPairs(collisions, &numCollisions);
 
 	if(m_pPlayer)
 	{

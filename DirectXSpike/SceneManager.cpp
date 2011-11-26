@@ -92,11 +92,12 @@ void CSceneManager::UpdateDrawLists()
 			break;
 		}
 	default:
+		assert(false);
 		break;
 	}
 
 	/* pre-sort the draw lists for the render engine according to transparency */
-	m_transparentList.sort();
+	//m_transparentList.sort();
 	//m_transparentList.reverse();
 	//m_transparentList.clear();
 
@@ -113,6 +114,8 @@ void CSceneManager::GetOpaqueDrawListF2B(std::list<IRenderable*> &list)
 	list.clear();
 	typedef std::list<IRenderable*> RenderList;
 
+	m_opaqueList.sort();
+
 	list = m_opaqueList;
 }
 
@@ -120,6 +123,9 @@ void CSceneManager::GetTransparentDrawListB2F(SceneMgrSortList &list)
 {
 	UpdateDrawLists();
 	list.clear();
+
+	m_transparentList.sort();
+	m_transparentList.reverse();
 
 	list = m_transparentList;
 }
@@ -142,9 +148,6 @@ void CSceneManager::AddRenderableObjectToScene(IRenderable* obj)
 
 void CSceneManager::Render( CRenderEngine &rndr )
 {
-	/*if(!m_bDrawDebugQuadTree )
-		return;*/
-
 	assert(m_debugMesh);
 	CShaderManager &shaderMgr = rndr.GetShaderManager();
 	LPDIRECT3DDEVICE9 device = rndr.GetDevice();
@@ -174,7 +177,7 @@ void CSceneManager::Render( CRenderEngine &rndr )
 
 	// background
 	shaderMgr.SetDrawColor(PASS_PRIM_COLORED, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
-	for(int i = 0; i < m_quadTree.GetQuadTreeSize(); i++)
+	for(int i = 0, j = m_quadTree.GetQuadTreeSize(); i < j; i++)
 	{
 		shaderMgr.SetWorldTransform(PASS_PRIM_COLORED, m_quadTree.GetWorldTransformByQuadIndex(i) );
 		device->DrawPrimitive(D3DPT_LINESTRIP, 0, m_debugMesh->GetNumVertices());		
@@ -197,4 +200,15 @@ void CSceneManager::Render( CRenderEngine &rndr )
 
 	COM_SAFERELEASE(indices);
 	COM_SAFERELEASE(vertices);
+}
+
+void CSceneManager::SetNextClipStrategy(int strategy/* = -1*/)
+{
+	if(strategy >= FIRST_STRATEGY) 
+		m_clipStrategy = strategy; 
+	else 
+	{ 
+		m_clipStrategy++; 
+		m_clipStrategy = m_clipStrategy >= STRATEGY_CNT ? FIRST_STRATEGY : m_clipStrategy; 
+	} 
 }

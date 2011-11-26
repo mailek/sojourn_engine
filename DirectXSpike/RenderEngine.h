@@ -12,6 +12,7 @@
 #include "ShaderManagerEx.h"
 #include "SceneManager.h"
 #include "LevelManager.h"
+#include "TextureManager.h"
 
 //////////////////////////////////////
 // Forward Declarations
@@ -36,6 +37,7 @@ private:
 	CShaderManagerEx				m_shaderMgr;
 	CLevelManager					m_levelMgr;
 	CSceneManager					m_sceneMgr;
+	CTextureManager*				m_texMgr;
 	
 	int								m_nBlurPasses;
 
@@ -62,6 +64,7 @@ public:
 	void Update(LPDIRECT3DDEVICE9 device, float elapsedMillis);
 	
 	inline CMeshManager &GetMeshManager() {return m_meshMgr;}
+	inline CTextureManager &GetTextureManager() {return *m_texMgr;}
 	inline void SetBlur(int blurs) {m_nBlurPasses = blurs;}
 	inline void SetHUD(CHUD *hud) {m_pHud = hud;}
 	inline D3DXVECTOR3 GetLightDirection(void) {return m_shaderMgr.GetLightDirection();}

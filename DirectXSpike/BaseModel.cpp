@@ -8,13 +8,18 @@
 #include "Terrain.h"
 #include "ShaderManager.h"
 #include "vertextypes.h"
+#include "texturemanager.h"
+#include "gamestatestack.h"
 
 #define MAX_STRUCT_NAME_CHARS	(50)
 #define MAX_BONE_LIMIT			(50)
 #define MAX_STRUCT_MATERIALS	(5)
 #define MAX_INFLUENCES			(35)
 #define MAX_BONE_DEPTH			(20)
-#define INVALID_ANIMATION		(-1)
+
+enum {
+	INVALID_ANIMATION = 9999
+};
 
 typedef struct Bone : public D3DXFRAME
 {
@@ -42,6 +47,32 @@ typedef struct MeshContainer : public D3DXMESHCONTAINER
 	//LPD3DXATTRIBUTERANGE pAttributeTable;	// The attribute table
  //   DWORD               NumAttributeGroups;// The number of attribute groups;
 } _MeshContainer;
+
+inline Sphere_PosRad CalculateMeshBoundSphere(LPD3DXMESH mesh)
+{
+	Sphere_PosRad ret;
+	::ZeroMemory(&ret, sizeof(ret));
+
+	// Calculate the bounding sphere
+	LPVOID data;
+	if(FAILED(mesh->LockVertexBuffer(D3DLOCK_READONLY, &data)))
+	{
+		assert(false);
+		return ret;
+	}
+
+	D3DXVECTOR3 center;
+	float radius; 
+
+	if(FAILED(D3DXComputeBoundingSphere((D3DXVECTOR3*)data, mesh->GetNumVertices(), mesh->GetNumBytesPerVertex(), &center, &radius)))
+		return ret;
+
+	ret.pos = center;
+	ret.radius = radius;
+
+	return ret;
+
+}
 
 ////////////////////////////////////////////////////
 // Hierarchy Allocator Class
@@ -113,17 +144,19 @@ class DefaultAllocator : public ID3DXAllocateHierarchy
 		container->MeshData.pMesh = pMeshData->pMesh;
 		container->MeshData.pMesh->AddRef();
 
+		TextureContextIdType texContext;
+		CGameStateStack::GetInstance()->GetCurrentState()->HandleEvent(EVT_GETTEXCONTEXT, &texContext, sizeof(texContext));
+		CTextureManager* texMgr = CTextureManager::GetInstance();
+
 		container->pMaterials = NULL;
 		for(DWORD dw = 0; dw < NumMaterials; dw++)
 		{
 			container->_materials[dw] = pMaterials->MatD3D;
 			container->_materials[dw].Ambient = container->_materials[dw].Diffuse;
 			
-			if(pMaterials[dw].pTextureFilename && strlen(pMaterials[dw].pTextureFilename) > 0)
+			if(pMaterials[dw].pTextureFilename)
 			{
-				std::ostringstream stream;
-				stream << "Resources\\" << pMaterials[dw].pTextureFilename;
-				HR(D3DXCreateTextureFromFile( pd3dDevice, stream.str().c_str(), &container->_textures[dw] ));				
+				container->_textures[dw] = texMgr->GetTexture(texContext, pMaterials[dw].pTextureFilename);
 			}
 		}
 
@@ -189,15 +222,19 @@ BaseModel::BaseModel(void) : m_mesh(NULL),
 							m_vecPos(0.0f, 0.0f, 0.0f),
 							m_meshType(eInvalid),
 							m_skeletonVB(NULL),
+							m_skeletonIB(NULL),
 							m_animController(NULL),
 							m_rootBone(NULL),
 							m_headMeshContainer(NULL),
 							m_animationCnt(0),
 							m_activeAnimation(INVALID_ANIMATION),
 							m_isAnimating(false),
-							m_sphereCalculated(false)
+							m_sphereCalculated(false),
+							m_numOfBones(0)
 {
-
+	Matrix4x4_LoadIdentity( &m_meshMatrix );
+	m_filename[0] = 0;
+	::ZeroMemory(&m_sphereBounds, sizeof(m_sphereBounds));
 }
 
 BaseModel::~BaseModel(void)
@@ -206,14 +243,9 @@ BaseModel::~BaseModel(void)
 		COM_SAFERELEASE(m_mesh);
 	else
 		D3DXFrameDestroy(m_rootBone, &s_allocator);
-
-	// release textures
-	for(TexIterator it = m_arrTexs.begin(), _it = m_arrTexs.end(); it != _it; it++)
-		COM_SAFERELEASE(*it);
 	
 	m_arrTexs.clear();
 	COM_SAFERELEASE(m_skeletonVB);
-	
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -224,33 +256,44 @@ Sphere_PosRad BaseModel::GetSphereBounds()
 {
 	Sphere_PosRad s;
 	::ZeroMemory(&s, sizeof(s));
-	if(m_mesh == NULL)
-		return s;
-	
 	if(!m_sphereCalculated)
 	{
-		// Calculate the bounding sphere
-//		LPDIRECT3DVERTEXBUFFER9 vb;
-		LPVOID data;
-		if(FAILED(m_mesh->LockVertexBuffer(D3DLOCK_READONLY, &data)))
+		switch(m_meshType)
 		{
-			assert(false);
-			return m_sphereBounds;
+			case eSimpleMesh:
+				s = CalculateMeshBoundSphere(m_mesh);
+				m_sphereCalculated = true;
+				break;
+			case eMeshHierarchy:
+				{
+				for(LPD3DXMESHCONTAINER container = m_headMeshContainer; container != NULL; container = container->pNextMeshContainer)
+				{
+					Sphere_PosRad tempSphere = CalculateMeshBoundSphere(container->MeshData.pMesh);
+
+					if(container == m_headMeshContainer)
+						s = tempSphere;
+					else
+						s = Sphere_GrowSphereToContainSphere(s, tempSphere);
+				}
+				}
+				m_sphereCalculated = true;
+				break;
+			default:
+				assert(false);
+				break;
 		}
+		s.radius *= fmax(fmax(m_vecScale.x, m_vecScale.y), m_vecScale.z);
+		Vector_3 position;
+		Vec3_TransformCoord(&position, &s.pos, &m_meshMatrix);
+		s.pos = position;
 
-		D3DXVECTOR3 center;
-		float radius; 
-
-		if(FAILED(D3DXComputeBoundingSphere((D3DXVECTOR3*)data, m_mesh->GetNumVertices(), m_mesh->GetNumBytesPerVertex(), &center, &radius)))
-			return m_sphereBounds;
-
-		m_sphereBounds.pos = center;
-		m_sphereBounds.radius = radius;
-
-		m_sphereCalculated = true;
+		m_sphereBounds = s;
 	}
 
-	return m_sphereBounds;
+	Vec3_Add(&s.pos, &m_sphereBounds.pos, &m_vecPos);
+	s.radius = m_sphereBounds.radius;
+
+	return s;
 }
 
 bool BaseModel::LoadXMeshFromFile(LPCSTR pFilename, IDirect3DDevice9* pDevice)
@@ -268,6 +311,9 @@ bool BaseModel::LoadXMeshFromFile(LPCSTR pFilename, IDirect3DDevice9* pDevice)
 		return false;
 
 	m_meshType = eSimpleMesh;
+	TextureContextIdType texContext;
+	CGameStateStack::GetInstance()->GetCurrentState()->HandleEvent(EVT_GETTEXCONTEXT, &texContext, sizeof(texContext));
+	CTextureManager* texMgr = CTextureManager::GetInstance();
 
 	D3DXMATERIAL* mats = (D3DXMATERIAL*)matBuffer->GetBufferPointer();
 	for(int i = 0, j = numMats; i < j; i++)
@@ -277,11 +323,7 @@ bool BaseModel::LoadXMeshFromFile(LPCSTR pFilename, IDirect3DDevice9* pDevice)
 
 		if(mats[i].pTextureFilename != NULL)
 		{
-			std::ostringstream stream;
-			stream << "Resources\\" << mats[i].pTextureFilename;
-		
-			LPDIRECT3DTEXTURE9 tex(NULL);
-			D3DXCreateTextureFromFile(pDevice, std::string(stream.str()).c_str(), &tex);
+			LPDIRECT3DTEXTURE9 tex = texMgr->GetTexture(texContext, mats[i].pTextureFilename);
 			m_arrTexs.push_back(tex);
 		}
 		else
@@ -515,29 +557,7 @@ void BaseModel::Render(LPDIRECT3DDEVICE9 device, D3DXMATRIX worldTransform, CSha
 	assert( m_meshType );
 
 	// apply the mesh specific transforms before rendering
-	D3DXMATRIX scale, worldMatrix;
-	D3DXMatrixIdentity(&worldMatrix);
-	D3DXMatrixScaling(&scale, m_vecScale.x, m_vecScale.y, m_vecScale.z);
-	worldMatrix *= scale;
-
-	D3DXMATRIX rotate;
-	D3DXMatrixRotationZ(&rotate, m_vecRotation.z);
-	worldMatrix *= rotate;
-
-	D3DXMatrixIdentity(&rotate);
-	D3DXMatrixRotationX(&rotate, m_vecRotation.x);
-	worldMatrix *= rotate;
-
-	D3DXMatrixIdentity(&rotate);
-	D3DXMatrixRotationY(&rotate, m_vecRotation.y);
-	worldMatrix *= rotate;
-
-	D3DXMATRIX translate;
-	D3DXMatrixIdentity(&translate);
-	D3DXMatrixTranslation(&translate, m_vecPos.x, m_vecPos.y, m_vecPos.z);
-	worldMatrix *= translate;
-
-	worldMatrix *= worldTransform;
+	D3DXMATRIX worldMatrix = m_meshMatrix * worldTransform;
 	shaderMgr.SetWorldTransform(PASS_DEFAULT, worldMatrix);
 
 	// Render Skeleton
@@ -741,5 +761,32 @@ void BaseModel::SetDrawColor( ColorRGBA32 clr )
 	mat.Diffuse = clr;
 
 	m_arrMats.push_back(mat);
-	m_arrTexs.push_back(0);
+	m_arrTexs.push_back(CTextureManager::GetInstance()->GetTexture(GLOBAL_TEX_CONTEXT, DEFAULT_TEXTURE));
+}
+
+void BaseModel::CalculateMeshMatrix()
+{
+	D3DXMATRIX scale, worldMatrix;
+	D3DXMatrixIdentity(&worldMatrix);
+	D3DXMatrixScaling(&scale, m_vecScale.x, m_vecScale.y, m_vecScale.z);
+	worldMatrix *= scale;
+
+	D3DXMATRIX rotate;
+	D3DXMatrixRotationZ(&rotate, m_vecRotation.z);
+	worldMatrix *= rotate;
+
+	D3DXMatrixIdentity(&rotate);
+	D3DXMatrixRotationX(&rotate, m_vecRotation.x);
+	worldMatrix *= rotate;
+
+	D3DXMatrixIdentity(&rotate);
+	D3DXMatrixRotationY(&rotate, m_vecRotation.y);
+	worldMatrix *= rotate;
+
+	D3DXMATRIX translate;
+	D3DXMatrixIdentity(&translate);
+	D3DXMatrixTranslation(&translate, m_vecPos.x, m_vecPos.y, m_vecPos.z);
+	worldMatrix *= translate;
+
+	m_meshMatrix = worldMatrix;
 }

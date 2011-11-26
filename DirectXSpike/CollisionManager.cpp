@@ -41,6 +41,7 @@ void CCollisionManager::GetCollisionPairs( CollisionPair* pairs_out, int* size_o
 
 				pairs_out++;
 				cnt++;
+				assert( cnt < MAX_COLLISION_PAIRS );
 			}
 
 			c2 = c2->next;
@@ -48,8 +49,6 @@ void CCollisionManager::GetCollisionPairs( CollisionPair* pairs_out, int* size_o
 
 		c1 = c1->next;
 	}
-
-	assert( cnt < MAX_COLLISION_PAIRS );
 	*size_out = cnt;
 }
 

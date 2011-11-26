@@ -23,9 +23,11 @@ class BaseModel;
 //////////////////////////////////////
 
 enum {
-	BRUTEFORCE, 
+	FIRST_STRATEGY,
+	BRUTEFORCE = FIRST_STRATEGY, 
 	FRUSTUMCLIP, 
-	CAMERAQUAD
+	CAMERAQUAD,
+	STRATEGY_CNT
 };
 
 enum { 
@@ -61,7 +63,7 @@ public:
 	void AddNonclippableObjectToScene(IRenderable* obj);
 	void Setup(LPDIRECT3DDEVICE9 device, CTerrain& terrain, CMeshManager& meshMgr);
 	
-	inline void SetNextClipStrategy(int strategy = -1) { if(strategy >= 0) m_clipStrategy = strategy; else { m_clipStrategy++; m_clipStrategy = m_clipStrategy > CAMERAQUAD ? BRUTEFORCE : m_clipStrategy; } }
+    void SetNextClipStrategy(int strategy = -1);
 	inline CCamera& GetDefaultCamera() {return m_camera;}
 	
 	virtual Matrix4x4 GetWorldTransform() {Matrix4x4 worldMatrix;	Matrix4x4_LoadIdentity(&worldMatrix); return worldMatrix;}

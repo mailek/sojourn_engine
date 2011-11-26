@@ -4,7 +4,7 @@
 #include "Singleton.h"
 #include "DoubleLinkedList.h"
 
-#define MAX_COLLISION_PAIRS		50
+#define MAX_COLLISION_PAIRS		500
 
 typedef struct
 {

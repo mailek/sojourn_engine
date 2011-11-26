@@ -13,15 +13,42 @@
 // SceneObject Functions
 //////////////////////////////////////////////////////////////////////////
 
-CLevelManager::SceneObject::SceneObject() : m_pMesh(NULL)
+CLevelManager::SceneObject::SceneObject() : m_pMesh(NULL),
+											m_lastFrame(0),
+											m_bTransparent(false)
 {
 	::ZeroMemory(&m_boundSphere, sizeof(m_boundSphere));
+	Matrix4x4_LoadIdentity(&m_transform);
 }
 
 void CLevelManager::SceneObject::Render( CRenderEngine &rndr )
 {
 	if(m_pMesh) 
 		m_pMesh->Render(rndr.GetDevice(), m_transform, rndr.GetShaderManager() );
+}
+
+Sphere_PosRad CLevelManager::SceneObject::GetBoundingSphere()
+{
+	Sphere_PosRad ret = m_boundSphere; 
+	if(m_pMesh) 
+	{
+		ret = m_pMesh->GetSphereBounds();
+
+		//ret.pos += m_boundSphere.pos;
+	}
+
+	return ret;
+}
+
+bool CLevelManager::SceneObject::IsTransparent()
+{
+	bool tp = false; 
+	if(m_pMesh) 
+		tp = m_pMesh->IsTransparent(); 
+	else 
+		tp = m_bTransparent; 
+	
+	return tp;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -34,8 +61,6 @@ CLevelManager::CLevelManager(void)
 
 CLevelManager::~CLevelManager(void)
 {
-	/*for(std::list<SceneObject*>::iterator it = m_staticLevelObjects.begin(), _it = m_staticLevelObjects.end(); it != _it; it++)
-		PTR_SAFEDELETE(*it);*/
 	for( CDoubleLinkedList<SceneObject>::DoubleLinkedListItem* it = m_staticLevelObjects.first; it != NULL; it = it->next)
 	{
 		PTR_SAFEDELETE(it->item);
@@ -76,7 +101,8 @@ bool CLevelManager::LoadDefaultLevel(CRenderEngine *renderEngine, CTerrain **ret
 
 	SceneObject* obj;
 	// generate some trees and place randomly in level
-	for(int i = 0; i < NUM_OF_TREES; i++)
+	//for(int i = 0; i < NUM_OF_TREES; i++)
+	for(int i = 0; i < 0; i++)
 	{
 		obj = new SceneObject();
 
@@ -120,18 +146,16 @@ bool CLevelManager::LoadDefaultLevel(CRenderEngine *renderEngine, CTerrain **ret
 		obj->m_boundSphere.radius = sphere.radius*3*radiusScale; // HACK HACK HACK : this coefficient of 3 is a magic radius multiplier because sphere calc is giving bad radius FIX ASAP
 		
 		//then add to scene mgr draw list
-		//m_staticLevelObjects.push_back(obj);
 		m_staticLevelObjects.AddItemToEnd(obj);
 		sceneMgr.AddRenderableObjectToScene(reinterpret_cast<IRenderable*>(obj));
 	}
 
 	// well object on the origin
 	obj = new SceneObject();
-	D3DXMatrixTranslation(&obj->m_transform, 100, m_pTerrain->GetTerrainHeightAtXZ(100,100), 100);
+	D3DXMatrixTranslation(&obj->m_transform, 0, m_pTerrain->GetTerrainHeightAtXZ(0,0), 0);
 	meshMgr.GetMesh(CMeshManager::eWell, &obj->m_pMesh);
 	obj->m_boundSphere = obj->m_pMesh->GetSphereBounds();
 	D3DXVec3TransformCoord(&obj->m_boundSphere.pos, &obj->m_boundSphere.pos, &obj->m_transform);
-	//m_staticLevelObjects.push_back(obj);
 	m_staticLevelObjects.AddItemToEnd(obj);
 	sceneMgr.AddRenderableObjectToScene(reinterpret_cast<IRenderable*>(obj));
 

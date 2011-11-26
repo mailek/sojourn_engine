@@ -67,6 +67,14 @@ private:
 	void BuildNextQuadTreeDepth(const QuadTreeNode *parent, long &quadCount, std::vector<QuadTreeNode*> &newParents, U& heightMap, bool leafDepth);
 };
 
+//////////////////////////////////////
+// Macros
+//////////////////////////////////////
+
+/* Get the index of the child quad (0-3) of the parent quad */
+#define CHILDQUAD_OF_PARENT( parentIdx, childIdx ) \
+	(4*parentIdx + childIdx+1)
+
 //////////////////////////////////////////////////////////////////////////
 // Setup Functions
 //////////////////////////////////////////////////////////////////////////
@@ -128,23 +136,22 @@ void QuadTree_GroundClamped<T,U>::BuildNextQuadTreeDepth(const QuadTreeNode *par
 	const float abbHeight = (leafDepth) ? m_def.leafHeight : m_def.branchHeight;
 	const float abbYSink = abbHeight / 2.0f;
 	
-	ABB_MaxMin scaledParent = ABB_Scale( parent->abb, 0.5f, 1.0f, 0.5f );
-	D3DXMATRIX rotation;
-	D3DXMatrixIdentity( &rotation );
-	D3DXVECTOR3 ulCenterOffset(-parentWidth/4.0f, 0, parentDepth/4.0f ); // center of upper-left quad
+	//ABB_MaxMin scaledParent = ABB_Scale( parent->abb, 0.5f, 1.0f, 0.5f );
+	//D3DXMATRIX rotation;
+	//D3DXMatrixIdentity( &rotation );
+	//D3DXVECTOR3 ulCenterOffset(-parentWidth/4.0f, 0, parentDepth/4.0f ); // center of upper-left quad
 	
-	// UL ->UR ->LR ->LL
-	for(int i = 0; i < 4; i++)
+	// UL ->LL ->UR ->LR
+	ABB_MaxMin abbDivisions[4];
+	int abbDivCnt = ABB_Divide(parent->abb, 1, 0, 1, abbDivisions);
+	assert(abbDivCnt == 4);
+
+	for(int i = 0; i < abbDivCnt; i++)
 	{
 		QuadTreeNode* newSubNode = &m_quadTreeArray[quadCount];
 		newSubNode->index = quadCount;
 		newSubNode->parentIndex = parent->index;
-		newSubNode->abb = scaledParent;
-		
-		D3DXVECTOR3 offset;
-		D3DXVec3TransformCoord( &offset, &ulCenterOffset, &rotation );
-		newSubNode->abb.max = scaledParent.max + offset;
-		newSubNode->abb.min = scaledParent.min + offset;
+		newSubNode->abb = abbDivisions[i];
 		
 		/* find quad's lowest point colliding with terrain */
 		float yMin = heightMap.GetTerrainHeightAtXZ(newSubNode->abb.min.x, newSubNode->abb.min.z);
@@ -163,10 +170,42 @@ void QuadTree_GroundClamped<T,U>::BuildNextQuadTreeDepth(const QuadTreeNode *par
 		newParents.push_back(&m_quadTreeArray[newSubNode->index]);
 
 		quadCount++;
-		D3DXMATRIX deltaRot;
-		D3DXMatrixRotationY( &deltaRot, HALF_PI );
-		rotation *= deltaRot;
 	}
+
+	//// UL ->UR ->LR ->LL
+	//for(int i = 0; i < 4; i++)
+	//{
+	//	QuadTreeNode* newSubNode = &m_quadTreeArray[quadCount];
+	//	newSubNode->index = quadCount;
+	//	newSubNode->parentIndex = parent->index;
+	//	newSubNode->abb = scaledParent;
+	//	
+	//	D3DXVECTOR3 offset;
+	//	D3DXVec3TransformCoord( &offset, &ulCenterOffset, &rotation );
+	//	newSubNode->abb.max = scaledParent.max + offset;
+	//	newSubNode->abb.min = scaledParent.min + offset;
+	//	
+	//	/* find quad's lowest point colliding with terrain */
+	//	float yMin = heightMap.GetTerrainHeightAtXZ(newSubNode->abb.min.x, newSubNode->abb.min.z);
+	//	yMin = min(yMin, heightMap.GetTerrainHeightAtXZ(newSubNode->abb.min.x + parentWidth/2.0f, newSubNode->abb.min.z));
+	//	yMin = min(yMin, heightMap.GetTerrainHeightAtXZ(newSubNode->abb.min.x, newSubNode->abb.min.z + parentDepth/2.0f));
+	//	yMin = min(yMin, heightMap.GetTerrainHeightAtXZ(newSubNode->abb.min.x + parentWidth/2.0f, newSubNode->abb.min.z + parentDepth/2.0f));
+
+	//	/* size the Y axis */
+	//	newSubNode->abb.min.y = yMin - abbYSink;
+	//	newSubNode->abb.max.y = newSubNode->abb.min.y + abbHeight;
+
+	//	newSubNode->worldTransform = ABB_CalcUnitTransform(newSubNode->abb);
+	//	newSubNode->sphereBounds = ABB_CalcMinSphereContaining(newSubNode->abb);
+	//	
+	//	assert(MAXQUADS >= newSubNode->index);
+	//	newParents.push_back(&m_quadTreeArray[newSubNode->index]);
+
+	//	quadCount++;
+	//	D3DXMATRIX deltaRot;
+	//	D3DXMatrixRotationY( &deltaRot, HALF_PI );
+	//	rotation *= deltaRot;
+	//}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -204,9 +243,9 @@ int QuadTree_GroundClamped<T,U>::FindLeafQuadByPoint(D3DXVECTOR3 point)
 	do
 	{
 		indexChanged = false;
-		for(int subIndex = 1; subIndex < 5; subIndex++)
+		for(int subIndex = 0; subIndex < 4; subIndex++)
 		{
-			NODE_INDEX_TYPE newIndex = 4*index+subIndex;
+			NODE_INDEX_TYPE newIndex = CHILDQUAD_OF_PARENT(index, subIndex);
 			if(Collide_PointToBox(point, m_quadTreeArray[newIndex].abb))
 			{
 				index = newIndex;
@@ -216,6 +255,7 @@ int QuadTree_GroundClamped<T,U>::FindLeafQuadByPoint(D3DXVECTOR3 point)
 		} 
 	} while(QuadHasChildren(index) && indexChanged);
 
+	assert(!QuadHasChildren(index));
 	return index;
 }
 
@@ -241,9 +281,9 @@ int QuadTree_GroundClamped<T,U>::FindLeafListQuadsByBoundSphere(const Sphere_Pos
 		newCount = 0;
 		for( long i = 0; parentsBucket[oldSearch][i] != INVALIDINDEX; i++ )
 		{
-			for(int subIndex = 1; subIndex <= 4; subIndex++)
+			for(int subIndex = 0; subIndex < 4; subIndex++)
 			{
-				NODE_INDEX_TYPE index = 4*(parentsBucket[oldSearch][i])+subIndex;
+				NODE_INDEX_TYPE index = CHILDQUAD_OF_PARENT((parentsBucket[oldSearch][i]), subIndex);
 				if(Collide_SphereToBox(sphere, m_quadTreeArray[index].abb))
 				{
 					if(QuadHasChildren(index))
@@ -297,8 +337,11 @@ int QuadTree_GroundClamped<T,U>::GetAllOccupiedDescendents( NODE_INDEX_TYPE pare
 
 	if(!QuadHasChildren(parent))
 	{
-		*leafIndices = parent;
-		retCount++;
+		if(m_quadTreeArray[parent].objects != NULL && m_quadTreeArray[parent].objects->size() > 0)
+		{
+			*leafIndices = parent;
+			retCount++;
+		}
 	} else
 	{
 		long foundCnt(0);
