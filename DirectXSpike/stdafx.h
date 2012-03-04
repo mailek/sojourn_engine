@@ -66,24 +66,6 @@ extern inline void COM_SAFERELEASE(IUnknown* ptr);
 		{assert(false);}
 
 //////////////////////////////////////
-// Events
-//////////////////////////////////////
-typedef enum {
-	EVT_UPDATE		 = 1,
-	EVT_RENDER,     
-	EVT_INIT,       
-	EVT_DESTROY,    
-	EVT_GETPLAYER,  
-	EVT_KEYUP,      
-	EVT_KEYDOWN,    
-	EVT_MOUSE_MOVED,
-	EVT_MOUSE_WHEEL,
-	EVT_GETTEXCONTEXT,
-
-	EVT_CNT
-};
-
-//////////////////////////////////////
 // Types
 //////////////////////////////////////
 #define ColorRGBA32 D3DCOLORVALUE

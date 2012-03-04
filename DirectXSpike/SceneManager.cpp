@@ -25,7 +25,7 @@ CSceneManager::~CSceneManager(void)
 
 void CSceneManager::Setup(LPDIRECT3DDEVICE9 device, CTerrain& terrain, CMeshManager& meshMgr)
 {
-	meshMgr.GetGlobalMesh(CMeshManager::eCenteredUnitABB, &m_debugMesh);
+	meshMgr.GetGlobalMesh(eCenteredUnitABB, &m_debugMesh);
 
 	// Create the quad tree for frustum culling acceleration
 	ABB_MaxMin abb = terrain.CalculateBoundingBox();
@@ -167,13 +167,21 @@ void CSceneManager::Render( CRenderEngine &rndr )
 	device->SetIndices( indices );
 	device->SetStreamSource(0, vertices, 0, m_debugMesh->GetVertexSizeInBytes());
 
+	// render state
+	device->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
+	device->SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
+	device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+	device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+	device->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE); 
+	device->SetRenderState(D3DRS_DITHERENABLE, TRUE);
+
 	// stencil setup
-	device->SetRenderState( D3DRS_STENCILENABLE, TRUE );
-	device->SetRenderState( D3DRS_STENCILFUNC, D3DCMP_EQUAL );
-	device->SetRenderState( D3DRS_STENCILZFAIL, D3DSTENCILOP_KEEP );
-	device->SetRenderState( D3DRS_STENCILFAIL, D3DSTENCILOP_KEEP );
-	device->SetRenderState( D3DRS_STENCILREF, 0 );
-	device->SetRenderState( D3DRS_STENCILMASK, 0 );
+	device->SetRenderState(D3DRS_STENCILENABLE, TRUE);
+	device->SetRenderState(D3DRS_STENCILFUNC, D3DCMP_EQUAL);
+	device->SetRenderState(D3DRS_STENCILZFAIL, D3DSTENCILOP_KEEP);
+	device->SetRenderState(D3DRS_STENCILFAIL, D3DSTENCILOP_KEEP);
+	device->SetRenderState(D3DRS_STENCILREF, 0);
+	device->SetRenderState(D3DRS_STENCILMASK, 0);
 
 	// background
 	shaderMgr.SetDrawColor(PASS_PRIM_COLORED, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
@@ -197,6 +205,8 @@ void CSceneManager::Render( CRenderEngine &rndr )
 	device->SetRenderState( D3DRS_ZWRITEENABLE, TRUE );
 	device->SetRenderState( D3DRS_ZENABLE, TRUE );
 	device->SetRenderState( D3DRS_STENCILENABLE, FALSE );
+
+	device->SetRenderState(D3DRS_DITHERENABLE, FALSE);
 
 	COM_SAFERELEASE(indices);
 	COM_SAFERELEASE(vertices);

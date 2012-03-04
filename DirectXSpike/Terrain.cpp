@@ -37,6 +37,7 @@ CTerrain::CTerrain(void) : m_VertexBuffer(NULL),
 							//m_texHeightTexture(NULL),
 							m_texDirtTexture(NULL)
 {
+	collidableType = OBSTACLE;
 }
 
 CTerrain::~CTerrain(void)

@@ -24,7 +24,7 @@ bool CGameStateStack::Init( CRenderEngine *renderEngine )
 
 void CGameStateStack::Update( LPDIRECT3DDEVICE9 device, float elapsedMillis )
 {
-	for( CDoubleLinkedList<IGameState>::DoubleLinkedListItem* it = m_stateStack.first; it != NULL; it = it->next )
+	for( CDoubleLinkedList<IEventHandler>::DoubleLinkedListItem* it = m_stateStack.first; it != NULL; it = it->next )
 	{
 		it->item->HandleEvent( EVT_UPDATE, &elapsedMillis, sizeof(float) );
 	}
@@ -33,14 +33,14 @@ void CGameStateStack::Update( LPDIRECT3DDEVICE9 device, float elapsedMillis )
 
 void CGameStateStack::PushNewState( const UINT stateId )
 {
-	IGameState* state = GetGameState( stateId );
+	IEventHandler* state = GetGameState( stateId );
 	m_stateStack.AddItemToEnd( state );
 }
 
-IGameState* CGameStateStack::GetCurrentState()
+IEventHandler* CGameStateStack::GetCurrentState()
 {
-	IGameState* ret = NULL;
-	CDoubleLinkedList<IGameState>::DoubleLinkedListItem* i = m_stateStack.last;
+	IEventHandler* ret = NULL;
+	CDoubleLinkedList<IEventHandler>::DoubleLinkedListItem* i = m_stateStack.last;
 	if(i != NULL)
 	{
 		ret = i->item;
@@ -51,7 +51,7 @@ IGameState* CGameStateStack::GetCurrentState()
 
 void CGameStateStack::PopCurrentState()
 {
-	IGameState* state = GetCurrentState();
+	IEventHandler* state = GetCurrentState();
 	if(state)
 	{
 		state->HandleEvent( EVT_DESTROY, NULL, 0 );
@@ -59,17 +59,17 @@ void CGameStateStack::PopCurrentState()
 	}
 }
 
-CPlayer* CGameStateStack::GetPlayer()
+IEventHandler* CGameStateStack::GetAvatar()
 {
-	CPlayer*	player = NULL;
+	IEventHandler*	avatar = NULL;
 	
-	IGameState* state = GetCurrentState();
+	IEventHandler* state = GetCurrentState();
 	if( state )
 	{
-		state->HandleEvent( EVT_GETPLAYER, &player, sizeof(void*) );
+		state->HandleEvent( EVT_GETAVATAR, &avatar, sizeof(void*) );
 	}
 
-	return player;
+	return avatar;
 }
 
 bool CGameStateStack::HandleEvent( UINT eventId, void* data, UINT data_sz )
@@ -80,9 +80,10 @@ bool CGameStateStack::HandleEvent( UINT eventId, void* data, UINT data_sz )
 	case EVT_MOUSE_WHEEL:
 	case EVT_KEYDOWN:
 	case EVT_KEYUP:
+	case EVT_DEBUGCAMERA:
 		{
 		// forward event to top state on stack
-		IGameState* state = GetCurrentState();
+		IEventHandler* state = GetCurrentState();
 		if( state )
 		{
 			state->HandleEvent( eventId, data, data_sz );
@@ -98,13 +99,13 @@ bool CGameStateStack::HandleEvent( UINT eventId, void* data, UINT data_sz )
 
 void CGameStateStack::ShutDown()
 {
-	for( CDoubleLinkedList<IGameState>::DoubleLinkedListItem* it = m_stateStack.first; it != NULL; it = it->next )
+	for( CDoubleLinkedList<IEventHandler>::DoubleLinkedListItem* it = m_stateStack.first; it != NULL; it = it->next )
 	{
 		it->item->HandleEvent( EVT_DESTROY, NULL, 0 );
 	}
 }
 
-IGameState* CGameStateStack::GetGameState( const UINT stateId )
+IEventHandler* CGameStateStack::GetGameState( const UINT stateId )
 {
 	return NULL;
 }

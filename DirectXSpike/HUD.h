@@ -26,7 +26,7 @@ public:
 	void SetDevice(LPDIRECT3DDEVICE9 device);
 	void Render();
 
-	inline void SetCurrentPlayerPos(D3DXVECTOR3 pos) {m_currentPlayerPos = pos;}
+	inline void SetCurrentAvatarPos(D3DXVECTOR3 pos) {m_currentPlayerPos = pos;}
 	inline void SetCurrentLightDir(D3DXVECTOR3 dir) {m_currentLightDir = dir;}
 	inline void SetCurrentMousePos(float x, float y) {m_currentMousePos = D3DXVECTOR2(x,y);}
 	inline void SetCurrentFPS(float fps) {m_currentFPS = fps;}

@@ -63,4 +63,5 @@ public:
 
 	// ICollidable
 	virtual void GetCollideSphere( Sphere_PosRad& out ) {out = GetBoundingSphere();}
+	virtual void HandleCollision( ICollidable* other ) {};
 	};

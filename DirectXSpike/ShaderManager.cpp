@@ -206,6 +206,9 @@ void CShaderManager::ReloadPixelShader(ePassID passId)
 		assert(false);
 		break;
 	}
+
+	m_device->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, TRUE);
+	m_device->SetRenderState(D3DRS_ANTIALIASEDLINEENABLE, TRUE);
 }
 
 void CShaderManager::ReloadVertexShader(ePassID passId)
@@ -260,6 +263,9 @@ void CShaderManager::ReloadVertexShader(ePassID passId)
 		assert(false);
 		break;
 	}
+
+	m_device->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, TRUE);
+	m_device->SetRenderState(D3DRS_ANTIALIASEDLINEENABLE, TRUE);
 }
 
 bool CShaderManager::SetShaderConstant( ID3DXConstantTable *pConsts, LPCSTR constName, ShaderVariant &variant )

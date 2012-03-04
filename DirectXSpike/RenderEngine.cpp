@@ -4,6 +4,8 @@
 #include "vertextypes.h"
 #include "Settings.h"
 
+#define WORLD_UP Vector_3(0,1,0)
+
 //////////////////////////////////////////////////////////////////////////
 // Setup Functions
 //////////////////////////////////////////////////////////////////////////
@@ -81,7 +83,7 @@ bool CRenderEngine::CreateRenderTarget(void)
 	HR(m_texRenderTarget3->GetSurfaceLevel(0, &m_surRenderTarget3));
 
 	// Create the render target quad geo
-	m_meshMgr.GetGlobalMesh(CMeshManager::eScreenQuad, &m_renderQuadGeo );
+	m_meshMgr.GetGlobalMesh(eScreenQuad, &m_renderQuadGeo );
 	assert(m_renderQuadGeo);
 
 	return true;
@@ -99,7 +101,7 @@ void CRenderEngine::RenderScene()
 	else
 		m_device->SetRenderTarget(0, m_surBackBuffer);
 		
-	m_device->Clear(0, 0, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00000000/*black*/, 1.0f, 0);
+	m_device->Clear(0, 0, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL, 0xff000000/*black*/, 1.0f, 0);
 
 	/* =============================== **
 	**      3D Environment View        **
@@ -131,6 +133,8 @@ void CRenderEngine::RenderScene()
 	m_device->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
 	m_device->SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
 	m_device->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
+	m_device->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, TRUE);
+	m_device->SetRenderState(D3DRS_ANTIALIASEDLINEENABLE, TRUE);
 	
 	m_sceneMgr.GetOpaqueDrawListF2B(opaqueList);
 	for(RenderList::iterator it = opaqueList.begin(), _it = opaqueList.end(); it != _it; it++)
@@ -143,10 +147,12 @@ void CRenderEngine::RenderScene()
 	SceneMgrSortList transList;
 	{// TRANSPARENT OBJECTS
 	
+	m_device->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, TRUE);
+	m_device->SetRenderState(D3DRS_ANTIALIASEDLINEENABLE, TRUE);
 	// keyed transparency
-	m_device->SetRenderState( D3DRS_ALPHATESTENABLE, TRUE); 
-	m_device->SetRenderState( D3DRS_ALPHAREF, 0xff);
-	m_device->SetRenderState( D3DRS_ALPHAFUNC, D3DCMP_GREATEREQUAL);
+	m_device->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE); 
+	m_device->SetRenderState(D3DRS_ALPHAREF, 0xff);
+	m_device->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATEREQUAL);
 	//m_device->SetRenderState( D3DRS_ALPHABLENDENABLE, FALSE);
 	m_device->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
 	
@@ -156,8 +162,9 @@ void CRenderEngine::RenderScene()
 	m_device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
 	m_device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
 
+	// render state
 	m_device->SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
-	m_device->SetRenderState( D3DRS_CULLMODE, D3DCULL_NONE);
+	m_device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
 	m_device->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
 
 	// TODO:: Split up keyed transparencies and alpha blend transparencies for quicker processing
@@ -169,8 +176,8 @@ void CRenderEngine::RenderScene()
 	}
 
 	m_device->SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
-	m_device->SetRenderState( D3DRS_ALPHAREF, 0xff);
-	m_device->SetRenderState( D3DRS_ALPHAFUNC, D3DCMP_LESS);
+	m_device->SetRenderState(D3DRS_ALPHAREF, 0xff);
+	m_device->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_LESS);
 	m_device->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
 
 	for(SceneMgrSortList::iterator it = transList.begin(), _it = transList.end(); it != _it; it++)
@@ -196,6 +203,8 @@ void CRenderEngine::RenderScene()
 		m_device->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
 		m_device->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
 
+		ColorRGBA32 clr;
+
 		Matrix4x4 world;
 		CDoubleLinkedList<IRenderable> sphereList;
 		for(RenderList::iterator it = opaqueList.begin(), _it = opaqueList.end(); it != _it; it++)
@@ -204,10 +213,9 @@ void CRenderEngine::RenderScene()
 		for(SceneMgrSortList::iterator it = transList.begin(), _it = transList.end(); it != _it; it++)
 			sphereList.AddItemToEnd(it->p);
 
-		ColorRGBA32 clr;
-		clr.r = 2.0f;
-		clr.g = 1.0f;
-		clr.b = 1.0f;
+		clr.r = 1.5f;
+		clr.g = 0.7f;
+		clr.b = 0.7f;
 		clr.a = 0.3f;
 		for(CDoubleLinkedList<IRenderable>::DoubleLinkedListItem* s = sphereList.first; s != NULL; s = s->next)
 		{
@@ -222,6 +230,31 @@ void CRenderEngine::RenderScene()
 			DrawDebugSphere(sphere, clr);
 		}
 
+		m_device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+		/* testing lines */
+		Vector_3 vx, vy;
+		clr.r = 1.0f;
+		clr.g = 1.0f;
+		clr.b = 1.0f;
+		clr.a = 1.0f;
+
+		vx.x = 0.0f;
+		vx.y = 0.0f;
+		vx.z = 0.0f;
+		
+		vy.x = 0.0f;
+		vy.y = 10.0f;
+		vy.z = 0.0f;
+
+		m_device->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
+		DrawDebugLine3D(vx, vy, clr, true);
+		/* end testing lines */
+
+		Vector_3 orig;
+		orig.x = 0;
+		orig.y = 0;
+		orig.z = 0;
+		DrawDebugAxes(orig);
 	}
 
 	m_device->EndScene();
@@ -305,7 +338,6 @@ void CRenderEngine::RenderScene()
 
 void CRenderEngine::Update( LPDIRECT3DDEVICE9 device, float elapsedMillis)
 {
-	m_sceneMgr.GetDefaultCamera().Update(elapsedMillis);
 	m_shaderMgr.Update(elapsedMillis);
 	m_meshMgr.Update( device, elapsedMillis);
 }
@@ -318,15 +350,106 @@ void CRenderEngine::DrawDebugSphere(Sphere_PosRad& sphere, ColorRGBA32 color)
 {
 	Matrix4x4 scaling, translation, world;
 
-	float r = 2*sphere.radius;
+	float r = sphere.radius;
 	Matrix4x4_Scale(&scaling, r, r, r);
 	Matrix4x4_Translate(&translation, sphere.pos.x, sphere.pos.y, sphere.pos.z);
 
 	world = scaling * translation;
 
 	BaseModel *model;
-	m_meshMgr.GetGlobalMesh(CMeshManager::eUnitSphere, &model);
+	m_meshMgr.GetGlobalMesh(eUnitSphere, &model);
 
 	model->SetDrawColor(color);
 	model->Render(m_device, world, m_shaderMgr);
+}
+
+void CRenderEngine::DrawDebugAxes(Vector_3 location)
+{
+	/* draw x axis red */
+	ColorRGBA32 xclr;
+	::ZeroMemory(&xclr, sizeof(xclr));
+	xclr.a = 1.0f;
+	xclr.r = 1.0f;
+
+	/* draw y axis green */
+	ColorRGBA32 yclr;
+	::ZeroMemory(&yclr, sizeof(yclr));
+	yclr.a = 1.0f;
+	yclr.g = 1.0f;
+
+	/* draw z axis blue */
+	ColorRGBA32 zclr;
+	::ZeroMemory(&zclr, sizeof(zclr));
+	zclr.a = 1.0f;
+	zclr.b = 1.0f;
+
+	/* end points */
+	Vector_3 xend, yend, zend;
+	xend = yend = zend = location;
+	xend.x += 100.0f;
+	yend.y += 100.0f;
+	zend.z += 100.0f;
+
+	/* draw lines */
+	DrawDebugLine3D(location, xend, xclr, true);
+	DrawDebugLine3D(location, yend, yclr, true);
+	DrawDebugLine3D(location, zend, zclr, true);
+}
+
+void CRenderEngine::DrawDebugLine3D(Vector_3 start, Vector_3 end, ColorRGBA32 color, bool showPoints/*= false*/)
+{
+	static const float thickness = 0.05f;
+
+	Matrix4x4 world;
+	Matrix4x4_LoadIdentity(&world);
+	BaseModel *rod;
+	m_meshMgr.GetGlobalMesh(eUnitCylinder, &rod);
+
+	if(showPoints)
+	{
+		Sphere_PosRad s;
+		s.pos = start;
+		s.radius = 0.05f;
+		DrawDebugSphere(s, color);
+		s.pos = end;
+		DrawDebugSphere(s, color);
+	}
+	
+	/* find the middle point */
+	Vector_3 mid;
+	mid.x = (start.x + end.x) * 0.5f;
+	mid.y = (start.y + end.y) * 0.5f;
+	mid.z = (start.z + end.z) * 0.5f;
+	///* testing - draw middle point (pivot) */
+	//Sphere_PosRad s;
+	//s.pos = mid;
+	//s.radius = 0.05f;
+	//DrawDebugSphere(s, color);
+	///* end testing */
+
+	/* stretch the rod to cover the gap between points */
+	Vector_3 startend = end - start;
+	float len = Vec3_Length(&startend);
+	Matrix4x4_Scale(&world, thickness, thickness, len);
+
+	/* rotate the rod to be the direction formed by line between two provided points */
+	Matrix4x4 xfm;
+	Vector_3 up = Vector_3(0,0,1);
+	Vector_3 axis;
+	Vector_3 dir = end - start;
+	Vec3_Normalize(&dir, &dir);
+	Vec3_Cross(&axis, &up, &dir);
+	float rotation = acos(Vec3_Dot(&up, &dir));
+	
+	D3DXMatrixRotationAxis( &xfm, &axis, rotation );
+
+	world *= xfm;
+
+	/* move the rod into place, midway between the points */
+	Matrix4x4_Translate(&xfm, mid.x, mid.y, mid.z);
+	world *= xfm;
+
+	/* draw rod */
+	rod->SetDrawColor(color);
+	rod->Render(m_device, world, m_shaderMgr);
 }

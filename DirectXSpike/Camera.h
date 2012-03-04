@@ -8,6 +8,7 @@
 //////////////////////////////////////
 #include "SceneQuadTree.h"
 #include "Camera.h"
+#include "gameevents.h"
 
 //////////////////////////////////////
 // Forward Declarations
@@ -34,18 +35,19 @@ private:
 	D3DXMATRIX			m_projectionMatrix;
 	D3DXMATRIX			m_viewMatrix;
 
-	CPlayer*			m_pPlayer;  // camera needs player to do soft attach
+	IEventHandler			   *m_pAttachParent;  // object which camera is attached to
 	CTerrain*			m_pTerrain; // camera needs terrain to find ground clamp
 
 public:
 	void Update(float elapsedMillis);
 	void AdjustFOVAngle( float deltaRads );
 
-	inline void SetPlayerForFollow(CPlayer *player) {m_pPlayer = player;}
+	inline void SetCameraAttach(IEventHandler *parent) {m_pAttachParent = parent;}
 	inline void SetTerrainToClamp(CTerrain *terrain) {m_pTerrain = terrain;}
 
 	inline void SetViewPort(unsigned int viewWidth, unsigned int viewHeight) { m_frustum.ASPECT = (float)viewWidth/(float)viewHeight; D3DXMatrixPerspectiveFovLH(&m_projectionMatrix, m_frustum.FOVANGLE, m_frustum.ASPECT, m_frustum.NEARDIST, m_frustum.FARDIST); }
 	inline void Set3DPosition(D3DXVECTOR3 &pos) {m_frustum.cameraPos = pos;}
+	inline void SetLocalPosition(D3DXVECTOR3 &pos) {m_vecPosLocalOffset = pos;}
 
 	inline D3DXMATRIX GetViewMatrix() const { return m_viewMatrix; }
 	inline D3DXMATRIX GetProjectionMatrix() const {return m_projectionMatrix;}

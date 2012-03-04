@@ -2,6 +2,13 @@
 #include "mathutil.h"
 
 //////////////////////////////////////////////////////////////////////////
+// Forward Declarations
+//////////////////////////////////////////////////////////////////////////
+static void FarthestPointsABB(const Point_3D pts[], const int numPts, int *minOut, int *maxOut);
+static Sphere_PosRad CalcSphereFromPointsByABBDistance(const Point_3D pts[], const int numPts);
+static void RandomizePointArray( Point_3D pts[], const int numPts );
+
+//////////////////////////////////////////////////////////////////////////
 // Float Math Functions
 //////////////////////////////////////////////////////////////////////////
 float frand(void)
@@ -179,6 +186,7 @@ inline Sphere_PosRad ABB_CalcMinSphereContaining( const ABB_MaxMin abb )
 	return s;
 }
 
+/* Calculate the largest sphere that will fit inside the given ABB */
 inline Sphere_PosRad ABB_CalcMaxSphereContainedBy( const ABB_MaxMin abb )
 {
 	Sphere_PosRad s;
@@ -193,6 +201,184 @@ inline Sphere_PosRad ABB_CalcMaxSphereContainedBy( const ABB_MaxMin abb )
 	s.radius = fmin( v.z, fmin( v.y, v.x ) );
 
 	return s;
+}
+
+/* Calculate the two most distant points on the boundary of the ABB containing the given point cloud */
+static void FarthestPointsABB( const Point_3D pts[], const int numPts, int *minOut, int *maxOut )
+{
+	int xMin(0), xMax(0), yMin(0), yMax(0), zMin(0), zMax(0);
+
+	/* find the extreme points along each axes */
+	for(int i=1; i < numPts; i++)
+	{
+		if(pts[i].x < pts[xMin].x) xMin = i;
+		if(pts[i].x > pts[xMax].x) xMax = i;
+		if(pts[i].y < pts[yMin].y) yMin = i;
+		if(pts[i].y > pts[yMax].y) yMax = i;
+		if(pts[i].z < pts[zMin].z) zMin = i;
+		if(pts[i].z > pts[zMax].z) zMax = i;
+	}
+
+	/* calculate the squared distance between each pair of 
+	   extreme points along a particular axis */
+	Point_3D temp;
+	temp = pts[xMax] - pts[xMin];
+	float xDistSq = Vec3_Dot(&temp, &temp);
+
+	temp = pts[yMax] - pts[yMin];
+	float yDistSq = Vec3_Dot(&temp, &temp);
+
+	temp = pts[zMax] - pts[zMin];
+	float zDistSq = Vec3_Dot(&temp, &temp);
+
+	/* return pair of points farthest apart */
+	*minOut = xMin;
+	*maxOut = xMax;
+	if(yDistSq > xDistSq && yDistSq > zDistSq)
+	{
+		*minOut = yMin;
+		*maxOut = yMax;
+	}
+	if(zDistSq > xDistSq && zDistSq > yDistSq)
+	{
+		*minOut = zMin;
+		*maxOut = zMax;
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////
+// Sphere Routines
+//////////////////////////////////////////////////////////////////////////
+
+/* Calculate bounding sphere of a given point cloud using the Ritter method */
+Sphere_PosRad Sphere_CalcBoundingSphereForPoints( const Point_3D pts[], const int numPts )
+{
+	Sphere_PosRad ret;
+
+	/* Find the approximate bounding sphere using ABB, to obtain estimated center point */
+	ret = CalcSphereFromPointsByABBDistance(pts, numPts);
+
+	/* Grow sphere radius to include every point in the array */
+	for(int i=0; i < numPts; i++)
+		Sphere_GrowSphereToContainPoint(&ret, pts[i]);
+
+	return ret;
+}
+
+/* Iteratively calculate a better bounding sphere for a given point cloud using 
+   multiple Ritter iterations 
+   Note: input points will be randomized upon output */
+Sphere_PosRad Sphere_CalcBoundingSphereForPointsIterative( Point_3D pts[], const int numPts )
+{
+	const int NUM_OF_ITERATIONS = 10;
+	const float SHRINK_MOD = 0.9f;
+
+	/* Calculate the initial guess */
+	Sphere_PosRad ret = Sphere_CalcBoundingSphereForPoints( pts, numPts );
+	Sphere_PosRad attempt = ret;
+
+	/* Recursively shrink the sphere then grow to contain points */
+	for(int k = 0; k < NUM_OF_ITERATIONS; k++)
+	{
+		attempt.radius = attempt.radius * SHRINK_MOD;
+		RandomizePointArray( pts, numPts );
+		for(int i = 0; i < numPts; i++)
+			Sphere_GrowSphereToContainPoint(&attempt, pts[i]);
+
+		if(attempt.radius < ret.radius)
+			ret = attempt;
+	}
+
+	return ret;
+}
+
+/* Grow the given Sphere to include the given Point */
+void Sphere_GrowSphereToContainPoint( Sphere_PosRad *inOut, const Point_3D p )
+{
+	// Find squared distance between sphere center and point
+	Vector_3 d = p - inOut->pos;
+	float distSq = Vec3_Dot(&d, &d);
+
+	// Only grow sphere if point is outside bounds
+	if(distSq > (inOut->radius * inOut->radius))
+	{
+		float dist = sqrt(distSq);
+		float newRadius = (dist + inOut->radius) * 0.5f;
+		float k = (newRadius - inOut->radius) / dist;
+		
+		inOut->radius = newRadius;
+		inOut->pos += (d * k);
+	}
+}
+
+/* Grow the given Sphere to include a different sphere */
+void Sphere_GrowSphereToContainSphere( Sphere_PosRad *inOut, const Sphere_PosRad s )
+{
+	assert(inOut->radius >= 0 && s.radius >= 0);
+
+	Vector_3 ab;
+	Sphere_PosRad a = *inOut;
+	Sphere_PosRad b = s;
+
+	Vec3_Sub(&ab, &b.pos, &a.pos);
+
+	Vector_3 ab_norm;
+	Vec3_Normalize(&ab_norm, &ab);
+
+	// Do the calculation in AB space
+	float ab_len = Vec3_Dot(&ab_norm, &ab);
+	
+	Vector_3 a_outer;
+	Vec3_Scale(&a_outer, &ab_norm, a.radius);
+	float outer = fmax(ab_len + b.radius, Vec3_Dot(&ab_norm, &a_outer));
+
+	Vector_3 a_inner;
+	Vec3_Scale(&a_inner, &a_outer, -1);
+	float inner = fmin(ab_len - b.radius, Vec3_Dot(&ab_norm, &a_inner));
+
+	inOut->radius = (outer - inner)/2;
+	float center = inner + inOut->radius;
+
+	Vec3_Scale(&inOut->pos, &ab_norm, center);
+	Vec3_Add(&inOut->pos, &inOut->pos, &a.pos);
+}
+
+/* Calculate an approximate bounding sphere for the given point cloud, using the ABB axis method */
+static Sphere_PosRad CalcSphereFromPointsByABBDistance(const Point_3D pts[], const int numPts)
+{
+	Sphere_PosRad s;
+
+	/* Find the most distant two points in the point cloud */
+	int max, min;
+	FarthestPointsABB( pts, numPts, &min, &max);
+
+	/* Calculate the smallest sphere that encompasses this pair of points */
+	Point_3D temp;
+	temp = pts[max] + pts[min];
+	Vec3_Scale(&s.pos, &temp, 0.5f);
+	
+	temp = pts[max] - s.pos;
+	s.radius = Vec3_Length(&temp);
+	
+	return s;
+}
+
+//////////////////////////////////////////////////////////////////////////
+// Point Routines
+//////////////////////////////////////////////////////////////////////////
+
+/* Randomize the order of a set of points */
+static void RandomizePointArray( Point_3D pts[], const int numPts )
+{
+	Point_3D swap;
+	int j;
+	for(int i = 0; i < numPts; i++)
+	{
+		j = rand() % numPts;
+		swap = pts[i];
+		pts[i] = pts[j];
+		pts[j] = swap;
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -212,11 +398,30 @@ bool Collide_SphereToSphere(
 /* Collide 3D Point to ABB */
 bool Collide_PointToBox(
 	const Point_3D &p, 
-	const ABB_MaxMin &abb
+	const ABB_MaxMin &abb,
+	WORD axes
 	)
 {
-	return abb.max.x >= p.x && abb.max.y >= p.y && abb.max.z >= p.z &&
-		abb.min.x < p.x && abb.min.y < p.y && abb.min.z < p.z;
+	bool ret = true;
+
+	if( axes & TEST_1D_X )
+	{
+		ret &= (abb.max.x >= p.x && abb.min.x < p.x);
+	}
+
+	if( axes & TEST_1D_Y )
+	{
+		ret &= (abb.max.y >= p.y && abb.min.y < p.y);
+	}
+
+	if( axes & TEST_1D_Z )
+	{
+		ret &= (abb.max.z >= p.z && abb.min.z < p.z);
+	}
+	/*return abb.max.x >= p.x && abb.max.y >= p.y && abb.max.z >= p.z &&
+		abb.min.x < p.x && abb.min.y < p.y && abb.min.z < p.z;*/
+
+	return ret;
 }
 
 /* Collide Sphere to ABB */
@@ -440,37 +645,106 @@ Vector_3 Polygon_CalcNormalVec( const Polygon_ABC &p )
 }
 
 //////////////////////////////////////////////////////////////////////////
-// Spheres
+// Complex Transform Class
 //////////////////////////////////////////////////////////////////////////
 
-/* Find a new sphere that contains spheres A and B */
-Sphere_PosRad Sphere_GrowSphereToContainSphere( Sphere_PosRad a, Sphere_PosRad b )
+Matrix4x4 ComplexTransform::GetTransform()
 {
-	assert(a.radius >= 0 && b.radius >= 0);
+#define FIRST	0
+#define SECOND	1
+#define THIRD	2
+#define X_ITEM	0
+#define Y_ITEM	1
+#define Z_ITEM	2
 
-	Sphere_PosRad ret;
-	Vector_3 ab;
-	Vec3_Sub(&ab, &b.pos, &a.pos);
+	if(flags & XFM_OUT_OF_DATE)
+	{
+		D3DXMATRIX s, workingMatrix;
+		D3DXMatrixIdentity(&workingMatrix);
 
-	Vector_3 ab_norm;
-	Vec3_Normalize(&ab_norm, &ab);
+		/* scaling */
+		D3DXMatrixScaling(&s, scale.x, scale.y, scale.z);
+		workingMatrix *= s;
 
-	// Do the calculation in AB space
-	float ab_len = Vec3_Dot(&ab_norm, &ab);
-	
-	Vector_3 a_outer;
-	Vec3_Scale(&a_outer, &ab_norm, a.radius);
-	float outer = fmax(ab_len + b.radius, Vec3_Dot(&ab_norm, &a_outer));
+		/* rotation */
+		D3DXMATRIX rXYZ[3];
+		D3DXMatrixRotationX(&rXYZ[X_ITEM], rotationEuler.x);
+		D3DXMatrixRotationY(&rXYZ[Y_ITEM], rotationEuler.y);
+		D3DXMatrixRotationZ(&rXYZ[Z_ITEM], rotationEuler.z);
 
-	Vector_3 a_inner;
-	Vec3_Scale(&a_inner, &a_outer, -1);
-	float inner = fmin(ab_len - b.radius, Vec3_Dot(&ab_norm, &a_inner));
+		D3DXMATRIX* ordered[3];
+		int orderFlag = (flags & ROTATION_ORDER_MASK);
+		switch(orderFlag)
+		{
+		case ROTATE_XYZ:
+			ordered[FIRST]	= &rXYZ[X_ITEM];
+			ordered[SECOND] = &rXYZ[Y_ITEM];
+			ordered[THIRD]	= &rXYZ[Z_ITEM];
+			break;
+		case ROTATE_XZY:
+			ordered[FIRST]	= &rXYZ[X_ITEM];
+			ordered[SECOND] = &rXYZ[Z_ITEM];
+			ordered[THIRD]	= &rXYZ[Y_ITEM];
+			break;
+		case ROTATE_YXZ:
+			ordered[FIRST]	= &rXYZ[Y_ITEM];
+			ordered[SECOND] = &rXYZ[X_ITEM];
+			ordered[THIRD]	= &rXYZ[Z_ITEM];
+			break;
+		case ROTATE_YZX:
+			ordered[FIRST]	= &rXYZ[Y_ITEM];
+			ordered[SECOND] = &rXYZ[Z_ITEM];
+			ordered[THIRD]	= &rXYZ[X_ITEM];
+			break;
+		case ROTATE_ZXY:
+			ordered[FIRST]	= &rXYZ[Z_ITEM];
+			ordered[SECOND] = &rXYZ[X_ITEM];
+			ordered[THIRD]	= &rXYZ[Y_ITEM];
+			break;
+		case ROTATE_ZYX:
+			ordered[FIRST]	= &rXYZ[Z_ITEM];
+			ordered[SECOND] = &rXYZ[Y_ITEM];
+			ordered[THIRD]	= &rXYZ[X_ITEM];
+			break;
+		default:
+			assert(false);
+			break;
+		}
 
-	ret.radius = (outer - inner)/2;
-	float center = inner + ret.radius;
+		for(int i=0; i < cnt_of_array(rXYZ); i++)
+			workingMatrix *= (*ordered[i]);
 
-	Vec3_Scale(&ret.pos, &ab_norm, center);
-	Vec3_Add(&ret.pos, &ret.pos, &a.pos);
-	
+		/* translation */
+		D3DXMATRIX t;
+		D3DXMatrixTranslation(&t, translation.x, translation.y, translation.z);
+		workingMatrix *= t;
+
+		/* save the matrix for lazy calc */
+		matrix = workingMatrix;
+		flags &= ~XFM_OUT_OF_DATE;
+	}
+
+#undef FIRST	
+#undef SECOND	
+#undef THIRD	
+#undef X_ITEM	
+#undef Y_ITEM	
+#undef Z_ITEM	
+
+	return matrix;
+}
+
+Matrix4x4 Matrix4x4_LookAtQuaternion( Matrix4x4 *mat_out, Vector_3 *eye, Vector_3 *target )
+{
+	Matrix4x4 ret;
+	Vec3_Normalize(eye, eye);
+	Vec3_Normalize(target, target);
+
+	Vector_3 norm;
+	Vec3_Cross(&norm, eye, target);
+	float rot = acos(Vec3_Dot(eye, target));
+
+	Matrix4x4_RotateAxis(&ret, &norm, rot);
+
 	return ret;
 }

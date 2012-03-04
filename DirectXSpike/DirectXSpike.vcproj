@@ -316,7 +316,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\GameState.h"
+				RelativePath=".\GameEvents.h"
 				>
 			</File>
 			<File
@@ -389,6 +389,14 @@
 			</File>
 			<File
 				RelativePath=".\CollisionManager.h"
+				>
+			</File>
+			<File
+				RelativePath=".\GhostCamera.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\GhostCamera.h"
 				>
 			</File>
 			<File

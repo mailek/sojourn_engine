@@ -13,7 +13,8 @@ CMainGameState::CMainGameState(void) :  m_pPlayer(NULL),
 										m_pLevelMgr(NULL),
 										m_pSceneMgr(NULL),
 										m_pTextureMgr(NULL),
-										m_pCamera(NULL)
+										m_pCamera(NULL),
+										m_pAvatar(NULL)
 {
 }
 
@@ -25,10 +26,18 @@ bool CMainGameState::HandleEvent( UINT eventId, void* data, UINT data_sz )
 {
 	switch( eventId )
 	{
-	case EVT_GETPLAYER:
+	case EVT_DEBUGCAMERA:
+		{
+		assert( data_sz == sizeof(bool) );
+		assert( data != NULL );
+		IEventHandler* avatar = (*(bool*)data) ? (IEventHandler*)&m_cameraGhost : (IEventHandler*)m_pPlayer;
+		SetAvatar(avatar);
+		break;
+		}
+	case EVT_GETAVATAR:
 		assert( data_sz == sizeof(void*) );
 		assert( data != NULL );
-		*(CPlayer**)data = m_pPlayer;
+		*(IEventHandler**)data = m_pAvatar;
 		break;
 	case EVT_UPDATE:
 		assert( data_sz == sizeof(float) );
@@ -70,6 +79,9 @@ bool CMainGameState::HandleEvent( UINT eventId, void* data, UINT data_sz )
 		assert( data != NULL );
 		*(TextureContextIdType*)data = m_texContext;
 		break;
+	default:
+		assert(false);
+
 	}
 
 	return true;
@@ -88,7 +100,6 @@ bool CMainGameState::Init( CRenderEngine *renderEngine )
 	m_pTextureMgr = &renderEngine->GetTextureManager();
 	m_texContext = m_pTextureMgr->CreateTextureContext("MainGame");
 	
-
 	// level objects
 	CTerrain*				pTerrain;
 	CSkybox*				pSkyDome;
@@ -104,17 +115,16 @@ bool CMainGameState::Init( CRenderEngine *renderEngine )
 	m_pPlayer = new CPlayer();
 	m_pPlayer->Setup(*meshMgr);
 	m_pSceneMgr->AddNonclippableObjectToScene(m_pPlayer);
-	m_pCollision->RegisterCollidable(m_pPlayer);
+	m_pCollision->RegisterDynamicCollidable(m_pPlayer);
 	
 	// camera
 	//m_pSceneMgr->SetCamera(camera);
-	m_pCamera->Set3DPosition(D3DXVECTOR3(0.0f, 10.0f, -24.0f));
-	m_pCamera->SetPlayerForFollow(m_pPlayer);
+	SetAvatar(m_pPlayer);
 	m_pCamera->SetTerrainToClamp(pTerrain);
 	pSkyDome->SetCameraObjectToFollow(m_pCamera);
 
 	// terrain clamping
-	m_pCollision->RegisterCollidable(pTerrain);
+	m_pCollision->RegisterStaticCollidable(pTerrain);
 	m_pPlayer->SetGroundClampTerrain(*pTerrain);
 
 	return true;
@@ -142,71 +152,103 @@ void CMainGameState::Destroy()
 
 void CMainGameState::Update( float elapsedMillis )
 {
-	// check collisions
-	CollisionPair collisions[MAX_COLLISION_PAIRS];
-	::ZeroMemory(&collisions, sizeof(collisions));
-
-	int numCollisions = 0;
-//	m_pCollision->GetCollisionPairs(collisions, &numCollisions);
-
+	// update dynamic objects
 	if(m_pPlayer)
 	{
-		m_pPlayer->Update(elapsedMillis);
+		m_pPlayer->HandleEvent(EVT_UPDATE, &elapsedMillis, sizeof(elapsedMillis));
 	}
+
+	// check collisions
+	m_pCollision->Update();
+
+	// update camera
+	m_cameraGhost.HandleEvent(EVT_UPDATE, &elapsedMillis, sizeof(elapsedMillis));
+	m_pSceneMgr->GetDefaultCamera().Update(elapsedMillis);
 }
 
 void CMainGameState::KeyUp( UINT vk )
 {
+	MovementCommandType arg;
+	arg.clearFlag = true;
+
 	switch( vk )
 	{
 		case VGK_DIRUP:
-			m_pPlayer->ClearMovementState(MOVE_FORWARD);
+			arg.state = MOVE_FORWARD;
 			break;
 		case VGK_DIRLEFT:
-			m_pPlayer->ClearMovementState(MOVE_LEFT);
+			arg.state = MOVE_LEFT;
 			break;
 		case VGK_DIRDOWN:
-			m_pPlayer->ClearMovementState(MOVE_BACKWARD);
+			arg.state = MOVE_BACKWARD;
 			break;
 		case VGK_DIRRIGHT:
-			m_pPlayer->ClearMovementState(MOVE_RIGHT);
+			arg.state = MOVE_RIGHT;
 			break;
 		default:
+			assert(false);
 			break;
+	}
+
+	if(m_pAvatar)
+	{
+		m_pAvatar->HandleEvent(EVT_MOVECMD, &arg, sizeof(arg));
 	}
 }
 
 void CMainGameState::KeyDown( UINT vk )
 {
+	MovementCommandType arg;
+	arg.clearFlag = false;
+
 	switch( vk )
 	{
 		case VGK_DIRUP:
-			m_pPlayer->SetMovementState(MOVE_FORWARD);
+			arg.state = MOVE_FORWARD;
 			break;
 		case VGK_DIRLEFT:
-			m_pPlayer->SetMovementState(MOVE_LEFT);
+			arg.state = MOVE_LEFT;
 			break;
 		case VGK_DIRDOWN:
-			m_pPlayer->SetMovementState(MOVE_BACKWARD);
+			arg.state = MOVE_BACKWARD;
 			break;
 		case VGK_DIRRIGHT:
-			m_pPlayer->SetMovementState(MOVE_RIGHT);
+			arg.state = MOVE_RIGHT;
 			break;
 		default:
+			assert(false);
 			break;
+	}
+
+	if(m_pAvatar)
+	{
+		m_pAvatar->HandleEvent(EVT_MOVECMD, &arg, sizeof(arg));
 	}
 }
 void CMainGameState::MouseMoved( D3DXVECTOR2 mouseDisplacement )
 {
-	if( m_pPlayer )
+	//if( m_pPlayer )
+	//{
+	//	D3DXVECTOR3 playerRotation = m_pPlayer->GetRotationRadians();
+	//	
+	//	static const float halfPi = D3DX_PI/2.0f;
+	//	playerRotation += D3DXVECTOR3(mouseDisplacement.y, mouseDisplacement.x, 0); // x mouse movement rotates look about Y axis, y mouse movement rotates the camera and lookat pitch about the X axis
+	//	playerRotation.x = fclamp(playerRotation.x, -halfPi+.001f, halfPi-.001f);
+	//	m_pPlayer->SetYRotationRadians(playerRotation.y);
+	//	m_pPlayer->SetXRotationRadians(playerRotation.x);
+	//}
+
+	if( m_pAvatar )
 	{
-		D3DXVECTOR3 playerRotation = m_pPlayer->GetRotationRadians();
+        D3DXVECTOR3 avatarRotation;
+		m_pAvatar->HandleEvent(EVT_GETFACINGVEC, &avatarRotation, sizeof(avatarRotation));
+		//= m_pPlayer->GetRotationRadians();
 		
 		static const float halfPi = D3DX_PI/2.0f;
-		playerRotation += D3DXVECTOR3(mouseDisplacement.y, mouseDisplacement.x, 0); // x mouse movement rotates look about Y axis, y mouse movement rotates the camera and lookat pitch about the X axis
-		playerRotation.x = fclamp(playerRotation.x, -halfPi+.001f, halfPi-.001f);
-		m_pPlayer->SetYRotationRadians(playerRotation.y);
-		m_pPlayer->SetXRotationRadians(playerRotation.x);
+		avatarRotation += D3DXVECTOR3(mouseDisplacement.y, mouseDisplacement.x, 0); // x mouse movement rotates look about Y axis, y mouse movement rotates the camera and lookat pitch about the X axis
+		avatarRotation.x = fclamp(avatarRotation.x, -halfPi+.001f, halfPi-.001f);
+
+		m_pAvatar->HandleEvent(EVT_SETFACINGVEC, &avatarRotation, sizeof(avatarRotation));
 	}
 }
 
@@ -217,4 +259,24 @@ void CMainGameState::MouseWheel( int mouseDelta )
 		const float ZOOM_SPEED = 0.0004f;
 		m_pCamera->AdjustFOVAngle(mouseDelta*ZOOM_SPEED);
 	}
+}
+
+void CMainGameState::SetAvatar(IEventHandler* avatar)
+{
+	IEventHandler* old = m_pAvatar;
+
+	m_pAvatar = avatar;
+
+	if(old)
+	{
+		old->HandleEvent(EVT_CONTROL_LOST_FOCUS, NULL, 0);
+	}
+
+	if(m_pAvatar)
+	{
+		m_pAvatar->HandleEvent(EVT_CONTROL_GAIN_FOCUS, NULL, 0);
+	}
+
+	m_pCamera->SetCameraAttach(m_pAvatar);
+	m_pAvatar->HandleEvent(EVT_ATTACH_CAMERA, m_pCamera, sizeof(m_pCamera));
 }

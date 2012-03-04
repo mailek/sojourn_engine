@@ -85,6 +85,10 @@ technique GaussBlur
         SpecularEnable = false;
         FogEnable = false;
         CullMode = none;
+        AlphaBlendEnable = false;
+        AlphaTestEnable = false;
+        ZEnable = false;
+        FillMode = solid;
         
         // pass setup 
         vertexshader = (vs);
@@ -100,6 +104,10 @@ technique GaussBlur
         SpecularEnable = false;
         FogEnable = false;
         CullMode = none;
+        AlphaBlendEnable = false;
+        AlphaTestEnable = false;
+        ZEnable = false;
+        FillMode = solid;
         
         // pass setup 
         vertexshader = (vs);

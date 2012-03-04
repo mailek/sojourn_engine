@@ -1,6 +1,6 @@
 #pragma once
 //////////////////////////////////////////////////////////////////////////
-// DirectXSpike.cpp : Defines the entry point for the application.
+// Keyboard.h : Defines the keyboard bindings for the engine.
 // 2011 Matthew Alford
 //////////////////////////////////////////////////////////////////////////
 
@@ -8,8 +8,8 @@
 // Global Constants
 //////////////////////////////////////
 enum KB_Key_Definitions {
-	KB_NUM_OFFSET	= 0x30,
-	KB_0		= 0x30,
+	KB_NUM_OFFSET		= 0x30,
+	KB_0				= 0x30,
 	KB_1,
 	KB_2,
 	KB_3,
@@ -19,8 +19,8 @@ enum KB_Key_Definitions {
 	KB_7,
 	KB_8,
 	KB_9,
-	KB_ALPHA_OFFSET = 0x41,
-	KB_A		= 0x41,
+	KB_ALPHA_OFFSET		= 0x41,
+	KB_A				= 0x41,
 	KB_B,
 	KB_C,
 	KB_D,
@@ -46,7 +46,7 @@ enum KB_Key_Definitions {
 	KB_X,
 	KB_Y,
 	KB_Z,
-	KB_CNT = 36
+	KB_CNT				= 36
 };
 
 enum Virtual_Key_Definitions {

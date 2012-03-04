@@ -16,6 +16,7 @@
 #define MAX_STRUCT_MATERIALS	(5)
 #define MAX_INFLUENCES			(35)
 #define MAX_BONE_DEPTH			(20)
+#define MAX_VERTICES			(5000)
 
 enum {
 	INVALID_ANIMATION = 9999
@@ -61,17 +62,26 @@ inline Sphere_PosRad CalculateMeshBoundSphere(LPD3DXMESH mesh)
 		return ret;
 	}
 
-	D3DXVECTOR3 center;
-	float radius; 
+	/* Build the temporary array of vertex points */
+	int numVerts = mesh->GetNumVertices();
+	int vertexStride = mesh->GetNumBytesPerVertex();
 
-	if(FAILED(D3DXComputeBoundingSphere((D3DXVECTOR3*)data, mesh->GetNumVertices(), mesh->GetNumBytesPerVertex(), &center, &radius)))
-		return ret;
+	assert(numVerts < MAX_VERTICES);
+	Point_3D pts[MAX_VERTICES];
+	BYTE* pVert = (BYTE*)data;
+	
+	for(int i = 0; i < numVerts; i++)
+	{
+		D3DXVECTOR3* v = (D3DXVECTOR3*)pVert;
+		pts[i] = *v;
 
-	ret.pos = center;
-	ret.radius = radius;
+		pVert += vertexStride;
+	}
 
-	return ret;
+//	ret = Sphere_CalcBoundingSphereForPoints(pts, numVerts);
+	ret = Sphere_CalcBoundingSphereForPointsIterative(pts, numVerts);
 
+	return (ret);
 }
 
 ////////////////////////////////////////////////////
@@ -217,9 +227,6 @@ static DefaultAllocator		s_allocator;
 BaseModel::BaseModel(void) : m_mesh(NULL),
 							m_debugAxesVB(NULL),
 							m_bTransparency(false),
-							m_vecScale(1.0f, 1.0f, 1.0f),
-							m_vecRotation(0.0f, 0.0f, 0.0f),
-							m_vecPos(0.0f, 0.0f, 0.0f),
 							m_meshType(eInvalid),
 							m_skeletonVB(NULL),
 							m_skeletonIB(NULL),
@@ -229,10 +236,9 @@ BaseModel::BaseModel(void) : m_mesh(NULL),
 							m_animationCnt(0),
 							m_activeAnimation(INVALID_ANIMATION),
 							m_isAnimating(false),
-							m_sphereCalculated(false),
-							m_numOfBones(0)
+							m_numOfBones(0),
+							m_boundSphereOutOfDate(true)
 {
-	Matrix4x4_LoadIdentity( &m_meshMatrix );
 	m_filename[0] = 0;
 	::ZeroMemory(&m_sphereBounds, sizeof(m_sphereBounds));
 }
@@ -252,49 +258,6 @@ BaseModel::~BaseModel(void)
 // Setup Functions
 //////////////////////////////////////////////////////////////////////////
 
-Sphere_PosRad BaseModel::GetSphereBounds()
-{
-	Sphere_PosRad s;
-	::ZeroMemory(&s, sizeof(s));
-	if(!m_sphereCalculated)
-	{
-		switch(m_meshType)
-		{
-			case eSimpleMesh:
-				s = CalculateMeshBoundSphere(m_mesh);
-				m_sphereCalculated = true;
-				break;
-			case eMeshHierarchy:
-				{
-				for(LPD3DXMESHCONTAINER container = m_headMeshContainer; container != NULL; container = container->pNextMeshContainer)
-				{
-					Sphere_PosRad tempSphere = CalculateMeshBoundSphere(container->MeshData.pMesh);
-
-					if(container == m_headMeshContainer)
-						s = tempSphere;
-					else
-						s = Sphere_GrowSphereToContainSphere(s, tempSphere);
-				}
-				}
-				m_sphereCalculated = true;
-				break;
-			default:
-				assert(false);
-				break;
-		}
-		s.radius *= fmax(fmax(m_vecScale.x, m_vecScale.y), m_vecScale.z);
-		Vector_3 position;
-		Vec3_TransformCoord(&position, &s.pos, &m_meshMatrix);
-		s.pos = position;
-
-		m_sphereBounds = s;
-	}
-
-	Vec3_Add(&s.pos, &m_sphereBounds.pos, &m_vecPos);
-	s.radius = m_sphereBounds.radius;
-
-	return s;
-}
 
 bool BaseModel::LoadXMeshFromFile(LPCSTR pFilename, IDirect3DDevice9* pDevice)
 {
@@ -333,10 +296,6 @@ bool BaseModel::LoadXMeshFromFile(LPCSTR pFilename, IDirect3DDevice9* pDevice)
 	matBuffer->Release();
 	adjBuffer->Release();
 
-	//hr = pDevice->CreateVertexBuffer(6*sizeof(DebugAxesVertex), D3DUSAGE_WRITEONLY, DebugAxesVertex::FVF, D3DPOOL_MANAGED, &m_debugAxesVB, 0);
-	//if(FAILED(hr))
-	//	return false;
-
 	CreateDebugAxes();
 
 	return true;
@@ -351,16 +310,6 @@ bool BaseModel::LoadXMeshHierarchyFromFile(LPCSTR pFilename, IDirect3DDevice9* p
 
 	m_meshType = eMeshHierarchy;
 	m_animationCnt = m_animController->GetNumAnimationSets();
-
-	// TODO: TESTING _ REMOVE THIS
-	D3DXTRACK_DESC desc;
-	m_animController->GetTrackDesc( 0, &desc );
-	//LPD3DXANIMATIONSET animSet = NULL;
-	//m_animController->GetAnimationSet(2, &animSet);
-	//m_animController->SetTrackAnimationSet(0, animSet );
-	m_animController->SetTrackSpeed(0, 2.0f);
-	
-	// END TODO
 
 	m_numOfBones = 0;
 	RecurseFillOutBone( m_rootBone, 0 );
@@ -379,6 +328,10 @@ bool BaseModel::LoadXMeshHierarchyFromFile(LPCSTR pFilename, IDirect3DDevice9* p
 		D3DFMT_INDEX16/*format*/, D3DPOOL_MANAGED/*pool*/, &m_skeletonIB, 0/*share handle*/ ));
 
 	UpdateBoneMatrices();
+	if( m_headMeshContainer )
+	{
+		UpdateSkinnedMeshes( pDevice );
+	}
 
 	return true;
 }
@@ -416,7 +369,7 @@ void BaseModel::RecurseFillOutBone( Bone* bone, unsigned int parentIndex )
 		LPDIRECT3DDEVICE9 device;
 		HR(pMeshContainer->MeshData.pMesh->GetDevice( &device ));
 		// Copy the bind pose reference mesh to a workable skinned mesh
-		pMeshContainer->MeshData.pMesh->CloneMeshFVF( 0/*options*/, pMeshContainer->MeshData.pMesh->GetFVF(), 
+		pMeshContainer->MeshData.pMesh->CloneMeshFVF( D3DXMESH_VB_MANAGED/*options*/, pMeshContainer->MeshData.pMesh->GetFVF(), 
 			device, &pMeshContainer->_skinnedMesh );
 	}
 	
@@ -445,11 +398,11 @@ void BaseModel::LoadTeapot(IDirect3DDevice9* pDevice)
 	
 	// Teapot Material
 	D3DXCOLOR matColor = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
-	D3DMATERIAL9 teapotMaterial;
-	teapotMaterial.Ambient		= matColor;
-	teapotMaterial.Diffuse		= matColor;
+	D3DMATERIAL9 mat;
+	mat.Ambient		= matColor;
+	mat.Diffuse		= matColor;
 
-	m_arrMats.push_back(teapotMaterial);
+	m_arrMats.push_back(mat);
 	m_arrTexs.push_back(0);
 }
 
@@ -462,11 +415,28 @@ void BaseModel::LoadCenteredUnitCube(IDirect3DDevice9* pDevice)
 
 	// Cube Material
 	D3DXCOLOR matColor = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
-	D3DMATERIAL9 cubeMaterial;
-	cubeMaterial.Ambient		= matColor;
-	cubeMaterial.Diffuse		= matColor;
+	D3DMATERIAL9 mat;
+	mat.Ambient		= matColor;
+	mat.Diffuse		= matColor;
 
-	m_arrMats.push_back(cubeMaterial);
+	m_arrMats.push_back(mat);
+	m_arrTexs.push_back(0);
+}
+
+void BaseModel::LoadCenteredUnitCylinder(IDirect3DDevice9* pDevice)
+{
+	assert(pDevice);
+
+	HR(D3DXCreateCylinder( pDevice, 0.5f, 0.5f, 1.0f, 16, 2, &m_mesh, NULL ));
+	m_meshType = eSimpleMesh;
+
+	// Cylinder Material
+	D3DXCOLOR matColor = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
+	D3DMATERIAL9 mat;
+	mat.Ambient		= matColor;
+	mat.Diffuse		= matColor;
+
+	m_arrMats.push_back(mat);
 	m_arrTexs.push_back(0);
 }
 
@@ -474,16 +444,16 @@ void BaseModel::LoadCenteredUnitSphere(IDirect3DDevice9* pDevice)
 {
 	assert(pDevice);
 
-	HR(D3DXCreateSphere( pDevice, 1.0f, 16, 16, &m_mesh, NULL ));
+	HR(D3DXCreateSphere( pDevice, 1.0f, 32, 32, &m_mesh, NULL ));
 	m_meshType = eSimpleMesh;
 
 	// Sphere Material
 	D3DXCOLOR matColor = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
-	D3DMATERIAL9 sphereMaterial;
-	sphereMaterial.Ambient		= matColor;
-	sphereMaterial.Diffuse		= matColor;
+	D3DMATERIAL9 mat;
+	mat.Ambient		= matColor;
+	mat.Diffuse		= matColor;
 
-	m_arrMats.push_back(sphereMaterial);
+	m_arrMats.push_back(mat);
 	m_arrTexs.push_back(0);
 }
 
@@ -526,16 +496,17 @@ void BaseModel::CreateDebugAxes()
 		return;
 
 	DebugAxesVertex _right, _up, _facing, _pos;
-	_right._p = D3DXVECTOR3(1.0f/m_vecScale.x, 0.0f, 0.0f);
+	Vector_3 scale = m_meshTransform.GetScale();
+	_right._p = D3DXVECTOR3(1.0f/scale.x, 0.0f, 0.0f);
 	_right._c = D3DCOLOR_XRGB(255, 0, 0);
 
-	_up._p = D3DXVECTOR3(0.0f, 1.0f/m_vecScale.y, 0.0f);
+	_up._p = D3DXVECTOR3(0.0f, 1.0f/scale.y, 0.0f);
 	_up._c = D3DCOLOR_XRGB(0, 0, 255);
 
-	_facing._p = D3DXVECTOR3(0.0f, 0.0f, 1.0f/m_vecScale.z);
+	_facing._p = D3DXVECTOR3(0.0f, 0.0f, 1.0f/scale.z);
 	_facing._c = D3DCOLOR_XRGB(0, 255, 0);
 	
-	_pos._p =  D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	_pos._p = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	_pos._c = D3DCOLOR_XRGB(255, 255, 255);
 
 	coord[0] = _pos;
@@ -552,12 +523,12 @@ void BaseModel::CreateDebugAxes()
 // Render Functions
 //////////////////////////////////////////////////////////////////////////
 
-void BaseModel::Render(LPDIRECT3DDEVICE9 device, D3DXMATRIX worldTransform, CShaderManager &shaderMgr) const
+void BaseModel::Render(LPDIRECT3DDEVICE9 device, D3DXMATRIX worldTransform, CShaderManager &shaderMgr)
 {
 	assert( m_meshType );
 
 	// apply the mesh specific transforms before rendering
-	D3DXMATRIX worldMatrix = m_meshMatrix * worldTransform;
+	Matrix4x4 worldMatrix = GetMeshMatrix() * worldTransform;
 	shaderMgr.SetWorldTransform(PASS_DEFAULT, worldMatrix);
 
 	// Render Skeleton
@@ -592,6 +563,7 @@ void BaseModel::Render(LPDIRECT3DDEVICE9 device, D3DXMATRIX worldTransform, CSha
 	}
 	else
 	{
+		assert(m_meshType == eSimpleMesh);
 		device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
 		device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
 		device->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_NONE);
@@ -601,7 +573,7 @@ void BaseModel::Render(LPDIRECT3DDEVICE9 device, D3DXMATRIX worldTransform, CSha
 			shaderMgr.SetMaterial(PASS_DEFAULT, m_arrMats[i]);
 			device->SetFVF(m_mesh->GetFVF());
 			device->SetTexture(0, m_arrTexs[i]);
-			m_mesh->DrawSubset(i);
+			HR(m_mesh->DrawSubset(i));
 		}
 		
 		device->SetTexture(0, 0);
@@ -620,6 +592,42 @@ void BaseModel::Render(LPDIRECT3DDEVICE9 device, D3DXMATRIX worldTransform, CSha
 	
 }
 
+Sphere_PosRad BaseModel::GetSphereBounds()
+{
+	/* Recalculate the sphere bound if needed */
+	if(m_boundSphereOutOfDate)
+	{
+		Sphere_PosRad newSphere;
+		if(m_meshType == eMeshHierarchy)
+		{
+			for(MeshContainer* container = (MeshContainer*)m_headMeshContainer; container != NULL; container = (MeshContainer*)container->pNextMeshContainer)
+			{
+				Sphere_PosRad tempSphere = CalculateMeshBoundSphere(container->_skinnedMesh);
+
+				if(container == m_headMeshContainer)
+					newSphere = tempSphere;
+				else
+					Sphere_GrowSphereToContainSphere(&newSphere, tempSphere);
+			}
+		}
+		else
+		{
+			assert(m_meshType == eSimpleMesh);
+			newSphere = CalculateMeshBoundSphere(m_mesh);
+		}
+
+		/* Apply local transforms */
+		newSphere.radius *= fmax(fmax(m_meshTransform.GetScale().x, m_meshTransform.GetScale().y), m_meshTransform.GetScale().z);
+		Matrix4x4 meshTransforms = GetMeshMatrix();
+		Vec3_TransformCoord(&newSphere.pos, &newSphere.pos, &meshTransforms);
+
+		m_sphereBounds = newSphere;
+		m_boundSphereOutOfDate = false;
+	}
+
+	return (m_sphereBounds);
+}
+
 //////////////////////////////////////////////////////////////////////////
 // Update Functions
 //////////////////////////////////////////////////////////////////////////
@@ -629,12 +637,14 @@ void BaseModel::Update( LPDIRECT3DDEVICE9 device, float elapsedMillis )
 	if( m_meshType == eMeshHierarchy )
 	{
 		if(m_animController && m_isAnimating )
+		{
 			m_animController->AdvanceTime( elapsedMillis, NULL );
 
-		UpdateBoneMatrices();
-		if( m_headMeshContainer )
-		{
-			UpdateSkinnedMeshes( device );
+			UpdateBoneMatrices();
+			if( m_headMeshContainer )
+			{
+				UpdateSkinnedMeshes( device );
+			}
 		}
 	}
 }
@@ -698,6 +708,9 @@ void BaseModel::UpdateSkinnedMeshes( LPDIRECT3DDEVICE9 device )
 		destMesh->UnlockVertexBuffer();
 
 	}
+
+	// update the bound sphere
+	m_boundSphereOutOfDate = true;
 }
 
 void BaseModel::RecurseCalculateBoneMatrices( Bone* bone, LPD3DXMATRIX parentTransform, SkeletonVertex* arrVertices, WORD* arrIndices )
@@ -762,31 +775,4 @@ void BaseModel::SetDrawColor( ColorRGBA32 clr )
 
 	m_arrMats.push_back(mat);
 	m_arrTexs.push_back(CTextureManager::GetInstance()->GetTexture(GLOBAL_TEX_CONTEXT, DEFAULT_TEXTURE));
-}
-
-void BaseModel::CalculateMeshMatrix()
-{
-	D3DXMATRIX scale, worldMatrix;
-	D3DXMatrixIdentity(&worldMatrix);
-	D3DXMatrixScaling(&scale, m_vecScale.x, m_vecScale.y, m_vecScale.z);
-	worldMatrix *= scale;
-
-	D3DXMATRIX rotate;
-	D3DXMatrixRotationZ(&rotate, m_vecRotation.z);
-	worldMatrix *= rotate;
-
-	D3DXMatrixIdentity(&rotate);
-	D3DXMatrixRotationX(&rotate, m_vecRotation.x);
-	worldMatrix *= rotate;
-
-	D3DXMatrixIdentity(&rotate);
-	D3DXMatrixRotationY(&rotate, m_vecRotation.y);
-	worldMatrix *= rotate;
-
-	D3DXMATRIX translate;
-	D3DXMatrixIdentity(&translate);
-	D3DXMatrixTranslation(&translate, m_vecPos.x, m_vecPos.y, m_vecPos.z);
-	worldMatrix *= translate;
-
-	m_meshMatrix = worldMatrix;
 }

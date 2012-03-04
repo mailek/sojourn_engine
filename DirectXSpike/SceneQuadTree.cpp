@@ -26,7 +26,7 @@ CSceneQuadTree::~CSceneQuadTree(void)
 
 void CSceneQuadTree::AddObjectToTree(IRenderable* obj)
 {
-	const int MAXLEAVES(2000);
+	const int MAXLEAVES(200);
 	static NODE_INDEX_TYPE leavesCollidingWithSphere[MAXLEAVES];
 	assert(obj);
 

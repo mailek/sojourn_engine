@@ -9,6 +9,8 @@
 #include "BaseModel.h"
 #include "IRenderable.h"
 #include "ICollidable.h"
+#include "GameEvents.h"
+#include "mathutil.h"
 
 //////////////////////////////////////
 // Forward Declarations
@@ -20,12 +22,6 @@ class CTerrain;
 //////////////////////////////////////
 // Type Definitions
 //////////////////////////////////////
-typedef enum {
-	MOVE_FORWARD =  (1<<0), 
-	MOVE_BACKWARD = (1<<1), 
-	MOVE_LEFT =		(1<<2), 
-	MOVE_RIGHT =	(1<<3)
-	};
 
 typedef struct {
 	float collideSphereRadius;	// size of collide sphere
@@ -35,50 +31,52 @@ typedef struct {
 //////////////////////////////////////
 // Class Definition
 //////////////////////////////////////
-class CPlayer : public IRenderable, public ICollidable
+class CPlayer : public IRenderable, public ICollidable, public IEventHandler
 {
 public:
 	CPlayer(void);
 	~CPlayer(void);
 
 private:
-	D3DXVECTOR3				m_vecScale;
-	D3DXVECTOR3				m_vecPos;
-	D3DXVECTOR3				m_vecEuler; // in radians
-	D3DXVECTOR3				m_vecVelocity;
+	Vector_3				m_vecVelocity;
 	DWORD					m_movementState;
-	D3DXVECTOR3				m_vecLastPos;
-	D3DXVECTOR3				m_vecRotationVelocity;
+	Vector_3				m_vecLastPos;
+	Vector_3				m_vecRotationVelocity;
 
 	BaseModel*				m_pModel;
 	CTerrain*				m_pTerrain;
 	PlayerProperties		m_properties;
+	ComplexTransform		m_transform;
 
 public:
-	void Update(float deltaTime);
 	void Setup(CMeshManager& meshMgr);
 	void GroundClampTerrain();	
-	void SetMovementState(int state);
-	void ClearMovementState(int state);
-	void SetPosition3D(D3DXVECTOR3 &pos);
+	void SetPosition3D(Vector_3 &pos);
 	
-	inline D3DXVECTOR3 GetPosition3D() {return m_vecPos;}
-	inline D3DXVECTOR3 GetRotationRadians() {return m_vecEuler;}
-	inline void SetXRotationRadians(float xRot) {m_vecEuler.x = xRot;}
-	inline void SetYRotationRadians(float yRot) {m_vecEuler.y = yRot;}
-	inline void SetZRotationRadians(float zRot) {m_vecEuler.z = zRot;}
-	inline void SetScale(D3DXVECTOR3 &scale) {m_vecScale = scale;}
+	inline Vector_3 GetPosition3D() {return m_transform.GetTranslation();}
+	inline void SetScale(Vector_3 &scale) {m_transform.SetScale(scale);}
 	inline void SetGroundClampTerrain(CTerrain &terrain) {m_pTerrain = &terrain; GroundClampTerrain();}
 
 	// IRenderable
 	virtual void Render( CRenderEngine &rndr );
 	virtual D3DXMATRIX GetWorldTransform();
-	virtual bool IsTransparent() { if(m_pModel==NULL) return false; return m_pModel->IsTransparent();}
+	virtual bool IsTransparent() { return (m_pModel==NULL && m_pModel->IsTransparent()); }
 	virtual void SetLastRenderFrame(UINT frameNum) {};
 	virtual UINT GetLastRenderFrame() {return 0;}
-	virtual Sphere_PosRad GetBoundingSphere() { Sphere_PosRad s = m_pModel->GetSphereBounds(); s.pos += m_vecPos; return s; }
+	virtual Sphere_PosRad GetBoundingSphere() { Sphere_PosRad s = m_pModel->GetSphereBounds(); s.pos += m_transform.GetTranslation(); return s; }
 
 	// ICollidable
-	virtual void GetCollideSphere( Sphere_PosRad& out ) { ::ZeroMemory(&out, sizeof(out)); out.pos = m_vecPos; out.radius = m_properties.collideSphereRadius;}
+	virtual void GetCollideSphere( Sphere_PosRad& out ) { ::ZeroMemory(&out, sizeof(out)); out.pos = m_transform.GetTranslation(); out.radius = m_properties.collideSphereRadius;}
+	virtual void HandleCollision( ICollidable* other );
+
+	// IEventHandler
+	virtual bool HandleEvent( UINT eventId, void* data, UINT data_sz );
+
+private:
+	void Update(float deltaTime);
+	inline Vector_3 GetRotationRadians() {return m_transform.GetRotationEulers();}
+	inline void SetXRotationRadians(float xRot) {m_transform.SetXRotationRadians(xRot);}
+	inline void SetYRotationRadians(float yRot) {m_transform.SetYRotationRadians(yRot);}
+	inline void SetZRotationRadians(float zRot) {m_transform.SetZRotationRadians(zRot);}
 
 };

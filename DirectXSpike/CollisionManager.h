@@ -19,12 +19,15 @@ private:
 	~CCollisionManager(void);
 
 public:
-	void RegisterCollidable( ICollidable* obj );
+	void RegisterDynamicCollidable( ICollidable* obj );
+	void RegisterStaticCollidable( ICollidable* obj );
 	void UnregisterCollidable( ICollidable* obj );
 	void GetCollisionPairs( CollisionPair* pairs_out, int* size_out );
+	void Update();
 
 private:
-	CDoubleLinkedList<ICollidable> m_collidables;
+	CDoubleLinkedList<ICollidable> m_dynamicCollidables;
+	CDoubleLinkedList<ICollidable> m_staticCollidables;
 
 private:
 	bool DetermineCollision( ICollidable* c1, ICollidable* c2 );

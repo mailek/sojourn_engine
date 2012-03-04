@@ -54,9 +54,12 @@ private:
 	CHUD*							m_pHud;					/* pointer to HUD manager */
 
 	bool Setup(unsigned int viewportWidth, unsigned int viewportHeight);
-	void DrawDebugSphere(Sphere_PosRad& sphere, ColorRGBA32 color);
 
 public:
+	void DrawDebugSphere(Sphere_PosRad& sphere, ColorRGBA32 color);
+	void DrawDebugLine3D(Vector_3 start, Vector_3 end, ColorRGBA32 color, bool showPoints = false);
+	void DrawDebugAxes(Vector_3 location);
+
 	void SetDevice(LPDIRECT3DDEVICE9 device, unsigned int viewportWidth, unsigned int viewportHeight);
 	void RenderScene();
 	void SetWireframeMode(bool enable);

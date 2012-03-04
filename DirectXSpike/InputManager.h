@@ -8,6 +8,7 @@
 // Includes
 //////////////////////////////////////
 #include "Keyboard.h"
+#include "GameEvents.h"
 
 //////////////////////////////////////
 // Forward Declarations
@@ -27,7 +28,7 @@ public:
 private:
 	D3DXVECTOR2 m_bufferMouse;
 	bool		m_bCameraAttachMode;
-	IGameState *m_gameState;
+	IEventHandler *m_gameState;
 	WORD		m_buttonBuffer;
 	WORD		m_prevFrameButtonBuffer;
 	int			m_bufferMouseWheel;
@@ -41,6 +42,6 @@ public:
 	inline void KeyDown( UINT keycode ) {UINT virtualkey = TranslateKey( keycode ); m_buttonBuffer |= (1<<(virtualkey-1));}
 	inline void KeyUp( UINT keycode ) {UINT virtualkey = TranslateKey( keycode ); m_buttonBuffer &= ~(1<<(virtualkey-1));}
 	inline D3DXVECTOR2 GetMousePos() {return m_bufferMouse;}
-	inline void SetGameState(IGameState* gs) {m_gameState = gs;}
+	inline void SetGameState(IEventHandler* gs) {m_gameState = gs;}
 
 };

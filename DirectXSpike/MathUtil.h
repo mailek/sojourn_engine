@@ -17,6 +17,7 @@ typedef D3DXVECTOR2 Point_2D;
 typedef D3DXVECTOR3 Vector_3;
 typedef D3DXVECTOR4 Vector_4;
 typedef D3DXMATRIX	Matrix4x4;
+typedef D3DXQUATERNION Quaternion;
 
 #define Vec4_LengthSq( vec4d ) \
 	D3DXVec4LengthSq( vec4d )
@@ -56,6 +57,14 @@ typedef D3DXMATRIX	Matrix4x4;
 
 #define Matrix4x4_LoadIdentity( mat_in_out ) \
 	D3DXMatrixIdentity( mat_in_out )
+
+#define Matrix4x4_LookAt( mat_out, eye, target, up ) \
+	D3DXMatrixLookAtLH( mat_out, eye, target, up )
+
+#define Matrix4x4_RotateAxis( mat_out, axis, angle_rad ) \
+	D3DXMatrixRotationAxis( mat_out, axis, angle_rad )
+
+Matrix4x4 Matrix4x4_LookAtQuaternion( Matrix4x4 *mat_out, Vector_3 *eye, Vector_3 *target );
 
 /* Geometry Types */
 typedef struct {
@@ -107,6 +116,7 @@ typedef struct {
 /* Math */
 const float PI			= 3.14159265358979f;
 const float HALF_PI		= PI / 2.0f;
+const float TWO_PI		= 2 * PI;
 
 /* Collision */
 typedef enum {
@@ -128,11 +138,27 @@ extern inline float frand(void);
 extern inline float fclamp(float x, float min, float max);
 extern inline bool fcompare(float a, float b);
 
-/* Spheres */
-extern inline void Sphere_CalcXfmHalfUnitSphere( Sphere_PosRad &in, Matrix4x4 &out );
+/* Collision */
+typedef enum
+{
+	TEST_1D_X	= 1,
+	TEST_1D_Y	= 2,
+	TEST_1D_Z	= 4,
+	TEST_2D_XY	= 3,
+	TEST_2D_XZ	= 5,
+	TEST_2D_YZ	= 6,
+	TEST_3D_XYZ	= 7
+} CollideAxesType;
 
-/* Bounds Computation */
-//extern inline Sphere_PosRad Bounds_CalcSphereBounds
+bool Collide_PointToBox(const Point_3D &p, const ABB_MaxMin &abb, WORD axes=TEST_3D_XYZ);
+bool Collide_PointToFrustum(Point_3D &testPt, const Frustum_Camera &f, bool ignoreY = false);
+IntersectType Collide_ABBToFrustum(const ABB_MaxMin testABB, const Frustum_Camera &f, bool bTest2DXZ /*= false*/);
+IntersectType Collide_SphereToFrustum(const Sphere_PosRad &s, const Frustum_Camera &f, bool bTest2DXZ);
+bool Collide_SphereToBox(const Sphere_PosRad &s, const ABB_MaxMin &abb);
+bool Collide_SphereToSphere(const Sphere_PosRad &s1, const Sphere_PosRad &s2);
+bool Collide_SphereToCapsule(const Sphere_PosRad &s, const Capsule &c);
+IntersectType Collide_SphereToPlane(const Sphere_PosRad &s, const Plane_Vec3PtNorm p, /*out*/Point_3D* sphereIntersect);
+bool Collide_RayToPlane(const Ray_Vec3Pt &r, const Plane_Vec3PtNorm p);
 
 /* ABB Routines */
 extern inline int ABB_Divide( const ABB_MaxMin target, int xDivs, int yDivs, int zDivs, ABB_MaxMin* out );
@@ -144,17 +170,6 @@ extern inline D3DXMATRIX ABB_CalcUnitTransform( const ABB_MaxMin abb );
 extern inline Sphere_PosRad ABB_CalcMinSphereContaining( const ABB_MaxMin abb );
 extern inline Sphere_PosRad ABB_CalcMaxSphereContainedBy( const ABB_MaxMin abb );
 
-/* Collision */
-bool Collide_PointToBox(const Point_3D &p, const ABB_MaxMin &abb);
-bool Collide_PointToFrustum(Point_3D &testPt, const Frustum_Camera &f, bool ignoreY = false);
-IntersectType Collide_ABBToFrustum(const ABB_MaxMin testABB, const Frustum_Camera &f, bool bTest2DXZ /*= false*/);
-IntersectType Collide_SphereToFrustum(const Sphere_PosRad &s, const Frustum_Camera &f, bool bTest2DXZ);
-bool Collide_SphereToBox(const Sphere_PosRad &s, const ABB_MaxMin &abb);
-bool Collide_SphereToSphere(const Sphere_PosRad &s1, const Sphere_PosRad &s2);
-bool Collide_SphereToCapsule(const Sphere_PosRad &s, const Capsule &c);
-IntersectType Collide_SphereToPlane(const Sphere_PosRad &s, const Plane_Vec3PtNorm p, /*out*/Point_3D* sphereIntersect);
-bool Collide_RayToPlane(const Ray_Vec3Pt &r, const Plane_Vec3PtNorm p);
-
 /* Points and Lines */
 float DistSq_Point3DFromLineSeg(Point_3D p, Point_3D a, Point_3D b);
 
@@ -162,10 +177,54 @@ float DistSq_Point3DFromLineSeg(Point_3D p, Point_3D a, Point_3D b);
 Vector_3 Polygon_CalcNormalVec( const Polygon_ABC &p );
 
 /* Spheres */
-Sphere_PosRad Sphere_GrowSphereToContainSphere( Sphere_PosRad a, Sphere_PosRad b );
+void Sphere_GrowSphereToContainSphere( Sphere_PosRad *inOut, const Sphere_PosRad s );
+void Sphere_GrowSphereToContainPoint( Sphere_PosRad *inOut, const Point_3D p );
+extern inline void Sphere_CalcXfmHalfUnitSphere( Sphere_PosRad &in, Matrix4x4 &out );
+Sphere_PosRad Sphere_CalcBoundingSphereForPoints( const Point_3D pts[], const int numPts );
+Sphere_PosRad Sphere_CalcBoundingSphereForPointsIterative( Point_3D pts[], const int numPts );
 
 /* Closest Computations */
 inline Point_3D ClosestPoint_PlaneFromPoint(Point_3D pt, Plane_Vec3PtNorm plane)
 {
  return Point_3D();
 }
+
+//////////////////////////////////////
+// Class Declarations
+//////////////////////////////////////
+
+/*	Utility class that emcompasses scale, rotation, 
+	and translation - and provides lazy computatcion of matrix */
+class ComplexTransform
+{
+public:
+	enum {
+		ROTATE_XYZ			= (1),
+		ROTATE_XZY			= (2),
+		ROTATE_YXZ 			= (3),
+		ROTATE_YZX 			= (4),
+		ROTATE_ZXY 			= (5),
+		ROTATE_ZYX 			= (6),
+		ROTATION_ORDER_MASK = (0x7),
+		XFM_OUT_OF_DATE		= (0x8)
+	} ETransformFlags;
+
+	ComplexTransform(): flags(ROTATE_ZYX|XFM_OUT_OF_DATE), rotationEuler(0,0,0), translation(0,0,0), scale(1,1,1){};
+	Matrix4x4 GetTransform();
+	inline void SetRotationOrder(int order){ flags = (flags & !(ROTATION_ORDER_MASK)) | order | XFM_OUT_OF_DATE;}
+	inline void SetXRotationRadians(float xr) {rotationEuler.x = xr; flags |= XFM_OUT_OF_DATE;}
+	inline void SetYRotationRadians(float yr) {rotationEuler.y = yr; flags |= XFM_OUT_OF_DATE;}
+	inline void SetZRotationRadians(float zr) {rotationEuler.z = zr; flags |= XFM_OUT_OF_DATE;}
+	inline void SetTranslation(Vector_3 &t) {translation=t; flags |= XFM_OUT_OF_DATE;}
+	inline void SetScale(Vector_3 &s) {scale = s; flags |= XFM_OUT_OF_DATE;}
+	inline Vector_3 GetScale() {return scale;}
+	inline Vector_3 GetTranslation() {return translation;}
+	inline Vector_3 GetRotationEulers() {return rotationEuler;}
+
+private:
+	Matrix4x4		matrix;
+	Vector_3		translation;
+	Vector_3		rotationEuler;	/* in radians */
+	Vector_3		scale;
+	int				flags;
+};

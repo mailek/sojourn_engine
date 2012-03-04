@@ -1,5 +1,7 @@
 #pragma once
-#include "gamestate.h"
+//#include "gamestate.h"
+#include "GameEvents.h"
+#include "ghostcamera.h"
 
 //////////////////////////////////////
 // Forward Declarations
@@ -15,7 +17,7 @@ class CTextureManager;
 //////////////////////////////////////
 // Class Definition
 //////////////////////////////////////
-class CMainGameState : public IGameState
+class CMainGameState : public IEventHandler
 {
 public:
 	CMainGameState(void);
@@ -31,6 +33,8 @@ private:
 	CCollisionManager		   *m_pCollision;
 	int							m_texContext;
 	CTextureManager*			m_pTextureMgr;
+	IEventHandler			   *m_pAvatar;
+	CGhostCamera			    m_cameraGhost;
 
 	bool Init( CRenderEngine *renderEngine );
 	void Update( float elapsedMillis );
@@ -39,4 +43,5 @@ private:
 	void KeyDown( UINT vk );
 	void MouseMoved( D3DXVECTOR2 mouseDisplacement );
 	void MouseWheel( int mouseDelta );
+	void SetAvatar(IEventHandler* avatar);
 };

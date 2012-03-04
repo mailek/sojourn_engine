@@ -17,24 +17,26 @@ CLevelManager::SceneObject::SceneObject() : m_pMesh(NULL),
 											m_lastFrame(0),
 											m_bTransparent(false)
 {
-	::ZeroMemory(&m_boundSphere, sizeof(m_boundSphere));
-	Matrix4x4_LoadIdentity(&m_transform);
+	collidableType = OBSTACLE;
 }
 
 void CLevelManager::SceneObject::Render( CRenderEngine &rndr )
 {
 	if(m_pMesh) 
-		m_pMesh->Render(rndr.GetDevice(), m_transform, rndr.GetShaderManager() );
+		m_pMesh->Render(rndr.GetDevice(), m_transform.GetTransform(), rndr.GetShaderManager() );
 }
 
 Sphere_PosRad CLevelManager::SceneObject::GetBoundingSphere()
 {
-	Sphere_PosRad ret = m_boundSphere; 
+	Sphere_PosRad ret;
+	::ZeroMemory(&ret, sizeof(ret));
 	if(m_pMesh) 
 	{
 		ret = m_pMesh->GetSphereBounds();
+		Vec3_TransformCoord(&ret.pos, &ret.pos, &m_transform.GetTransform());
 
-		//ret.pos += m_boundSphere.pos;
+		/* use the average the the three scales */
+		ret.radius *= (m_transform.GetScale().x + m_transform.GetScale().y + m_transform.GetScale().z)/3.0f;
 	}
 
 	return ret;
@@ -101,8 +103,8 @@ bool CLevelManager::LoadDefaultLevel(CRenderEngine *renderEngine, CTerrain **ret
 
 	SceneObject* obj;
 	// generate some trees and place randomly in level
-	//for(int i = 0; i < NUM_OF_TREES; i++)
-	for(int i = 0; i < 0; i++)
+	for(int i = 0; i < NUM_OF_TREES; i++)
+	//if(0)
 	{
 		obj = new SceneObject();
 
@@ -112,39 +114,27 @@ bool CLevelManager::LoadDefaultLevel(CRenderEngine *renderEngine, CTerrain **ret
 		diff *= 0.5f;
 		
 		D3DXVECTOR3 newTreeLocation(fabs(diff.x)*(2.0f*frand() - 1.0f), 0, fabs(diff.z)*(2.0f*frand() - 1.0f));
-		
-		//ground clamp 
+
+		// ground clamp 
 		newTreeLocation.y = m_pTerrain->GetTerrainHeightAtXZ(newTreeLocation.x, newTreeLocation.z);
+
+		// set random position
+		obj->SetLocalPosition(newTreeLocation);
 		
 		// random scale for trees
-		D3DXMATRIX randomScale;
 		const float fXZScaleFactor(2.0f), fYScaleFactor(0.7f);
-		float fXZRandomScale = 3.0f + frand()*fXZScaleFactor;
-		float fYRandomScale = 3.0f + frand()*fYScaleFactor;
-		D3DXMatrixScaling(&randomScale, fXZRandomScale, fYRandomScale, fXZRandomScale);
+		const float fXZRandomScale = 3.0f + frand()*fXZScaleFactor;
+		const float fYRandomScale = 3.0f + frand()*fYScaleFactor;
+		obj->SetScale(Vector_3(fXZRandomScale, fYRandomScale, fXZRandomScale));
+		//obj->SetScale(Vector_3(1,1,1));
 
 		// random rotation
-		D3DXMATRIX randomRotation;
-		D3DXMatrixRotationY(&randomRotation, frand()*2*PI);
+		obj->SetYRotationRadians(frand()*TWO_PI);
 		
-		// set the world transform
-		D3DXMatrixIdentity(&obj->m_transform);
-		D3DXMATRIX translate;
-		D3DXMatrixTranslation(&translate, newTreeLocation.x, newTreeLocation.y, newTreeLocation.z);
-		obj->m_transform *= randomScale * randomRotation * translate;
+		//set the mesh to the cherry tree, and set transparency
+		meshMgr.GetMesh(CMeshManager::eCherryTreeLow, &obj->m_pMesh);
 		obj->m_bTransparent = true;
 
-		//set the mesh to the cherry tree 
-		meshMgr.GetMesh(CMeshManager::eCherryTreeLow, &obj->m_pMesh);
-		Sphere_PosRad sphere = obj->m_pMesh->GetSphereBounds();
-				
-		// calculate the world position of the bounding sphere by applying the object world transform, using only the highest scale of the three axes
-		D3DXMATRIX sphereTransform = obj->m_transform;
-		float radiusScale = max(sphereTransform._11, max(sphereTransform._22, sphereTransform._33));
-				
-		D3DXVec3TransformCoord(&obj->m_boundSphere.pos, &sphere.pos, &sphereTransform);
-		obj->m_boundSphere.radius = sphere.radius*3*radiusScale; // HACK HACK HACK : this coefficient of 3 is a magic radius multiplier because sphere calc is giving bad radius FIX ASAP
-		
 		//then add to scene mgr draw list
 		m_staticLevelObjects.AddItemToEnd(obj);
 		sceneMgr.AddRenderableObjectToScene(reinterpret_cast<IRenderable*>(obj));
@@ -152,12 +142,12 @@ bool CLevelManager::LoadDefaultLevel(CRenderEngine *renderEngine, CTerrain **ret
 
 	// well object on the origin
 	obj = new SceneObject();
-	D3DXMatrixTranslation(&obj->m_transform, 0, m_pTerrain->GetTerrainHeightAtXZ(0,0), 0);
+	Vector_3 wellPos = Vector_3(0, 0, 0);
+	wellPos.y = m_pTerrain->GetTerrainHeightAtXZ(wellPos.x,wellPos.y);
+	obj->SetLocalPosition(wellPos);
 	meshMgr.GetMesh(CMeshManager::eWell, &obj->m_pMesh);
-	obj->m_boundSphere = obj->m_pMesh->GetSphereBounds();
-	D3DXVec3TransformCoord(&obj->m_boundSphere.pos, &obj->m_boundSphere.pos, &obj->m_transform);
-	m_staticLevelObjects.AddItemToEnd(obj);
-	sceneMgr.AddRenderableObjectToScene(reinterpret_cast<IRenderable*>(obj));
+	//m_staticLevelObjects.AddItemToEnd(obj);
+	//sceneMgr.AddRenderableObjectToScene(reinterpret_cast<IRenderable*>(obj));
 
 	return true;
 }
@@ -166,6 +156,6 @@ void CLevelManager::RegisterStaticCollision(CCollisionManager* cm)
 {
 	for(CDoubleLinkedList<SceneObject>::DoubleLinkedListItem* it = m_staticLevelObjects.first; it != NULL; it = it->next)
 	{
-		cm->RegisterCollidable(it->item);
+		cm->RegisterStaticCollidable(it->item);
 	}
 }

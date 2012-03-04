@@ -5,7 +5,7 @@
 class CShaderManager;
 class CRenderEngine;
 
-interface IRenderable{	// temporary solution until I get templates written
+interface IRenderable{ // look into converting to templates
 	virtual void Render( CRenderEngine &rndr ) =0;
 	virtual D3DXMATRIX GetWorldTransform() =0;
 	virtual bool IsTransparent() =0;

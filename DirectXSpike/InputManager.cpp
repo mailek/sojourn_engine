@@ -1,7 +1,6 @@
 #include "StdAfx.h"
 #include "InputManager.h"
 #include "Player.h"
-#include "GameState.h"
 
 #define MOUSE_DEAD_ZONE		(0.001f)
 

@@ -246,7 +246,7 @@ int QuadTree_GroundClamped<T,U>::FindLeafQuadByPoint(D3DXVECTOR3 point)
 		for(int subIndex = 0; subIndex < 4; subIndex++)
 		{
 			NODE_INDEX_TYPE newIndex = CHILDQUAD_OF_PARENT(index, subIndex);
-			if(Collide_PointToBox(point, m_quadTreeArray[newIndex].abb))
+			if(Collide_PointToBox(point, m_quadTreeArray[newIndex].abb, TEST_2D_XZ))
 			{
 				index = newIndex;
 				indexChanged = true;
@@ -265,7 +265,7 @@ template <typename T, typename U>
 int QuadTree_GroundClamped<T,U>::FindLeafListQuadsByBoundSphere(const Sphere_PosRad &sphere, NODE_INDEX_TYPE *leafIndices)
 {
 	int retLeafCnt(0);
-	const int MAXSEARCHITEMS(20);
+	const int MAXSEARCHITEMS(200);
 	const int INVALIDINDEX(-1);
 	static int parentsBucket[2][MAXSEARCHITEMS];
 	int newSearch(0), oldSearch(1);

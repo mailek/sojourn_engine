@@ -19,6 +19,15 @@ class CTerrain;
 typedef std::vector<BaseModel*> MeshList;
 typedef MeshList::iterator MeshListIterator;
 
+typedef enum { 
+	eUnitSphere, 
+	eUnitCylinder, 
+	eTeapot, 
+	eCenteredUnitABB, 
+	eScreenQuad,
+	globalMeshCnt
+} EGlobalMeshType;
+
 //////////////////////////////////////
 // Class Definition
 //////////////////////////////////////
@@ -31,12 +40,11 @@ public:
 	bool LoadMeshes(void);
 
 	typedef enum { eTinyX, eAnimTiny, eMultiAnimTiny, eWell, eCherryTreeLow } EMeshType;
-	typedef enum { eUnitSphere, eTeapot, eCenteredUnitABB, eScreenQuad } EGlobalMeshType;
 
 private:
 	LPDIRECT3DDEVICE9					m_device;
 	MeshList							m_arrMeshes;
-	MeshList							m_arrGlobalMeshes;
+	BaseModel*							m_arrGlobalMeshes[globalMeshCnt];
 	D3DMATERIAL9						m_teapotMaterial;
 
 	bool LoadGlobalMeshes(void);

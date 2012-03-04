@@ -332,6 +332,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				case VK_F7:
 					Settings_ToggleBool(DEBUG_SHOW_CLIP_BOUNDS);
 					break;
+				case VK_F8:
+					{
+					static bool toggle = false;
+					toggle = !toggle;
+					s_gameState->HandleEvent(EVT_DEBUGCAMERA, &toggle, sizeof(toggle));
+					break;
+					}
 				case KB_W: // w key
 				case KB_S: // s key
 				case KB_A: // a key
@@ -408,16 +415,27 @@ void InitD3D(HINSTANCE hInstance,
 	*device = NULL;
 	IDirect3D9* _d3d9;
 	_d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
+	D3DFORMAT frameBufferFormat = D3DFMT_A8R8G8B8;
+	D3DDISPLAYMODE displayMode;
+	_d3d9->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &displayMode);
+
+	/* check multisample/aa support */
+	D3DMULTISAMPLE_TYPE multisampleType = D3DMULTISAMPLE_NONE;
+	DWORD multisampleQuality = 0;
+	if(SUCCEEDED(_d3d9->CheckDeviceMultiSampleType( D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, displayMode.Format, windowedMode, D3DMULTISAMPLE_8_SAMPLES, &multisampleQuality )))
+	{
+		multisampleType = D3DMULTISAMPLE_8_SAMPLES;
+	}
 
 	// specify the parameters for the device object
 	D3DPRESENT_PARAMETERS d3dpp;
 	::ZeroMemory(&d3dpp, sizeof(d3dpp));
 	d3dpp.BackBufferWidth				= width;
 	d3dpp.BackBufferHeight				= height;
-	d3dpp.BackBufferFormat				= D3DFMT_A8R8G8B8;
+	d3dpp.BackBufferFormat				= displayMode.Format;
 	d3dpp.BackBufferCount				= 1;
-	d3dpp.MultiSampleType				= D3DMULTISAMPLE_NONE; 
-	d3dpp.MultiSampleQuality			= 0;
+	d3dpp.MultiSampleType				= multisampleType; 
+	d3dpp.MultiSampleQuality			= multisampleQuality ? multisampleQuality-1 : 0;
 	d3dpp.SwapEffect					= D3DSWAPEFFECT_DISCARD;
 	d3dpp.hDeviceWindow					= hwnd;
 	d3dpp.Windowed						= windowedMode;
@@ -495,10 +513,12 @@ void Update( LPDIRECT3DDEVICE9 device, float elapsedmills )
 	D3DXVECTOR2 mousePos = s_inputMgr.GetMousePos();
 	s_hud.SetCurrentMousePos(mousePos.x, mousePos.y);
 	s_hud.SetCurrentFPS(m_appState.frameCount);
-	CPlayer *player = s_gameState->GetPlayer();
-	if( player )
+	IEventHandler *avatar = s_gameState->GetAvatar();
+	if( avatar )
 	{
-		s_hud.SetCurrentPlayerPos(player->GetPosition3D());
+		Vector_3 avatarPos;
+		avatar->HandleEvent(EVT_GETPOSITIONVEC, &avatarPos, sizeof(avatarPos));
+		s_hud.SetCurrentAvatarPos(avatarPos);
 	}
 
 	s_hud.SetCurrentLightDir(s_renderEngine.GetLightDirection());

@@ -27,27 +27,39 @@ bool CMeshManager::LoadGlobalMeshes(void)
 {
 	assert(m_device);
 
-	/* Warning - these must maintain the same order as EGlobalMeshType */
+	BaseModel *model;
 
-	// Create the unit sphere
-	BaseModel* sphere = new BaseModel();
-	sphere->LoadCenteredUnitSphere(m_device);
-	m_arrGlobalMeshes.push_back(sphere);
+	for(int i = 0; i < globalMeshCnt; i++)
+	{
+		model = new BaseModel();
 
-	// Create the teapot
-	BaseModel* teapot = new BaseModel();
-	teapot->LoadTeapot(m_device);
-	m_arrGlobalMeshes.push_back(teapot);
+		switch(i)
+		{
+		case eUnitSphere:
+			// Create the unit sphere
+			model->LoadCenteredUnitSphere(m_device);
+			break;
+		case eUnitCylinder:
+			model->LoadCenteredUnitCylinder(m_device);
+			break;
+		case eTeapot:
+			// Create the teapot
+			model->LoadTeapot(m_device);
+			break;
+		case eCenteredUnitABB:
+			// Create Debug Centered ABB Cube
+			model->LoadCenteredUnitCube(m_device);
+			break;
+		case eScreenQuad:
+			// Create Screen Oriented Quad
+			model->LoadScreenOrientedQuad(m_device);
+			break;
+		default:
+			assert(false);
+		}
 
-	// Create Debug Centered ABB Cube
-	BaseModel* abbCube = new BaseModel();
-	abbCube->LoadCenteredUnitCube(m_device);
-	m_arrGlobalMeshes.push_back(abbCube);
-
-	// Create Screen Oriented Quad
-	BaseModel* screenQuad = new BaseModel();
-	screenQuad->LoadScreenOrientedQuad(m_device);
-	m_arrGlobalMeshes.push_back(screenQuad);
+		m_arrGlobalMeshes[i] = model;
+	}
 	
 	return true;
 }
@@ -70,7 +82,7 @@ bool CMeshManager::LoadMeshes(void)
 		float scaleFactor(0.025f);
 		tiny->SetScale(D3DXVECTOR3(scaleFactor, scaleFactor, scaleFactor)); // tiny model is way too big, scale down
 		tiny->SetXRotationRadians(-D3DX_PI * 0.5f); // flip to standing orientation
-		tiny->Set3DPosition(D3DXVECTOR3(0.0f, 6.7f, 0.0f));
+		tiny->SetLocalPosition(D3DXVECTOR3(0.0f, 6.7f, 0.0f));
 		m_arrMeshes.push_back(tiny);
 	} else return false;
 
@@ -84,7 +96,7 @@ bool CMeshManager::LoadMeshes(void)
 		float scaleFactor(0.025f);
 		animTiny->SetScale(D3DXVECTOR3(scaleFactor, scaleFactor, scaleFactor)); // tiny model is way too big, scale down
 		animTiny->SetXRotationRadians(-D3DX_PI * 0.5f); 
-		animTiny->Set3DPosition(D3DXVECTOR3(0.0f, 0.0f, 0.0f));
+		animTiny->SetLocalPosition(D3DXVECTOR3(0.0f, 0.0f, 0.0f));
 		m_arrMeshes.push_back(animTiny);
 	} else return false;
 
@@ -97,7 +109,7 @@ bool CMeshManager::LoadMeshes(void)
 		float scaleFactor(0.025f);
 		multiAnimTiny->SetScale(D3DXVECTOR3(scaleFactor, scaleFactor, scaleFactor)); // tiny model is way too big, scale down
 		multiAnimTiny->SetYRotationRadians(-D3DX_PI); // flip to standing orientation;
-		multiAnimTiny->Set3DPosition(D3DXVECTOR3(0.0f, 6.7f, 0.0f));
+		multiAnimTiny->SetLocalPosition(D3DXVECTOR3(0.0f, 6.7f, 0.0f));
 		m_arrMeshes.push_back(multiAnimTiny);
 	} else return false;
 
@@ -108,10 +120,9 @@ bool CMeshManager::LoadMeshes(void)
 		strcpy_s(well->m_filename, "well.x");
 		// NOTE: IN HERE GOES ANY CORRECTIONS NEEDED TO THE MODEL, THESE WILL BE APPLIED BEFORE ANY OTHER TRANFORMS
 
-		//float scaleFactor(12.0f);
-		float scaleFactor(1.0f);
+		float scaleFactor(8.0f);
 		well->SetScale(D3DXVECTOR3(scaleFactor, scaleFactor, scaleFactor));
-		well->Set3DPosition(D3DXVECTOR3(0.0f, 0.0f, 0.0f));
+		well->SetLocalPosition(D3DXVECTOR3(0.0f, 0.0f, 0.0f));
 		m_arrMeshes.push_back(well);
 	} else return false;
 
@@ -124,7 +135,7 @@ bool CMeshManager::LoadMeshes(void)
 
 		float scaleFactor(4.0f);
 		cherryLow->SetScale(D3DXVECTOR3(scaleFactor, scaleFactor, scaleFactor));
-		cherryLow->Set3DPosition(D3DXVECTOR3(0.0f, -2.0f, 0.0f)); // sink the tree in the ground a little
+		cherryLow->SetLocalPosition(D3DXVECTOR3(0.0f, -2.0f, 0.0f)); // sink the tree in the ground a little
 		// trees need transparency for leaves
 		cherryLow->SetTransparency(true);
 		m_arrMeshes.push_back(cherryLow);
@@ -152,5 +163,4 @@ void CMeshManager::Update( LPDIRECT3DDEVICE9 device, float elapsedMillis )
 {
 	for(MeshList::iterator it = m_arrMeshes.begin(), _it = m_arrMeshes.end(); it != _it; it++)
 		(*it)->Update( device, elapsedMillis );
-
 }

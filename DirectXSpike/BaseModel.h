@@ -42,10 +42,6 @@ public:
 private:
 	std::vector<LPDIRECT3DTEXTURE9>		m_arrTexs;
 	std::vector<D3DMATERIAL9>			m_arrMats;
-	D3DXMATRIX							m_meshMatrix;
-	D3DXVECTOR3							m_vecScale;
-	D3DXVECTOR3							m_vecRotation;		/* in radians */
-	D3DXVECTOR3							m_vecPos;			/* local offsets in model coordinate space */
 	bool								m_bTransparency;	
 	Sphere_PosRad						m_sphereBounds;
 	unsigned int						m_numOfBones;
@@ -55,8 +51,9 @@ private:
 	DWORD								m_animationCnt;		/* number of animations in model file */
 	DWORD								m_activeAnimation;/* id of current animation playing */
 	bool								m_isAnimating;		/* stop or start the animation updates */
-	bool								m_sphereCalculated;
+	bool								m_boundSphereOutOfDate;
 	char								m_filename[MAX_FILENAME_LEN]; /* filename of the model */
+	ComplexTransform					m_meshTransform;    /* local transforms specific to model */
 
 	EMeshType							m_meshType;
 	/* ///////// if simple mesh /////////// */
@@ -72,16 +69,16 @@ private:
 	void RecurseCalculateBoneMatrices( Bone* bone, LPD3DXMATRIX parentTransform, SkeletonVertex* arrVertices, WORD* arrIndices );
 	void UpdateBoneMatrices();
 	void UpdateSkinnedMeshes( LPDIRECT3DDEVICE9 device );
-	void CalculateMeshMatrix();
 
 public:
 	bool LoadXMeshFromFile(LPCSTR pFilename, IDirect3DDevice9* pDevice);
 	bool LoadXMeshHierarchyFromFile(LPCSTR pFilename, IDirect3DDevice9* pDevice);
 	void LoadTeapot(IDirect3DDevice9* pDevice);
 	void LoadCenteredUnitCube(IDirect3DDevice9* device);
+	void LoadCenteredUnitCylinder(IDirect3DDevice9* device);
 	void LoadCenteredUnitSphere(IDirect3DDevice9* pDevice);
 	void LoadScreenOrientedQuad(IDirect3DDevice9* pDevice);
-	void Render(LPDIRECT3DDEVICE9 device, D3DXMATRIX worldTransform, CShaderManager &shaderMgr) const;
+	void Render(LPDIRECT3DDEVICE9 device, D3DXMATRIX worldTransform, CShaderManager &shaderMgr);
 	Sphere_PosRad GetSphereBounds();
 	void Update( LPDIRECT3DDEVICE9 device, float elapsedMillis );
 	void SetAnimation( DWORD animationId );
@@ -93,11 +90,12 @@ public:
 	inline DWORD GetVertexSizeInBytes() { assert(m_meshType == eSimpleMesh); return m_mesh->GetNumBytesPerVertex(); }
 	inline UINT GetNumVertices() { assert(m_meshType == eSimpleMesh); return m_mesh->GetNumVertices(); }
 
-	inline void Set3DPosition(D3DXVECTOR3 &translation) {m_vecPos=translation; CalculateMeshMatrix();}
-	inline void SetScale(D3DXVECTOR3 &scale) {m_vecScale = scale; CreateDebugAxes(); CalculateMeshMatrix();}
-	inline void SetXRotationRadians(float xRot) {m_vecRotation.x = xRot; CalculateMeshMatrix();}
-	inline void SetYRotationRadians(float yRot) {m_vecRotation.y = yRot; CalculateMeshMatrix();}
-	inline void SetZRotationRadians(float zRot) {m_vecRotation.z = zRot; CalculateMeshMatrix();}
+	inline Matrix4x4 GetMeshMatrix() {return m_meshTransform.GetTransform();}
+	inline void SetLocalPosition(D3DXVECTOR3 &translation) {m_meshTransform.SetTranslation(translation); m_boundSphereOutOfDate=true;}
+	inline void SetScale(D3DXVECTOR3 &scale) {m_meshTransform.SetScale(scale); m_boundSphereOutOfDate=true;}
+	inline void SetXRotationRadians(float xRot) {m_meshTransform.SetXRotationRadians(xRot); m_boundSphereOutOfDate=true;}
+	inline void SetYRotationRadians(float yRot) {m_meshTransform.SetYRotationRadians(yRot); m_boundSphereOutOfDate=true;}
+	inline void SetZRotationRadians(float zRot) {m_meshTransform.SetZRotationRadians(zRot); m_boundSphereOutOfDate=true;}
 	inline void SetTransparency(bool transparent) {m_bTransparency = transparent;}
 	inline bool IsTransparent() {return m_bTransparency;}
 
