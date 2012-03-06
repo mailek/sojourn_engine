@@ -191,6 +191,8 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 		::MessageBox(0, _T("Setup Failed"), _T("Error"), 0);
 		return FALSE;
 	}
+
+	dxPowerUp( __theDevice );
 	
 	// Event Loop
 	while (TRUE)

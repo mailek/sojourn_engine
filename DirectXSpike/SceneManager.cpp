@@ -149,14 +149,15 @@ void CSceneManager::AddRenderableObjectToScene(IRenderable* obj)
 void CSceneManager::Render( CRenderEngine &rndr )
 {
 	assert(m_debugMesh);
-	CShaderManager &shaderMgr = rndr.GetShaderManager();
+	CShaderManagerEx &shaderMgr = rndr.GetShaderManager();
 	LPDIRECT3DDEVICE9 device = rndr.GetDevice();
 
 	/* render the quad tree nodes for debug purposes */
-	shaderMgr.SetVertexShader(PASS_PRIM_COLORED);
-	shaderMgr.SetPixelShader(PASS_PRIM_COLORED);
+	shaderMgr.PushCurrentShader();
+	shaderMgr.SetEffect(EFFECT_PRIMITIVES);
+	shaderMgr.SetTechnique("ColorDraw");
+	shaderMgr.SetViewProjectionEx( m_camera.GetViewMatrix(), m_camera.GetProjectionMatrix() );
 
-	shaderMgr.SetViewProjection(PASS_PRIM_COLORED, m_camera.GetViewMatrix(), m_camera.GetProjectionMatrix());
 	device->SetFVF(m_debugMesh->GetFVF());
 	device->SetTexture(0, 0);
 
@@ -168,46 +169,61 @@ void CSceneManager::Render( CRenderEngine &rndr )
 	device->SetStreamSource(0, vertices, 0, m_debugMesh->GetVertexSizeInBytes());
 
 	// render state
-	device->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
-	device->SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
-	device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
-	device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-	device->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE); 
-	device->SetRenderState(D3DRS_DITHERENABLE, TRUE);
+	dxEnableZWrite();
+	dxEnableZTest();
+	dxEnableAlphaBlend( false );
+	dxEnableAlphaTest( false ); 
+	dxEnableDithering();
+	dxCullMode( D3DCULL_NONE );
 
 	// stencil setup
-	device->SetRenderState(D3DRS_STENCILENABLE, TRUE);
-	device->SetRenderState(D3DRS_STENCILFUNC, D3DCMP_EQUAL);
-	device->SetRenderState(D3DRS_STENCILZFAIL, D3DSTENCILOP_KEEP);
-	device->SetRenderState(D3DRS_STENCILFAIL, D3DSTENCILOP_KEEP);
-	device->SetRenderState(D3DRS_STENCILREF, 0);
-	device->SetRenderState(D3DRS_STENCILMASK, 0);
+	dxEnableStencilTest();
+	dxStencilOp( D3DSTENCILOP_REPLACE, D3DSTENCILOP_KEEP, D3DSTENCILOP_KEEP );
+	dxStencilFunc( D3DCMP_EQUAL, 0, 0 );
 
 	// background
-	shaderMgr.SetDrawColor(PASS_PRIM_COLORED, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
-	for(int i = 0, j = m_quadTree.GetQuadTreeSize(); i < j; i++)
+	shaderMgr.SetDrawColorEx(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+	int num = shaderMgr.BeginEffect();
+	for(int i=0; i<num; i++)
 	{
-		shaderMgr.SetWorldTransform(PASS_PRIM_COLORED, m_quadTree.GetWorldTransformByQuadIndex(i) );
-		device->DrawPrimitive(D3DPT_LINESTRIP, 0, m_debugMesh->GetNumVertices());		
+		shaderMgr.Pass(i);
+		for(int i = 0, j = m_quadTree.GetQuadTreeSize(); i < j; i++)
+		{
+			shaderMgr.SetWorldTransformEx( m_quadTree.GetWorldTransformByQuadIndex(i) );
+			shaderMgr.CommitEffectParams();
+			device->DrawPrimitive(D3DPT_LINESTRIP, 0, m_debugMesh->GetNumVertices());		
+		}
+		shaderMgr.FinishPass();
 	}
 
+	shaderMgr.FinishEffect();
+
 	// decal
-	device->SetRenderState( D3DRS_ZWRITEENABLE, FALSE );
-	device->SetRenderState( D3DRS_ZENABLE, FALSE );
+	dxEnableZWrite(false);
+	dxEnableZTest(false);
 
 	// find the leaf quad the camera is currently within, and display it highlighted with red
 	int cameraQuadIndex = m_quadTree.FindLeafQuadByPoint(m_camera.Get3DPosition());
-	shaderMgr.SetWorldTransform( PASS_PRIM_COLORED, m_quadTree.GetWorldTransformByQuadIndex(cameraQuadIndex) );
-	shaderMgr.SetDrawColor(PASS_PRIM_COLORED, D3DXCOLOR(1.0f, 0.2f, 0.2f, 1.0f));
-	device->DrawPrimitive(D3DPT_LINESTRIP, 0, m_debugMesh->GetNumVertices());
+	shaderMgr.SetWorldTransformEx( m_quadTree.GetWorldTransformByQuadIndex(cameraQuadIndex) );
+	shaderMgr.SetDrawColorEx( D3DXCOLOR(1.0f, 0.2f, 0.2f, 1.0f) );
+
+	num = shaderMgr.BeginEffect();
+	for(int i=0; i<num; i++)
+	{
+		shaderMgr.Pass(i);
+		device->DrawPrimitive(D3DPT_LINESTRIP, 0, m_debugMesh->GetNumVertices());
+		shaderMgr.FinishPass();
+	}
+
+	shaderMgr.FinishEffect();
 
 	// stencil tear down
-	device->SetRenderState( D3DRS_ZWRITEENABLE, TRUE );
-	device->SetRenderState( D3DRS_ZENABLE, TRUE );
-	device->SetRenderState( D3DRS_STENCILENABLE, FALSE );
+	dxEnableZWrite();
+	dxEnableZTest();
+	dxEnableStencilTest(false);
+	dxEnableDithering(false);
 
-	device->SetRenderState(D3DRS_DITHERENABLE, FALSE);
-
+	shaderMgr.PopCurrentShader();
 	COM_SAFERELEASE(indices);
 	COM_SAFERELEASE(vertices);
 }

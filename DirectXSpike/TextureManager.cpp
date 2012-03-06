@@ -145,7 +145,7 @@ TextureInstanceType* CTextureManager::InsertNewTextureInMap(TextureContextIdType
 		for(int i = 0; i < MAX_TEXTURES; i++)
 		{
 			search = &m_textures[i];
-			if(search->parent_context == GLOBAL_TEX_CONTEXT && stricmp(search->filename, DEFAULT_TEXTURE)==0)
+			if(search->parent_context == GLOBAL_TEX_CONTEXT && _stricmp(search->filename, DEFAULT_TEXTURE)==0)
 			{
 				ret = search;
 				break;

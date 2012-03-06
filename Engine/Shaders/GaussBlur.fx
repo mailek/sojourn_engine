@@ -28,6 +28,11 @@ const float2 samples[13] = {
   -6.0f,   0.002216f
 };
 
+
+/*--------------------------
+-  Vertex Shader
+--------------------------*/
+
 struct VS_INPUT 
 {
    float3 Position : POSITION0; 
@@ -50,6 +55,10 @@ VS_OUTPUT vs_main( VS_INPUT Input )
    return( Output );
 }
 
+/*--------------------------
+-  Vertex Shader
+--------------------------*/
+
 // 13 sample Horizontal Gauss Filter
 float4 ps_horz(float2 Txr1 : TEXCOORD0) : COLOR0
 {  
@@ -61,6 +70,12 @@ float4 ps_horz(float2 Txr1 : TEXCOORD0) : COLOR0
    
    return color;
 }
+
+vertexshader vs = compile vs_2_0 vs_main();
+
+/*--------------------------
+-  Pixel Shader
+--------------------------*/
 
 // 13 sample Vertical Gauss Filter
 float4 ps_vert(float2 Txr1 : TEXCOORD0) : COLOR0
@@ -74,7 +89,10 @@ float4 ps_vert(float2 Txr1 : TEXCOORD0) : COLOR0
    return color;
 }
 
-vertexshader vs = compile vs_2_0 vs_main();
+
+/*--------------------------
+-  Techniques
+--------------------------*/
 
 technique GaussBlur
 {
@@ -92,7 +110,6 @@ technique GaussBlur
         
         // pass setup 
         vertexshader = (vs);
-//        pixelshader = NULL;
         pixelshader = compile ps_2_0 ps_horz();
         fvf = XYZ;
     }
@@ -112,7 +129,6 @@ technique GaussBlur
         // pass setup 
         vertexshader = (vs);
         pixelshader = compile ps_2_0 ps_vert();
-//        pixelshader = NULL;
         fvf = XYZ;
     }
 }

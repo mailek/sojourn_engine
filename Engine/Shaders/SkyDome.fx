@@ -1,3 +1,10 @@
+////////////////////////////////////////////////////
+// Skydome.fx - Skydome Shader
+//
+// Description: Renders skydome without lighting.
+// 
+////////////////////////////////////////////////////
+
 uniform matrix matWorld;
 uniform matrix matViewProjection;
 
@@ -10,6 +17,11 @@ sampler s0 = sampler_state
     MagFilter = LINEAR;
     MipFilter = LINEAR;
 };
+
+
+/*--------------------------
+-  Vertex Shader
+--------------------------*/
 
 struct VS_INPUT {
     vector position		: POSITION;
@@ -35,6 +47,15 @@ VS_OUTPUT vs_main(VS_INPUT Input)
 
 vertexshader vs = compile vs_2_0 vs_main();
 
+
+/*--------------------------
+-  Pixel Shader
+--------------------------*/
+
+/*--------------------------
+-  Techniques
+--------------------------*/
+
 technique FlatTexture
 {
     Pass P0
@@ -51,4 +72,3 @@ technique FlatTexture
         fvf = XYZ | TEX0;
     }
 }
-

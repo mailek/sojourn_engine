@@ -232,6 +232,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DirectXUtil.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\DirectXUtil.h"
+				>
+			</File>
+			<File
 				RelativePath=".\IRenderable.h"
 				>
 			</File>
@@ -284,10 +292,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Shaders\SkyDome.fx"
-				>
-			</File>
-			<File
 				RelativePath=".\TextureManager.cpp"
 				>
 			</File>
@@ -299,22 +303,34 @@
 				RelativePath=".\VertexTypes.h"
 				>
 			</File>
+			<Filter
+				Name="Shaders"
+				>
+				<File
+					RelativePath="..\Engine\Shaders\FlatShade.fx"
+					>
+				</File>
+				<File
+					RelativePath="..\Engine\Shaders\GaussBlur.fx"
+					>
+				</File>
+				<File
+					RelativePath="..\Engine\Shaders\Primitives.fx"
+					>
+				</File>
+				<File
+					RelativePath="..\Engine\Shaders\ScreenQuad.fx"
+					>
+				</File>
+				<File
+					RelativePath="..\Engine\Shaders\SkyDome.fx"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Main"
 			>
-			<File
-				RelativePath=".\DirectXSpike.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\DirectXSpike.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\DirectXSpike.rc"
-				>
-			</File>
 			<File
 				RelativePath=".\GameEvents.h"
 				>
@@ -336,10 +352,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Resource.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Settings.h"
 				>
 			</File>
@@ -349,10 +361,6 @@
 			</File>
 			<File
 				RelativePath=".\SettingsManager.h"
-				>
-			</File>
-			<File
-				RelativePath=".\small.ico"
 				>
 			</File>
 			<File
@@ -501,6 +509,30 @@
 			</File>
 			<File
 				RelativePath=".\Keyboard.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Windows"
+			>
+			<File
+				RelativePath=".\DirectXSpike.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\DirectXSpike.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\DirectXSpike.rc"
+				>
+			</File>
+			<File
+				RelativePath=".\Resource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\small.ico"
 				>
 			</File>
 		</Filter>

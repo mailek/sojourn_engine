@@ -34,19 +34,19 @@ void CShaderManager::SetDevice(LPDIRECT3DDEVICE9 device)
 void CShaderManager::Setup()
 {
 	////// FLAT SHADE PASS
-	ShaderPass flatShadePass;
+	/*ShaderPass flatShadePass;
 	::ZeroMemory(&flatShadePass, sizeof(flatShadePass));
 	CreateVertexShader(flatShadePass, SHADERS_FOLDER"FlatShadeVS.fx");
 	CreatePixelShader(flatShadePass, SHADERS_FOLDER"FlatShadePS.fx");
-	m_vecPasses.push_back(flatShadePass);
+	m_vecPasses.push_back(flatShadePass);*/
 
 	////// PLAIN RT PASS
-	ShaderPass plainRTPass;
-	::ZeroMemory(&plainRTPass, sizeof(plainRTPass));
-	CreateVertexShader(plainRTPass, SHADERS_FOLDER"PlainRTVS.fx");
+	//ShaderPass plainRTPass;
+	//::ZeroMemory(&plainRTPass, sizeof(plainRTPass));
+	//CreateVertexShader(plainRTPass, SHADERS_FOLDER"PlainRTVS.fx");
 	//CreatePixelShader(plainRTPass, "Shaders//BlurRTPS.fx");
-	CreatePixelShader(plainRTPass, SHADERS_FOLDER"PlainRTPS.fx");
-	m_vecPasses.push_back(plainRTPass);
+	//CreatePixelShader(plainRTPass, SHADERS_FOLDER"PlainRTPS.fx");
+	//m_vecPasses.push_back(plainRTPass);
 
 	////// RENDERTARGET BLUR HORZ PASS
 	//ShaderPass hblurRTPass;
@@ -69,21 +69,21 @@ void CShaderManager::Setup()
 	//m_vecPasses.push_back(vblurRTPass);
 
 	////// PRIMITIVE SHADE PASS
-	ShaderPass primShadePass;
+	/*ShaderPass primShadePass;
 	::ZeroMemory(&primShadePass, sizeof(primShadePass));
 	CreateVertexShader(primShadePass, SHADERS_FOLDER"PrimitiveVS.fx");
 	CreatePixelShader(primShadePass, SHADERS_FOLDER"PrimitivePS.fx");
-	m_vecPasses.push_back(primShadePass);
+	m_vecPasses.push_back(primShadePass);*/
 
 	/////// PRIMITIVE COLORED PASS
-	ShaderPass primColoredPass;
+	/*ShaderPass primColoredPass;
 	::ZeroMemory(&primColoredPass, sizeof(primColoredPass));
 	CreateVertexShader(primColoredPass, SHADERS_FOLDER"PrimitiveColoredVS.fx");
 	primColoredPass.pPS = m_vecPasses[PASS_PRIMITIVE].pPS;
 	primColoredPass.pPS->AddRef();
 	primColoredPass.pPSConstTable = m_vecPasses[PASS_PRIMITIVE].pPSConstTable;
 	primColoredPass.pPSConstTable->AddRef();
-	m_vecPasses.push_back(primColoredPass);
+	m_vecPasses.push_back(primColoredPass);*/
 
 	// DIRECTIONAL LIGHTS
 	D3DXCOLOR lightColor = D3DXCOLOR(1.f, 1.0f, 1.0f, 1.0f);
@@ -182,13 +182,13 @@ void CShaderManager::ReloadPixelShader(ePassID passId)
 	if(m_currentPS == passId)
 		return;
 
-	switch(passId)
-	{
-	case PASS_DEFAULT:
-		break;
-	case PASS_RTPLAIN:
+	/*switch(passId)
+	{*/
+	//case PASS_DEFAULT:
+	//	break;
+	/*case PASS_RTPLAIN:
 		m_device->SetRenderState(D3DRS_FOGENABLE, FALSE);
-		break;
+		break;*/
 	//case PASS_RTBLURH:
 	//	{
 	//	SetInvViewport(PASS_RTPLAIN, (float)m_iViewportWidth, (float)m_iViewportHeight);
@@ -199,13 +199,13 @@ void CShaderManager::ReloadPixelShader(ePassID passId)
 	//	SetInvViewport(PASS_RTPLAIN, (float)m_iViewportWidth, (float)m_iViewportHeight);
 	//	break;
 	//	}
-	case PASS_PRIMITIVE:
-	case PASS_PRIM_COLORED:
-		break;
-	default:
+	//case PASS_PRIMITIVE:
+	//case PASS_PRIM_COLORED:
+	//	break;
+	/*default:
 		assert(false);
 		break;
-	}
+	}*/
 
 	m_device->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, TRUE);
 	m_device->SetRenderState(D3DRS_ANTIALIASEDLINEENABLE, TRUE);
@@ -219,10 +219,13 @@ void CShaderManager::ReloadVertexShader(ePassID passId)
 	ShaderPass &sp = m_vecPasses[passId];
 	sp.pVSConstTable->SetDefaults(m_device);
 
-	switch(passId)
+	/*switch(passId)
 	{
 	case PASS_DEFAULT:
-		{
+		{*/
+
+		// TODO: clean this up and move to shadermgrex
+
 		// Flat Shade
 		SetViewProjection( passId, sp.params.view, sp.params.projection );
 
@@ -241,13 +244,13 @@ void CShaderManager::ReloadVertexShader(ePassID passId)
 		// fog
 		m_device->SetRenderState(D3DRS_FOGCOLOR, D3DCOLOR_XRGB(128,128,128)); // gray
 		m_device->SetRenderState(D3DRS_FOGENABLE, TRUE);
-		break;
+	/*	break;
 
-		}
-	case PASS_RTPLAIN:
+		}*/
+	/*case PASS_RTPLAIN:
 		SetInvViewport(PASS_RTPLAIN, (float)m_iViewportWidth, (float)m_iViewportHeight);
 		m_device->SetRenderState(D3DRS_FOGENABLE, FALSE);
-		break;
+		break;*/
 	//case PASS_RTBLURH:
 	//	SetInvViewport(PASS_RTBLURH, (float)m_iViewportWidth, (float)m_iViewportHeight);
 	//	m_device->SetRenderState(D3DRS_FOGENABLE, FALSE);
@@ -256,13 +259,13 @@ void CShaderManager::ReloadVertexShader(ePassID passId)
 	//	SetInvViewport(PASS_RTBLURV, (float)m_iViewportWidth, (float)m_iViewportHeight);
 	//	m_device->SetRenderState(D3DRS_FOGENABLE, FALSE);
 	//	break;
-	case PASS_PRIMITIVE:
-	case PASS_PRIM_COLORED:
-		break;
-	default:
+	//case PASS_PRIMITIVE:
+	//case PASS_PRIM_COLORED:
+	//	break;
+	/*default:
 		assert(false);
 		break;
-	}
+	}*/
 
 	m_device->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, TRUE);
 	m_device->SetRenderState(D3DRS_ANTIALIASEDLINEENABLE, TRUE);

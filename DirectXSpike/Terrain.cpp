@@ -15,13 +15,6 @@
 //#define DEBUGTERRAIN
 
 
-//// define the vertex format for this class
-//static const D3DVERTEXELEMENT9 _decl[] = {
-//	0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0,
-//	D3DDECL_END()
-//};
-
-
 //////////////////////////////////////////////////////////////////////////
 // Setup Functions
 //////////////////////////////////////////////////////////////////////////
@@ -34,7 +27,6 @@ CTerrain::CTerrain(void) : m_VertexBuffer(NULL),
 							m_fYOffset(0.0f),
 							m_debugNormalsVB(NULL),
 							m_texGroundTexture(NULL),
-							//m_texHeightTexture(NULL),
 							m_texDirtTexture(NULL)
 {
 	collidableType = OBSTACLE;
@@ -44,9 +36,6 @@ CTerrain::~CTerrain(void)
 {
 	COM_SAFERELEASE(m_VertexBuffer);
 	COM_SAFERELEASE(m_IndexBuffer);
-	//COM_SAFERELEASE(m_texGroundTexture);
-	//COM_SAFERELEASE(m_texHeightTexture);
-	//COM_SAFERELEASE(m_texDirtTexture);
 }
 
 ABB_MaxMin CTerrain::CalculateBoundingBox(void)
@@ -311,13 +300,13 @@ float CTerrain::GetTerrainHeightAtXZ(float xCoord, float zCoord)
 void CTerrain::Render( CRenderEngine &rndr )
 {
 	LPDIRECT3DDEVICE9 device = rndr.GetDevice();
-	CShaderManager &shaderMgr = rndr.GetShaderManager();
+	CShaderManagerEx &shaderMgr = rndr.GetShaderManager();
 	CCamera &camera = rndr.GetSceneManager().GetDefaultCamera();
 	assert(device);
 	
 	D3DXMATRIX worldMatrix;
 	D3DXMatrixIdentity(&worldMatrix);
-	shaderMgr.SetWorldTransform(PASS_DEFAULT, worldMatrix);
+	shaderMgr.SetWorldTransformEx(worldMatrix);
 
 	device->SetStreamSource(0, m_VertexBuffer, 0, sizeof(TerrainVertex));
 	device->SetIndices(m_IndexBuffer);
@@ -343,11 +332,14 @@ void CTerrain::Render( CRenderEngine &rndr )
 	D3DMATERIAL9 terrainMaterial;
 	terrainMaterial.Ambient		= matColor;
 	terrainMaterial.Diffuse		= matColor;
-	shaderMgr.SetMaterial(PASS_DEFAULT, terrainMaterial);
+	shaderMgr.SetMaterialEx(terrainMaterial);
 	
 	device->SetTexture(0, m_texGroundTexture);
 //	device->SetTexture(1, m_texHeightTexture);
 	device->SetTexture(1, m_texDirtTexture);
+
+	assert(false);	// TODO: add begin/end effect and draw support
+
 	device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, m_numOfVerts, 0, m_numTriangles);
 
 	device->SetTexture(0, 0);

@@ -21,12 +21,12 @@
 // Constants
 //////////////////////////////////////
 enum ePassID {
-		PASS_DEFAULT,
-		PASS_RTPLAIN,
+		//PASS_DEFAULT,
+		//PASS_RTPLAIN,
 		//PASS_RTBLURH,
 		//PASS_RTBLURV,
-		PASS_PRIMITIVE,
-		PASS_PRIM_COLORED,
+		//PASS_PRIMITIVE,
+		//PASS_PRIM_COLORED,
 		PASS_CNT,
 		PASS_INVALID = -1
 	};

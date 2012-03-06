@@ -6,7 +6,7 @@
 
 #include "BaseModel.h"
 #include "Terrain.h"
-#include "ShaderManager.h"
+#include "ShaderManagerEx.h"
 #include "vertextypes.h"
 #include "texturemanager.h"
 #include "gamestatestack.h"
@@ -523,13 +523,16 @@ void BaseModel::CreateDebugAxes()
 // Render Functions
 //////////////////////////////////////////////////////////////////////////
 
-void BaseModel::Render(LPDIRECT3DDEVICE9 device, D3DXMATRIX worldTransform, CShaderManager &shaderMgr)
+void BaseModel::Render(LPDIRECT3DDEVICE9 device, D3DXMATRIX worldTransform, CShaderManagerEx &shaderMgr)
 {
 	assert( m_meshType );
 
 	// apply the mesh specific transforms before rendering
 	Matrix4x4 worldMatrix = GetMeshMatrix() * worldTransform;
-	shaderMgr.SetWorldTransform(PASS_DEFAULT, worldMatrix);
+	shaderMgr.SetEffect(EFFECT_LIGHTTEX);
+	shaderMgr.SetWorldTransformEx(worldMatrix);
+
+	assert(false); // TODO: update code to begin/end effect and draw
 
 	// Render Skeleton
 	if( m_meshType == eMeshHierarchy )
@@ -552,9 +555,10 @@ void BaseModel::Render(LPDIRECT3DDEVICE9 device, D3DXMATRIX worldTransform, CSha
 			{
 				// TODO:  Note that the reason for hard-coding the ambient is
 				//		  per the sample tiny model is dark for outside scene
-				shaderMgr.SetMaterial(PASS_DEFAULT, pDrawContainer->_materials[i]);
+				shaderMgr.SetMaterialEx(pDrawContainer->_materials[i]);
 				HR(device->SetFVF( pDrawContainer->pSkinInfo->GetFVF() ));
 				HR(device->SetTexture(0, pDrawContainer->_textures[i]));
+
 				HR((pDrawContainer->_skinnedMesh->DrawSubset(i)));
 			}
 			pDrawContainer = (MeshContainer*)pDrawContainer->pNextMeshContainer;
@@ -570,7 +574,7 @@ void BaseModel::Render(LPDIRECT3DDEVICE9 device, D3DXMATRIX worldTransform, CSha
 
 		for(int i = 0, j = m_arrMats.size(); i < j; i++)
 		{
-			shaderMgr.SetMaterial(PASS_DEFAULT, m_arrMats[i]);
+			shaderMgr.SetMaterialEx(m_arrMats[i]);
 			device->SetFVF(m_mesh->GetFVF());
 			device->SetTexture(0, m_arrTexs[i]);
 			HR(m_mesh->DrawSubset(i));

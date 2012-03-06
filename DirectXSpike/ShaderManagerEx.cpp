@@ -10,59 +10,17 @@ CShaderManagerEx::~CShaderManagerEx(void)
 	COM_SAFERELEASE(m_currentEffect);
 }
 
-
 void CShaderManagerEx::Setup(void)
 {
 	// call the base class
 	CShaderManager::Setup();
 
 	// create the materials (effects)
-	ID3DXBuffer*	errors = NULL;
-
-	/////////////////////////////////////
-	// SKYDOME
-	D3DXCreateEffectFromFile( 
-		m_device, 
-		"Shaders//SkyDome.fx", 
-		NULL, 
-		NULL, 
-		0/*no flags*/, 
-		NULL, 
-		&m_effectSet[EFFECT_SKYDOME], 
-		&errors );
-
-	if( errors )
-	{
-		::MessageBox(0, (char*)errors->GetBufferPointer(), 0, 0 );
-		COM_SAFERELEASE( errors );
-		return;
-	}
-
-	/////////////////////////////////////
-	// GAUSSBLUR
-	D3DXCreateEffectFromFile( 
-		m_device, 
-		"Shaders//GaussBlur.fx", 
-		NULL, 
-		NULL, 
-		0/*no flags*/, 
-		NULL, 
-		&m_effectSet[EFFECT_GAUSSBLUR], 
-		&errors );
-
-	if( errors )
-	{
-		::MessageBox(0, (char*)errors->GetBufferPointer(), 0, 0 );
-		COM_SAFERELEASE( errors );
-		return;
-	}
-
-	// set up the parameters
-	
-	//m_currentEffect->GetParameterByName( m_hViewTransform, "viewTransform" );
-	
-	//m_currentEffect->GetParameterByName( m_hProjectionTransform, "projectionTransform" );
-	//m_currentEffect->GetParameterByName( m_hDirectionToLight, "dirToLight" );
+	LoadShader( "SkyDome.fx",		EFFECT_SKYDOME );
+	LoadShader( "GaussBlur.fx",		EFFECT_GAUSSBLUR );
+	LoadShader( "ScreenQuad.fx",	EFFECT_SCREENQUAD );
+	LoadShader( "Primitives.fx",	EFFECT_PRIMITIVES );
+	LoadShader( "FlatShade.fx",		EFFECT_LIGHTTEX );
 }
 
 void CShaderManagerEx::SetWorldTransformEx(D3DXMATRIX worldTransform)
@@ -72,11 +30,20 @@ void CShaderManagerEx::SetWorldTransformEx(D3DXMATRIX worldTransform)
 	HR(m_currentEffect->SetMatrix(h, &worldTransform));
 }
 
-void CShaderManagerEx::SetViewProjectionEx(D3DXMATRIX viewProjTransform)
+void CShaderManagerEx::SetViewProjectionEx(D3DXMATRIX viewTransform, D3DXMATRIX projectionTransform)
 {
 	D3DXHANDLE h=0;
+	D3DXMATRIX viewProj = viewTransform * projectionTransform;
+
 	h = m_currentEffect->GetParameterByName( NULL, "matViewProjection" );
-	HR(m_currentEffect->SetMatrix(h, &viewProjTransform));
+	HR(m_currentEffect->SetMatrix(h, &viewProj));
+
+	h = m_currentEffect->GetParameterByName( NULL, "matView" );
+	if( h )
+	{
+		HR(m_currentEffect->SetMatrix(h, &viewTransform));
+	}
+
 }
 
 int CShaderManagerEx::BeginEffect()
@@ -132,9 +99,11 @@ void CShaderManagerEx::ReloadEffect(eEffectID effectId)
 {
 	switch(effectId)
 	{
+	case EFFECT_LIGHTTEX:
 	case EFFECT_SKYDOME:
 		break;
 	case EFFECT_GAUSSBLUR:
+	case EFFECT_SCREENQUAD:
 		{
 			ShaderVariant v;
 			v.type = SHADER_VAR_FLOAT;
@@ -142,9 +111,10 @@ void CShaderManagerEx::ReloadEffect(eEffectID effectId)
 			SetEffectConstant( "fInvViewportWidth", v );
 			v._float = 1.0f/m_iViewportHeight;
 			SetEffectConstant( "fInvViewportHeight", v );
-			
 			break;
 		}
+	case EFFECT_PRIMITIVES:
+		break;
 	default:
 		assert(false);
 		break;
@@ -186,4 +156,64 @@ void CShaderManagerEx::SetTexture(LPCSTR name, LPDIRECT3DTEXTURE9 texture)
 {
 	D3DXHANDLE hnd = m_currentEffect->GetParameterByName(0, name);
 	HR(m_currentEffect->SetTexture(hnd, texture));
+}
+
+void CShaderManagerEx::LoadShader( const char* filename, int index )
+{
+	char			file[200];
+	ID3DXBuffer*	errors = NULL;
+
+	strcpy_s( file, "Shaders//" );
+	strcat_s( file, filename );
+
+	D3DXCreateEffectFromFile( 
+		m_device, 
+		file, 
+		NULL, 
+		NULL, 
+		0/*no flags*/, 
+		NULL, 
+		&m_effectSet[index], 
+		&errors );
+
+	if( errors )
+	{
+		::MessageBox(0, (char*)errors->GetBufferPointer(), 0, 0 );
+		COM_SAFERELEASE( errors );
+		return;
+	}
+
+}
+
+void CShaderManagerEx::SetDrawColorEx(D3DXCOLOR color)
+{
+	ShaderVariant v;
+
+	v.type = SHADER_VAR_FLOAT4;
+	v._float4[0] = color.r;
+	v._float4[1] = color.g;
+	v._float4[2] = color.b;
+	v._float4[3] = color.a;
+
+	SetEffectConstant( "drawColor", v );
+}
+
+void CShaderManagerEx::CommitEffectParams()
+{
+	HR(m_currentEffect->CommitChanges());
+}
+
+void CShaderManagerEx::SetMaterialEx( const D3DMATERIAL9 &mat )
+{
+	assert(false); // TODO: add support for setting materials on fx
+
+	/*ShaderVariant* v = &m_vecPasses[pass].params.matDiffuse;
+	v->type = SHADER_VAR_FLOAT4;
+	memcpy( v->_float4, &mat.Diffuse, sizeof(v->_float4) );
+	SetShaderConstant( m_vecPasses[pass].pVSConstTable, "diffuseMaterial", *v );
+	
+	v = &m_vecPasses[pass].params.matAmbient;
+	v->type = SHADER_VAR_FLOAT4;
+	memcpy( v->_float4, &mat.Ambient, sizeof(v->_float4) );
+	SetShaderConstant( m_vecPasses[pass].pVSConstTable, "ambientMaterial", *v );*/
 }

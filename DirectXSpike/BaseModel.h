@@ -11,7 +11,7 @@
 //////////////////////////////////////
 // Forward Declarations
 //////////////////////////////////////
-class CShaderManager;
+class CShaderManagerEx;
 class CTerrain;
 struct SkeletonVertex;
 struct Bone;
@@ -78,7 +78,7 @@ public:
 	void LoadCenteredUnitCylinder(IDirect3DDevice9* device);
 	void LoadCenteredUnitSphere(IDirect3DDevice9* pDevice);
 	void LoadScreenOrientedQuad(IDirect3DDevice9* pDevice);
-	void Render(LPDIRECT3DDEVICE9 device, D3DXMATRIX worldTransform, CShaderManager &shaderMgr);
+	void Render(LPDIRECT3DDEVICE9 device, D3DXMATRIX worldTransform, CShaderManagerEx &shaderMgr);
 	Sphere_PosRad GetSphereBounds();
 	void Update( LPDIRECT3DDEVICE9 device, float elapsedMillis );
 	void SetAnimation( DWORD animationId );

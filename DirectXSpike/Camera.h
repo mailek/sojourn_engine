@@ -51,6 +51,7 @@ public:
 
 	inline D3DXMATRIX GetViewMatrix() const { return m_viewMatrix; }
 	inline D3DXMATRIX GetProjectionMatrix() const {return m_projectionMatrix;}
+	inline D3DXMATRIX GetViewProjectionMatrix() const {return m_viewMatrix*m_projectionMatrix;}
 	inline Frustum_Camera GetFrustum() const { return m_frustum; }
 	inline D3DXVECTOR3 Get3DPosition() const { return  m_frustum.cameraPos; } 
 };

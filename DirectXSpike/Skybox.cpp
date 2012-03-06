@@ -83,7 +83,7 @@ void CSkybox::Render( CRenderEngine &rndr )
 	
 	shaderMgr.SetEffect(EFFECT_SKYDOME);
 	shaderMgr.SetTechnique("FlatTexture");
-	shaderMgr.SetViewProjectionEx(camera.GetViewMatrix()*camera.GetProjectionMatrix());
+	shaderMgr.SetViewProjectionEx(camera.GetViewMatrix(), camera.GetProjectionMatrix());
 	shaderMgr.SetWorldTransformEx(world);
 
 	device->SetTexture(0, m_texSkyTexture);

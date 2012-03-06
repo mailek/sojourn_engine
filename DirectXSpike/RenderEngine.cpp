@@ -60,13 +60,7 @@ void CRenderEngine::SetDevice(LPDIRECT3DDEVICE9 device, unsigned int viewportWid
 
 void CRenderEngine::SetWireframeMode(bool enable)
 {
-	if(m_device == NULL)
-		return;
-
-	if(enable)
-		m_device->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
-	else
-		m_device->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
+	dxFillMode( enable ? D3DFILL_WIREFRAME : D3DFILL_SOLID );
 }
 
 bool CRenderEngine::CreateRenderTarget(void)
@@ -116,25 +110,28 @@ void CRenderEngine::RenderScene()
 		m_sceneMgr.Render( *this );
 	}
 
-	m_shaderMgr.SetVertexShader(PASS_DEFAULT);
-	m_shaderMgr.SetPixelShader(PASS_DEFAULT);
+	/*m_shaderMgr.SetVertexShader(PASS_DEFAULT);
+	m_shaderMgr.SetPixelShader(PASS_DEFAULT);*/
+	m_shaderMgr.SetEffect(EFFECT_LIGHTTEX);
+
+	assert(false); // TODO: add begin/end effect and draw support
 	
 	CCamera& camera = m_sceneMgr.GetDefaultCamera();
 	D3DXMATRIX viewMatrix = camera.GetViewMatrix();
-	m_shaderMgr.SetViewProjection(PASS_DEFAULT, viewMatrix, camera.GetProjectionMatrix());
+	m_shaderMgr.SetViewProjectionEx(viewMatrix, camera.GetProjectionMatrix());
 		
 	m_device->BeginScene();
 	typedef std::list<IRenderable*> RenderList;
 
 	RenderList opaqueList;
 	{// OPAQUE OBJECTS
-	m_device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-	m_device->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
-	m_device->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
-	m_device->SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
-	m_device->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
-	m_device->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, TRUE);
-	m_device->SetRenderState(D3DRS_ANTIALIASEDLINEENABLE, TRUE);
+	dxEnableAlphaBlend(false);
+	dxEnableAlphaTest(false);
+	dxEnableZWrite();
+	dxEnableZTest();
+	dxEnableMultisample();
+	dxEnableLineAA();
+	dxCullMode(D3DCULL_CCW);
 	
 	m_sceneMgr.GetOpaqueDrawListF2B(opaqueList);
 	for(RenderList::iterator it = opaqueList.begin(), _it = opaqueList.end(); it != _it; it++)
@@ -147,17 +144,15 @@ void CRenderEngine::RenderScene()
 	SceneMgrSortList transList;
 	{// TRANSPARENT OBJECTS
 	
-	m_device->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, TRUE);
-	m_device->SetRenderState(D3DRS_ANTIALIASEDLINEENABLE, TRUE);
+	
 	// keyed transparency
-	m_device->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE); 
+	dxEnableAlphaTest();
 	m_device->SetRenderState(D3DRS_ALPHAREF, 0xff);
 	m_device->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATEREQUAL);
-	//m_device->SetRenderState( D3DRS_ALPHABLENDENABLE, FALSE);
 	m_device->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
 	
 	// blending
-	m_device->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+	dxEnableAlphaBlend();
 	m_device->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
 	m_device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
 	m_device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
@@ -193,8 +188,10 @@ void CRenderEngine::RenderScene()
 	Settings_GetBool(DEBUG_SHOW_CLIP_BOUNDS, showClipBounds);
 	if(showClipBounds)
 	{
-		m_shaderMgr.SetVertexShader(PASS_DEFAULT);
-		m_shaderMgr.SetPixelShader(PASS_DEFAULT);
+		/*m_shaderMgr.SetVertexShader(PASS_DEFAULT);
+		m_shaderMgr.SetPixelShader(PASS_DEFAULT);*/
+		assert(false);	// TODO: add begin/end effect and draw support
+
 
 		m_device->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
 		m_device->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
@@ -311,10 +308,13 @@ void CRenderEngine::RenderScene()
 	** =============================== */
 
 	// HUD PASS
-	m_shaderMgr.SetVertexShader(PASS_DEFAULT);
-	m_shaderMgr.SetPixelShader(PASS_DEFAULT);
+	/*m_shaderMgr.SetVertexShader(PASS_DEFAULT);
+	m_shaderMgr.SetPixelShader(PASS_DEFAULT);*/
+	m_shaderMgr.SetEffect(EFFECT_LIGHTTEX);
+	assert(false);	// TODO: add begin/end effect and draw support
+
 	viewMatrix = camera.GetViewMatrix();
-	m_shaderMgr.SetViewProjection(PASS_DEFAULT, viewMatrix, camera.GetProjectionMatrix());
+	m_shaderMgr.SetViewProjectionEx(viewMatrix, camera.GetProjectionMatrix());
 
 	m_device->BeginScene();
 
