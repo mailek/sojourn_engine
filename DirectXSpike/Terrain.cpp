@@ -83,10 +83,7 @@ bool CTerrain::LoadTerrain(LPCSTR pFilename, LPCSTR pTextureFilename, int rows, 
 		m_heightMap[i] = (int)arrBinary[i];
 	}
 
-	if(SetupMesh(device) == false)
-		return false;
-
-	return true;
+	return(SetupMesh(device));
 }
 
 int CTerrain::GetHeightMapEntry(int row, int col)
@@ -301,8 +298,12 @@ void CTerrain::Render( CRenderEngine &rndr )
 {
 	LPDIRECT3DDEVICE9 device = rndr.GetDevice();
 	CShaderManagerEx &shaderMgr = rndr.GetShaderManager();
+	shaderMgr.SetEffect( EFFECT_LIGHTTEX );
+	shaderMgr.SetDefaultTechnique();
 	CCamera &camera = rndr.GetSceneManager().GetDefaultCamera();
-	assert(device);
+	shaderMgr.SetViewProjectionEx( camera.GetViewMatrix(), camera.GetProjectionMatrix() );
+	D3DXVECTOR3 toLight = D3DXVECTOR3(0,0,0) - rndr.GetLightDirection();
+	shaderMgr.SetLightDirection(*D3DXVec3Normalize(&toLight, &toLight));
 	
 	D3DXMATRIX worldMatrix;
 	D3DXMatrixIdentity(&worldMatrix);
@@ -312,16 +313,17 @@ void CTerrain::Render( CRenderEngine &rndr )
 	device->SetIndices(m_IndexBuffer);
 	device->SetFVF(TerrainVertex::FVF);
 
+	dxCullMode(D3DCULL_CCW);
 	device->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
 	device->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
 	device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_ANISOTROPIC);
 	device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_ANISOTROPIC);
 	device->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_POINT);
-	device->SetSamplerState(1, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
+	/*device->SetSamplerState(1, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
 	device->SetSamplerState(1, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
 	device->SetSamplerState(1, D3DSAMP_MAGFILTER, D3DTEXF_ANISOTROPIC);
 	device->SetSamplerState(1, D3DSAMP_MINFILTER, D3DTEXF_ANISOTROPIC);
-	device->SetSamplerState(1, D3DSAMP_MIPFILTER, D3DTEXF_POINT);
+	device->SetSamplerState(1, D3DSAMP_MIPFILTER, D3DTEXF_POINT);*/
 	//device->SetSamplerState(2, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
 	//device->SetSamplerState(2, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
 	//device->SetSamplerState(2, D3DSAMP_MAGFILTER, D3DTEXF_ANISOTROPIC);
@@ -334,16 +336,22 @@ void CTerrain::Render( CRenderEngine &rndr )
 	terrainMaterial.Diffuse		= matColor;
 	shaderMgr.SetMaterialEx(terrainMaterial);
 	
-	device->SetTexture(0, m_texGroundTexture);
+	//device->SetTexture(0, m_texGroundTexture);
+	shaderMgr.SetTexture("tex0", m_texGroundTexture);
 //	device->SetTexture(1, m_texHeightTexture);
-	device->SetTexture(1, m_texDirtTexture);
+	//device->SetTexture(1, m_texDirtTexture);
 
-	assert(false);	// TODO: add begin/end effect and draw support
-
-	device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, m_numOfVerts, 0, m_numTriangles);
+	int numPasses = shaderMgr.BeginEffect();
+	for( int i = 0; i < numPasses; i++ )
+	{
+		shaderMgr.Pass(i);
+		device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, m_numOfVerts, 0, m_numTriangles);
+		shaderMgr.FinishPass();
+	}
+	shaderMgr.FinishEffect();
 
 	device->SetTexture(0, 0);
-	device->SetTexture(1, 0);
+	//device->SetTexture(1, 0);
 	//device->SetTexture(2, 0);
 
 #ifdef DEBUGTERRAIN

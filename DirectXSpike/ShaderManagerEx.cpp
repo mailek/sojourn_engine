@@ -143,7 +143,8 @@ bool CShaderManagerEx::SetEffectConstant( LPCSTR name, ShaderVariant &variant )
 			assert(false);
 			break;
 		}
-	} else 
+	} 
+	else 
 	{
 		assert(false);
 		return false;
@@ -205,15 +206,26 @@ void CShaderManagerEx::CommitEffectParams()
 
 void CShaderManagerEx::SetMaterialEx( const D3DMATERIAL9 &mat )
 {
-	assert(false); // TODO: add support for setting materials on fx
+	ShaderVariant v;
 
-	/*ShaderVariant* v = &m_vecPasses[pass].params.matDiffuse;
-	v->type = SHADER_VAR_FLOAT4;
-	memcpy( v->_float4, &mat.Diffuse, sizeof(v->_float4) );
-	SetShaderConstant( m_vecPasses[pass].pVSConstTable, "diffuseMaterial", *v );
-	
-	v = &m_vecPasses[pass].params.matAmbient;
-	v->type = SHADER_VAR_FLOAT4;
-	memcpy( v->_float4, &mat.Ambient, sizeof(v->_float4) );
-	SetShaderConstant( m_vecPasses[pass].pVSConstTable, "ambientMaterial", *v );*/
+	v.type = SHADER_VAR_FLOAT4;
+	memcpy( v._float4, &mat.Diffuse, sizeof(v._float4) );
+	SetEffectConstant( "diffuseMaterial", v );
+
+	memcpy( v._float4, &mat.Ambient, sizeof(v._float4) );
+	SetEffectConstant( "ambientMaterial", v );
+}
+
+void CShaderManagerEx::SetLightDirection(D3DXVECTOR3& lightDir)
+{
+	ShaderVariant v;
+
+	v.type = SHADER_VAR_FLOAT4;
+
+	v._float4[0] = lightDir.x;
+	v._float4[1] = lightDir.y;
+	v._float4[2] = lightDir.z;
+	v._float4[3] = 1.0f;
+
+	SetEffectConstant( "directionToLight", v );
 }

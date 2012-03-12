@@ -95,7 +95,7 @@ void CRenderEngine::RenderScene()
 	else
 		m_device->SetRenderTarget(0, m_surBackBuffer);
 		
-	m_device->Clear(0, 0, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL, 0xff000000/*black*/, 1.0f, 0);
+	dxClear(0, 0, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL, 0xff000000/*black*/, 1.0f, 0);
 
 	/* =============================== **
 	**      3D Environment View        **
@@ -109,17 +109,7 @@ void CRenderEngine::RenderScene()
 	{
 		m_sceneMgr.Render( *this );
 	}
-
-	/*m_shaderMgr.SetVertexShader(PASS_DEFAULT);
-	m_shaderMgr.SetPixelShader(PASS_DEFAULT);*/
-	m_shaderMgr.SetEffect(EFFECT_LIGHTTEX);
-
-	assert(false); // TODO: add begin/end effect and draw support
 	
-	CCamera& camera = m_sceneMgr.GetDefaultCamera();
-	D3DXMATRIX viewMatrix = camera.GetViewMatrix();
-	m_shaderMgr.SetViewProjectionEx(viewMatrix, camera.GetProjectionMatrix());
-		
 	m_device->BeginScene();
 	typedef std::list<IRenderable*> RenderList;
 
@@ -129,7 +119,6 @@ void CRenderEngine::RenderScene()
 	dxEnableAlphaTest(false);
 	dxEnableZWrite();
 	dxEnableZTest();
-	dxEnableMultisample();
 	dxEnableLineAA();
 	dxCullMode(D3DCULL_CCW);
 	
@@ -307,29 +296,14 @@ void CRenderEngine::RenderScene()
 	**              HUD                **
 	** =============================== */
 
-	// HUD PASS
-	/*m_shaderMgr.SetVertexShader(PASS_DEFAULT);
-	m_shaderMgr.SetPixelShader(PASS_DEFAULT);*/
-	m_shaderMgr.SetEffect(EFFECT_LIGHTTEX);
-	assert(false);	// TODO: add begin/end effect and draw support
-
-	viewMatrix = camera.GetViewMatrix();
-	m_shaderMgr.SetViewProjectionEx(viewMatrix, camera.GetProjectionMatrix());
-
-	m_device->BeginScene();
-
-	m_device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
-	m_device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
-	m_device->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_NONE);
-
 	bool settingsBool;
 	Settings_GetBool(HUD_SHOW_HUD, settingsBool);
 	if(settingsBool == true)
 	{
+		m_device->BeginScene();
 		m_pHud->Render();
+		m_device->EndScene();
 	}
-
-	m_device->EndScene();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -360,7 +334,7 @@ void CRenderEngine::DrawDebugSphere(Sphere_PosRad& sphere, ColorRGBA32 color)
 	m_meshMgr.GetGlobalMesh(eUnitSphere, &model);
 
 	model->SetDrawColor(color);
-	model->Render(m_device, world, m_shaderMgr);
+	model->Render(*this, world, m_shaderMgr);
 }
 
 void CRenderEngine::DrawDebugAxes(Vector_3 location)
@@ -451,5 +425,5 @@ void CRenderEngine::DrawDebugLine3D(Vector_3 start, Vector_3 end, ColorRGBA32 co
 
 	/* draw rod */
 	rod->SetDrawColor(color);
-	rod->Render(m_device, world, m_shaderMgr);
+	rod->Render(*this, world, m_shaderMgr);
 }

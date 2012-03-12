@@ -15,7 +15,7 @@ uniform vector ambientMaterial;
 uniform vector diffuseMaterial;
 
 static vector AmbientLightIntensity = {0.6f, 0.6f, 0.6f, 1.0f};
-static vector DiffuseLightIntensity = {1.0f, 1.0f, 1.0f, 1.0};
+static vector DiffuseLightIntensity = {1.0f, 1.0f, 1.0f, 1.0f};
 static float  FogStrength = 0.13f;
 
 /*--------------------------
@@ -63,6 +63,7 @@ VS_OUTPUT vs_main( VS_INPUT Input )
       sdiffuse = 0.0f;
 
    Output.diffuse = AmbientLightIntensity * ambientMaterial + sdiffuse * DiffuseLightIntensity * diffuseMaterial;   
+   //Output.diffuse = 1.0f;
    //Output.diffuse = AmbientLightIntensity * ambientMaterial + sdiffuse * DiffuseLightIntensity * diffuseMaterial;   
 
 // Fog
@@ -84,9 +85,9 @@ Texture tex2;
 sampler s0 = sampler_state
 {
     Texture = (tex0);
-    MinFilter = LINEAR;
-    MagFilter = LINEAR;
-    MipFilter = LINEAR;
+    MinFilter = ANISOTROPIC;
+    MagFilter = ANISOTROPIC;
+    MipFilter = ANISOTROPIC;
 };
 
 sampler s1 = sampler_state
@@ -121,7 +122,7 @@ float4 ps_main(vector col : COLOR0, float2 Txr1 : TEXCOORD0, float2 Txr2 : TEXCO
 -  Techniques
 --------------------------*/
 
-technique FlatShade
+technique ShadedOpaque
 {
     Pass P0
     { 
@@ -129,10 +130,11 @@ technique FlatShade
         Lighting = false;
         SpecularEnable = false;
         FogEnable = false;
+        Texture[0] = <tex0>;
         
         // pass setup 
 		vertexshader = compile vs_2_0 vs_main();
         pixelshader = compile ps_2_0 ps_main();
-        fvf = XYZ | TEX0;
+        //fvf = XYZ | TEX0;
     }
 }

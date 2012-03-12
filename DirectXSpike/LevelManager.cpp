@@ -23,7 +23,7 @@ CLevelManager::SceneObject::SceneObject() : m_pMesh(NULL),
 void CLevelManager::SceneObject::Render( CRenderEngine &rndr )
 {
 	if(m_pMesh) 
-		m_pMesh->Render(rndr.GetDevice(), m_transform.GetTransform(), rndr.GetShaderManager() );
+		m_pMesh->Render(rndr, m_transform.GetTransform(), rndr.GetShaderManager() );
 }
 
 Sphere_PosRad CLevelManager::SceneObject::GetBoundingSphere()

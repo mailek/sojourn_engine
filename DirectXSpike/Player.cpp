@@ -237,7 +237,7 @@ void CPlayer::Render( CRenderEngine &rndr )
 	rndr.DrawDebugSphere(s, c);
 
 	/* Draw Player Model */
-	m_pModel->Render( rndr.GetDevice(), GetWorldTransform(), rndr.GetShaderManager() );
+	m_pModel->Render( rndr, GetWorldTransform(), rndr.GetShaderManager() );
 }
 
 D3DXMATRIX CPlayer::GetWorldTransform(void)

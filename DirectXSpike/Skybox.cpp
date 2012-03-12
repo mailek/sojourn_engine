@@ -77,7 +77,6 @@ void CSkybox::Render( CRenderEngine &rndr )
 {
 	D3DXMATRIX world = GetWorldTransform();
 	CShaderManagerEx &shaderMgr = rndr.GetShaderManager();
-	shaderMgr.PushCurrentShader();
 	LPDIRECT3DDEVICE9 device = rndr.GetDevice();
 	CCamera& camera = rndr.GetSceneManager().GetDefaultCamera();
 	
@@ -85,8 +84,7 @@ void CSkybox::Render( CRenderEngine &rndr )
 	shaderMgr.SetTechnique("FlatTexture");
 	shaderMgr.SetViewProjectionEx(camera.GetViewMatrix(), camera.GetProjectionMatrix());
 	shaderMgr.SetWorldTransformEx(world);
-
-	device->SetTexture(0, m_texSkyTexture);
+	shaderMgr.SetTexture("diffuseTex", m_texSkyTexture);
 
 	int num = shaderMgr.BeginEffect();
 	for(int i=0; i<num; i++)
@@ -97,7 +95,6 @@ void CSkybox::Render( CRenderEngine &rndr )
 	}
 
 	shaderMgr.FinishEffect();
-	shaderMgr.PopCurrentShader();
 }
 
 D3DXMATRIX CSkybox::GetWorldTransform() 

@@ -65,10 +65,11 @@ technique FlatTexture
         SpecularEnable = false;
         FogEnable = false;
         CullMode = none;
+        Texture[0] = <diffuseTex>;
         
         // pass setup 
         vertexshader = (vs);
         pixelshader = null;
-        fvf = XYZ | TEX0;
+ //       fvf = XYZ | TEX0;
     }
 }

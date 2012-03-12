@@ -46,7 +46,7 @@ class CLevelManager
 
 	private:
 		ComplexTransform	m_transform;
-		BaseModel			*m_pMesh;
+		BaseModel          *m_pMesh;
 		bool				m_bTransparent;
 		UINT				m_lastFrame;
 

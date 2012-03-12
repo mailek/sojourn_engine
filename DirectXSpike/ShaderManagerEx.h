@@ -35,6 +35,7 @@ public:
 	void ReloadEffect(eEffectID effectId);
 	bool SetEffectConstant( LPCSTR name, ShaderVariant &variant );
 	void SetTexture(LPCSTR name, LPDIRECT3DTEXTURE9 texture);
+	void SetLightDirection(D3DXVECTOR3& lightDir);
 
 private:
 	LPD3DXEFFECT	m_currentEffect;

@@ -4,6 +4,7 @@
 #include <sstream>
 #include <d3dx9anim.h>
 
+#include "RenderEngine.h"
 #include "BaseModel.h"
 #include "Terrain.h"
 #include "ShaderManagerEx.h"
@@ -523,16 +524,20 @@ void BaseModel::CreateDebugAxes()
 // Render Functions
 //////////////////////////////////////////////////////////////////////////
 
-void BaseModel::Render(LPDIRECT3DDEVICE9 device, D3DXMATRIX worldTransform, CShaderManagerEx &shaderMgr)
+void BaseModel::Render(CRenderEngine& rndr, D3DXMATRIX worldTransform, CShaderManagerEx &shaderMgr)
 {
 	assert( m_meshType );
 
 	// apply the mesh specific transforms before rendering
+	LPDIRECT3DDEVICE9 device = rndr.GetDevice();
+	CCamera& camera = rndr.GetSceneManager().GetDefaultCamera();
+	rndr.GetLightDirection();
 	Matrix4x4 worldMatrix = GetMeshMatrix() * worldTransform;
 	shaderMgr.SetEffect(EFFECT_LIGHTTEX);
+	shaderMgr.SetDefaultTechnique();
 	shaderMgr.SetWorldTransformEx(worldMatrix);
-
-	assert(false); // TODO: update code to begin/end effect and draw
+	shaderMgr.SetViewProjectionEx(camera.GetViewMatrix(), camera.GetProjectionMatrix());
+	shaderMgr.SetLightDirection(rndr.GetLightDirection());
 
 	// Render Skeleton
 	if( m_meshType == eMeshHierarchy )
@@ -543,43 +548,55 @@ void BaseModel::Render(LPDIRECT3DDEVICE9 device, D3DXMATRIX worldTransform, CSha
 		//HR(device->SetIndices( m_skeletonIB ));
 		//HR(device->SetFVF( SkeletonVertex::FVF ));
 		//HR(device->DrawIndexedPrimitive(D3DPT_LINELIST, 0, 0, m_numOfBones+1, 10, m_numOfBones ));
-		
+	
 		// Draw Skin
-		device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
-		device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
-		device->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_NONE);
-		MeshContainer* pDrawContainer = (MeshContainer*)m_headMeshContainer;
-		while( pDrawContainer != NULL )
+		int numPasses = shaderMgr.BeginEffect();
+		for( int p = 0; p < numPasses; p++ )
 		{
-			for( DWORD i = 0; i < pDrawContainer->NumMaterials; i++ )
-			{
-				// TODO:  Note that the reason for hard-coding the ambient is
-				//		  per the sample tiny model is dark for outside scene
-				shaderMgr.SetMaterialEx(pDrawContainer->_materials[i]);
-				HR(device->SetFVF( pDrawContainer->pSkinInfo->GetFVF() ));
-				HR(device->SetTexture(0, pDrawContainer->_textures[i]));
+			shaderMgr.Pass(p);
 
-				HR((pDrawContainer->_skinnedMesh->DrawSubset(i)));
+			MeshContainer* pDrawContainer = (MeshContainer*)m_headMeshContainer;
+			while( pDrawContainer != NULL )
+			{
+				for( DWORD i = 0; i < pDrawContainer->NumMaterials; i++ )
+				{
+					shaderMgr.SetMaterialEx(pDrawContainer->_materials[i]);
+					HR(device->SetFVF( pDrawContainer->pSkinInfo->GetFVF() ));
+					shaderMgr.SetTexture("tex0", pDrawContainer->_textures[i]);
+					shaderMgr.CommitEffectParams();
+
+					HR((pDrawContainer->_skinnedMesh->DrawSubset(i)));
+				}
+				pDrawContainer = (MeshContainer*)pDrawContainer->pNextMeshContainer;
 			}
-			pDrawContainer = (MeshContainer*)pDrawContainer->pNextMeshContainer;
+
+			shaderMgr.FinishPass();
 		}
+
+		shaderMgr.FinishEffect();
 
 	}
 	else
 	{
 		assert(m_meshType == eSimpleMesh);
-		device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
-		device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
-		device->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_NONE);
-
-		for(int i = 0, j = m_arrMats.size(); i < j; i++)
-		{
-			shaderMgr.SetMaterialEx(m_arrMats[i]);
-			device->SetFVF(m_mesh->GetFVF());
-			device->SetTexture(0, m_arrTexs[i]);
-			HR(m_mesh->DrawSubset(i));
-		}
 		
+		int numPasses = shaderMgr.BeginEffect();
+		for( int p = 0; p < numPasses; p++ )
+		{
+			shaderMgr.Pass(p);
+			for(int i = 0, j = m_arrMats.size(); i < j; i++)
+			{
+				shaderMgr.SetMaterialEx(m_arrMats[i]);
+				device->SetFVF(m_mesh->GetFVF());
+				shaderMgr.SetTexture("tex0", m_arrTexs[i]);
+				shaderMgr.CommitEffectParams();
+				HR(m_mesh->DrawSubset(i));
+			}
+
+			shaderMgr.FinishPass();
+		}
+
+		shaderMgr.FinishEffect();
 		device->SetTexture(0, 0);
 	}
 
