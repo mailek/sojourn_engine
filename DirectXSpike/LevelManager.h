@@ -1,7 +1,11 @@
 #pragma once
-//////////////////////////////////////////////////////////////////////////
-// LevelManager.h - 2011 Matthew Alford
-//////////////////////////////////////////////////////////////////////////
+/********************************************************************
+	created:	2012/04/23
+	filename: 	LevelManager.h
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 
 //////////////////////////////////////
 // Include
@@ -27,6 +31,9 @@ class CCollisionManager;
 //////////////////////////////////////
 class CLevelManager
 {
+	//////////////////////////////////
+	// SceneObject
+	//////////////////////////////////
 	class SceneObject : public IRenderable, public ICollidable {
 		friend class CLevelManager;
 	public:
@@ -55,10 +62,21 @@ class CLevelManager
 		virtual void HandleCollision( ICollidable* other ) {};
 	};
 
+	//////////////////////////////////
+	// LightObject
+	//////////////////////////////////
+	static const int MAX_LIGHTS = 20;
+	struct LightObject {
+		bool				used;
+		bool				isOn;
+		D3DLIGHT9			light;
+	};
+
 private:
 	CDoubleLinkedList<SceneObject>	m_staticLevelObjects;
 	CTerrain					   *m_pTerrain;
 	CSkybox					       *m_pSkyDome;
+	LightObject						m_lights[MAX_LIGHTS];
 
 public:
 	CLevelManager(void);
@@ -66,4 +84,7 @@ public:
 
 	bool LoadDefaultLevel(CRenderEngine *renderEngine, CTerrain **retTerrain, CSkybox **retSkybox);
 	void RegisterStaticCollision(CCollisionManager* cm);
+
+private:
+	void AddDirLight(Vector_3 lightDir, Color_4 lightColor);
 };

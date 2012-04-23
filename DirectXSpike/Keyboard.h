@@ -1,8 +1,11 @@
 #pragma once
-//////////////////////////////////////////////////////////////////////////
-// Keyboard.h : Defines the keyboard bindings for the engine.
-// 2011 Matthew Alford
-//////////////////////////////////////////////////////////////////////////
+/********************************************************************
+	created:	2012/04/23
+	filename: 	Keyboard.h
+	author:		Matthew Alford
+	
+	purpose:	Defines the keyboard bindings for the engine.
+*********************************************************************/
 
 //////////////////////////////////////
 // Global Constants

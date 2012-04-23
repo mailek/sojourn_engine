@@ -1,3 +1,10 @@
+/********************************************************************
+	created:	2012/04/16
+	filename: 	SceneQuadTree.cpp
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #include "StdAfx.h"
 #include "SceneQuadTree.h"
 #include "Camera.h"

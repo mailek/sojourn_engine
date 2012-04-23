@@ -1,8 +1,11 @@
 #pragma once
-//////////////////////////////////////////////////////////////////////////
-// InputManager.h - 2011 Matthew Alford
-// Description: Buffers raw input messages and translates to game key codes
-//////////////////////////////////////////////////////////////////////////
+/********************************************************************
+	created:	2012/04/23
+	filename: 	InputManager.h
+	author:		Matthew Alford
+	
+	purpose:	Buffers raw input messages and translates to game key codes
+*********************************************************************/
 
 //////////////////////////////////////
 // Includes

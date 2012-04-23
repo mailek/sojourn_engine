@@ -1,5 +1,11 @@
 #pragma once
-
+/********************************************************************
+	created:	2012/04/16
+	filename: 	TextureManager.h
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #include "singleton.h"
 
 typedef int TextureContextIdType;
@@ -12,13 +18,13 @@ typedef int TextureContextIdType;
 #define GLOBAL_TEX_CONTEXT		(1)
 #define DEFAULT_TEXTURE			"defaultTexture.dds"
 
-typedef enum 
+typedef enum _EGlobalTexIds
 {
 	DEFAULT_TEXTURE_ID = 0,
 	GLOBAL_TEX_CNT
-};
+} EGlobalTexIds;
 
-typedef struct
+typedef struct _GlobalTextureDef
 {
 	int						globalTextureId;
 	char					filename[MAX_TEX_FILENAME_LEN];
@@ -28,13 +34,13 @@ const GlobalTextureDef m_globalTextureDef[] =
 {{DEFAULT_TEXTURE_ID, "defaultTexture.dds"}
 };
 
-typedef struct 
+typedef struct _TextureContexType
 {
 	TextureContextIdType	id;
 	char					name[TEX_CONTEXT_NAME_LEN];
 } TextureContextType;
 
-typedef struct
+typedef struct _TextureInstanceType
 {
 	TextureContextIdType	parent_context;
 	LPDIRECT3DTEXTURE9		tex;

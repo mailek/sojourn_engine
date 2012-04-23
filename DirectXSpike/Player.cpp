@@ -1,3 +1,10 @@
+/********************************************************************
+	created:	2012/04/23
+	filename: 	Player.cpp
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #include "StdAfx.h"
 #include "Player.h"
 #include "MeshManager.h"
@@ -10,14 +17,15 @@
 // Type Definitions
 //////////////////////////////////////
 
-typedef enum {
+typedef enum _EMovementFlagType
+{
 	MOVE_FORWARD_FLAG	= (1<<0), 
 	MOVE_BACKWARD_FLAG	= (1<<1), 
 	MOVE_LEFT_FLAG		= (1<<2), 
 	MOVE_RIGHT_FLAG		= (1<<3),
 	/* all flags */
 	MOVE_FLAG_MASK		= MOVE_FORWARD_FLAG | MOVE_BACKWARD_FLAG | MOVE_LEFT_FLAG | MOVE_RIGHT_FLAG
-	} MovementFlagType;
+} EMovementFlagType;
 
 //////////////////////////////////////////////////////////////////////////
 // Setup Functions
@@ -136,7 +144,7 @@ void CPlayer::SetPosition3D(Vector_3 &pos)
 
 bool CPlayer::HandleEvent( UINT eventId, void* data, UINT data_sz )
 {
-	static const MovementFlagType movementMap[] = {
+	static const EMovementFlagType movementMap[] = {
 		MOVE_FORWARD_FLAG,
 		MOVE_BACKWARD_FLAG,
 		MOVE_LEFT_FLAG,
@@ -231,12 +239,13 @@ void CPlayer::Render( CRenderEngine &rndr )
 	s.pos.y += 0.5f * s.radius;
 	ColorRGBA32 c;
 	c.a = 1.0f;
-	c.r = 1.0f;
-	c.g = 1.0f;
+	c.r = 0.3f;
+	c.g = 0.3f;
 	c.b = 1.0f;
 	rndr.DrawDebugSphere(s, c);
 
 	/* Draw Player Model */
+	m_pModel->SetRenderFunc(m_pModel->RenderFuncs.lightAndTexture);
 	m_pModel->Render( rndr, GetWorldTransform(), rndr.GetShaderManager() );
 }
 

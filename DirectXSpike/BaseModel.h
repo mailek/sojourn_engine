@@ -1,8 +1,11 @@
 #pragma once
-//////////////////////////////////////////////////////////////////////////
-// Player.h - 2011 Matthew Alford
-//////////////////////////////////////////////////////////////////////////
-
+/********************************************************************
+	created:	2012/04/16
+	filename: 	BaseModel.h
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 //////////////////////////////////////
 // Includes
 //////////////////////////////////////
@@ -16,16 +19,17 @@ class CTerrain;
 class CRenderEngine;
 struct SkeletonVertex;
 struct Bone;
+class BaseModel;
 
 //////////////////////////////////////
 // Type Definitions
 //////////////////////////////////////
-typedef enum EMeshType 
+typedef enum _EMeshType 
 {
 	eInvalid,
 	eSimpleMesh,
 	eMeshHierarchy
-};
+} EMeshType;
 
 typedef std::vector<D3DMATERIAL9>::iterator				MatIterator;
 typedef std::vector<IDirect3DTexture9*>::iterator		TexIterator;
@@ -33,9 +37,41 @@ typedef std::vector<IDirect3DTexture9*>::iterator		TexIterator;
 //////////////////////////////////////
 // Class Definition
 //////////////////////////////////////
+
+class IRenderFunc
+{
+public:
+	IRenderFunc() : P(NULL) {};
+	virtual void Render(CRenderEngine& rndr, D3DXMATRIX worldTransform, CShaderManagerEx &shaderMgr) =0;
+
+	BaseModel		*P;
+};
+
+class rfLightAndTexture : public IRenderFunc
+{
+public:
+	virtual void Render(CRenderEngine& rndr, D3DXMATRIX worldTransform, CShaderManagerEx &shaderMgr);
+};
+
+class rfLightAndColored : public IRenderFunc
+{
+public:
+	virtual void Render(CRenderEngine& rndr, D3DXMATRIX worldTransform, CShaderManagerEx &shaderMgr);
+};
+
+class rfXPLightAndColored : public IRenderFunc
+{
+public:
+	virtual void Render(CRenderEngine& rndr, D3DXMATRIX worldTransform, CShaderManagerEx &shaderMgr);
+};
+
 class BaseModel
 {
+	/* everyone needs a friend */
 	friend class CMeshManager;
+	friend class rfLightAndTexture;
+	friend class rfLightAndColored;
+	friend class rfXPLightAndColored;
 public:
 	BaseModel(void);
 	virtual ~BaseModel(void);
@@ -46,15 +82,16 @@ private:
 	bool								m_bTransparency;	
 	Sphere_PosRad						m_sphereBounds;
 	unsigned int						m_numOfBones;
-	LPDIRECT3DVERTEXBUFFER9				m_skeletonVB;		/* renderable bone vertices (joints) */
-	LPDIRECT3DINDEXBUFFER9				m_skeletonIB;		/* renderable bone indices */
+	LPDIRECT3DVERTEXBUFFER9				m_skeletonVB;					/* Renderable bone vertices (joints)	*/
+	LPDIRECT3DINDEXBUFFER9				m_skeletonIB;					/* Renderable bone indices				*/
 	LPD3DXANIMATIONCONTROLLER			m_animController;
-	DWORD								m_animationCnt;		/* number of animations in model file */
-	DWORD								m_activeAnimation;/* id of current animation playing */
-	bool								m_isAnimating;		/* stop or start the animation updates */
-	bool								m_boundSphereOutOfDate;
-	char								m_filename[MAX_FILENAME_LEN]; /* filename of the model */
-	ComplexTransform					m_meshTransform;    /* local transforms specific to model */
+	DWORD								m_animationCnt;					/* Number of animations in model file	*/
+	DWORD								m_activeAnimation;				/* Id of current animation playing		*/
+	bool								m_isAnimating;					/* Stop or start the animation updates	*/
+	bool								m_boundSphereOutOfDate;			/* Sphere bound recalc flag				*/
+	char								m_filename[MAX_FILENAME_LEN];	/* Filename of the model				*/
+	ComplexTransform					m_meshTransform;    			/* Local transforms specific to model	*/
+	IRenderFunc*						m_pRenderFunc;					/* Current render technique				*/
 
 	EMeshType							m_meshType;
 	/* ///////// if simple mesh /////////// */
@@ -98,6 +135,13 @@ public:
 	inline void SetYRotationRadians(float yRot) {m_meshTransform.SetYRotationRadians(yRot); m_boundSphereOutOfDate=true;}
 	inline void SetZRotationRadians(float zRot) {m_meshTransform.SetZRotationRadians(zRot); m_boundSphereOutOfDate=true;}
 	inline void SetTransparency(bool transparent) {m_bTransparency = transparent;}
+	inline void SetRenderFunc( IRenderFunc& rf ) {m_pRenderFunc = &rf;}
 	inline bool IsTransparent() {return m_bTransparency;}
+
+	struct {
+		rfLightAndTexture		lightAndTexture;
+		rfLightAndColored		lightAndColored;
+		rfXPLightAndColored		xpLightAndColored;
+	}									RenderFuncs;
 
 };

@@ -1,5 +1,11 @@
 #pragma once
-//#include "gamestate.h"
+/********************************************************************
+	created:	2012/04/16
+	filename: 	MainGameState.h
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #include "GameEvents.h"
 #include "ghostcamera.h"
 

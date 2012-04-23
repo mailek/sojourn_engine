@@ -1,5 +1,11 @@
 #pragma once
-
+/********************************************************************
+	created:	2012/04/16
+	filename: 	IRenderable.h
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #include "MathUtil.h"
 
 class CShaderManager;

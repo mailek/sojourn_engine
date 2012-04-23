@@ -1,12 +1,18 @@
 #pragma once
-
+/********************************************************************
+	created:	2012/04/23
+	filename: 	CollisionManager.h
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #include "ICollidable.h"
 #include "Singleton.h"
 #include "DoubleLinkedList.h"
 
 #define MAX_COLLISION_PAIRS		500
 
-typedef struct
+typedef struct _CollisionPair
 {
 	ICollidable* items[2];
 } CollisionPair;

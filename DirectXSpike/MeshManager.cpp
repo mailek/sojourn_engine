@@ -1,10 +1,17 @@
+/********************************************************************
+	created:	2012/04/16
+	filename: 	MeshManager.cpp
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #include "StdAfx.h"
 #include "MeshManager.h"
 #include "Terrain.h"
 
-//////////////////////////////////////////////////////////////////////////
-// Setup Functions
-//////////////////////////////////////////////////////////////////////////
+/*=================================================
+	MeshManager Class
+=================================================*/
 
 CMeshManager::CMeshManager(void) : m_device(NULL)
 {
@@ -15,6 +22,10 @@ CMeshManager::~CMeshManager(void)
 	for(MeshList::iterator it = m_arrMeshes.begin(), _it = m_arrMeshes.end(); it != _it; it++)
 		PTR_SAFEDELETE(*it);
 }
+
+/*=================================================
+	Setup Functions
+=================================================*/
 
 void CMeshManager::SetDevice(LPDIRECT3DDEVICE9 device) 
 {
@@ -64,7 +75,7 @@ bool CMeshManager::LoadGlobalMeshes(void)
 	return true;
 }
 
-// Loads the meshes to be rendered
+/* Loads the meshes to be rendered */
 bool CMeshManager::LoadMeshes(void)
 {
 	assert(m_device);
@@ -155,9 +166,9 @@ void CMeshManager::GetGlobalMesh(EGlobalMeshType meshName, BaseModel **retMesh)
 	(*retMesh) = m_arrGlobalMeshes[meshName];
 }
 
-//////////////////////////////////////////////////////////////////////////
-// Update Functions
-//////////////////////////////////////////////////////////////////////////
+/*=================================================
+	Update Functions
+=================================================*/
 
 void CMeshManager::Update( LPDIRECT3DDEVICE9 device, float elapsedMillis )
 {

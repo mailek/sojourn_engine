@@ -1,5 +1,11 @@
 #pragma once
-
+/********************************************************************
+	created:	2012/04/23
+	filename: 	Singleton.h
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 template <typename T>
 class SingleThreadSingleton
 {

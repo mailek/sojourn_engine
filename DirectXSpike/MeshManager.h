@@ -1,7 +1,11 @@
 #pragma once
-//////////////////////////////////////////////////////////////////////////
-// MeshManager.h - 2011 Matthew Alford
-//////////////////////////////////////////////////////////////////////////
+/********************************************************************
+	created:	2012/04/16
+	filename: 	MeshManager.h
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 
 //////////////////////////////////////
 // Includes
@@ -19,7 +23,8 @@ class CTerrain;
 typedef std::vector<BaseModel*> MeshList;
 typedef MeshList::iterator MeshListIterator;
 
-typedef enum { 
+typedef enum _EGlobalMeshType 
+{ 
 	eUnitSphere, 
 	eUnitCylinder, 
 	eTeapot, 

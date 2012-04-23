@@ -1,3 +1,10 @@
+/********************************************************************
+	created:	2012/04/23
+	filename: 	LevelManager.cpp
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #include "StdAfx.h"
 #include "LevelManager.h"
 #include "SceneManager.h"
@@ -22,8 +29,11 @@ CLevelManager::SceneObject::SceneObject() : m_pMesh(NULL),
 
 void CLevelManager::SceneObject::Render( CRenderEngine &rndr )
 {
-	if(m_pMesh) 
+	if(m_pMesh)
+	{
+		m_pMesh->SetRenderFunc(m_pMesh->RenderFuncs.lightAndTexture);
 		m_pMesh->Render(rndr, m_transform.GetTransform(), rndr.GetShaderManager() );
+	}
 }
 
 Sphere_PosRad CLevelManager::SceneObject::GetBoundingSphere()
@@ -149,6 +159,10 @@ bool CLevelManager::LoadDefaultLevel(CRenderEngine *renderEngine, CTerrain **ret
 	//m_staticLevelObjects.AddItemToEnd(obj);
 	//sceneMgr.AddRenderableObjectToScene(reinterpret_cast<IRenderable*>(obj));
 
+	/* setup lights */
+	memset(m_lights, 0, sizeof(m_lights));
+	AddDirLight(Vector_3(0.0f, -1.0f, 0.0f), Color_4(1.f, 1.0f, 1.0f, 1.0f));
+
 	return true;
 }
 
@@ -158,4 +172,25 @@ void CLevelManager::RegisterStaticCollision(CCollisionManager* cm)
 	{
 		cm->RegisterStaticCollidable(it->item);
 	}
+}
+
+void CLevelManager::AddDirLight(Vector_3 lightDir, Color_4 lightColor)
+{
+	LightObject* l = NULL;
+	for( int i = 0; i < MAX_LIGHTS; i++)
+	{
+		if(!m_lights[i].used)
+		{
+			l = &m_lights[i];
+			break;
+		}
+	}
+
+	l->used				= true;
+	l->isOn				= true;
+	l->light.Type		= D3DLIGHT_DIRECTIONAL;
+	l->light.Direction	= lightDir;
+	l->light.Diffuse	= lightColor;
+	l->light.Ambient	= lightColor * 0.5f;
+	l->light.Specular	= lightColor * 0.3f;
 }

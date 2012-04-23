@@ -1,15 +1,23 @@
 #pragma once
+/********************************************************************
+	created:	2012/04/16
+	filename: 	ShaderManagerEx.h
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #include "shadermanager.h"
 
-enum eEffectID {
-		EFFECT_LIGHTTEX,
-		EFFECT_SKYDOME,
-		EFFECT_GAUSSBLUR,
-		EFFECT_SCREENQUAD,
-		EFFECT_PRIMITIVES,
-		EFFECT_CNT,
-		EFFECT_INVALID = -1
-	};
+typedef enum _EEffectID 
+{
+	EFFECT_LIGHTTEX,
+	EFFECT_SKYDOME,
+	EFFECT_GAUSSBLUR,
+	EFFECT_SCREENQUAD,
+	EFFECT_DEBUGDRAW,
+	EFFECT_CNT,
+	EFFECT_INVALID = -1
+} EEffectID;
 
 class CShaderManagerEx :
 	public CShaderManager
@@ -31,8 +39,8 @@ public:
 	void CommitEffectParams();
 	void FinishEffect();
 	void FinishPass();
-	void SetEffect(eEffectID effectId);
-	void ReloadEffect(eEffectID effectId);
+	void SetEffect(EEffectID effectId);
+	void ReloadEffect(EEffectID effectId);
 	bool SetEffectConstant( LPCSTR name, ShaderVariant &variant );
 	void SetTexture(LPCSTR name, LPDIRECT3DTEXTURE9 texture);
 	void SetLightDirection(D3DXVECTOR3& lightDir);

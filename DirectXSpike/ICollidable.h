@@ -1,8 +1,14 @@
 #pragma once
-
+/********************************************************************
+	created:	2012/04/23
+	filename: 	ICollidable.h
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #include "mathutil.h"
 
-typedef enum
+typedef enum _ECollidableType
 {
 	OBSTACLE,
 	CHARACTER

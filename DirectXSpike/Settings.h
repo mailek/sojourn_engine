@@ -1,17 +1,23 @@
 #pragma once
-
+/********************************************************************
+	created:	2012/04/16
+	filename: 	Settings.h
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #include "variantutil.h"
 
 typedef Variant SettingValue;
 
-typedef enum
+typedef enum _ESettingInitValue
 {
 	INVALID_VAL = 0,
 	BOOL_TRUE,
 	BOOL_FALSE
 } ESettingInitValue;
 
-typedef enum
+typedef enum _ESettingId
 {
 	/* ==== Debug Flags ==== */
 	DEBUG_DRAW_SCENE_TREE = 0,	// render or hide quad tree lines
@@ -26,7 +32,7 @@ typedef enum
 } ESettingId;
 
 /* must be in same order as ESettingId */
-const struct
+const struct _SettingsValue
 {
 	ESettingId			id;
 	ESettingInitValue	init;
@@ -45,12 +51,6 @@ const struct
 #define Settings_Init()												\
 	CSettingsManager::GetInstance()->Init();						
 
-#define Settings_GetBool(id, boolean)								\
-{																	\
-	SettingValue* setting;											\
-	CSettingsManager::GetInstance()->GetSettingValue(id, &setting);	\
-	boolean = setting->value.bool_val;								\
-}																	
 
 #define Settings_ToggleBool(id)										\
 {																	\

@@ -1,3 +1,10 @@
+/********************************************************************
+	created:	2012/04/23
+	filename: 	LevelLoader.cpp
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #include "StdAfx.h"
 #include "LevelLoader.h"
 

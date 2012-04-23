@@ -1,3 +1,10 @@
+/********************************************************************
+	created:	2012/04/16
+	filename: 	BaseModel.cpp
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #include "StdAfx.h"
 
 #include <iostream>
@@ -12,17 +19,20 @@
 #include "texturemanager.h"
 #include "gamestatestack.h"
 
+/*=================================================
+	Local Constants
+=================================================*/
 #define MAX_STRUCT_NAME_CHARS	(50)
 #define MAX_BONE_LIMIT			(50)
 #define MAX_STRUCT_MATERIALS	(5)
 #define MAX_INFLUENCES			(35)
 #define MAX_BONE_DEPTH			(20)
 #define MAX_VERTICES			(5000)
+#define INVALID_ANIMATION		(9999)
 
-enum {
-	INVALID_ANIMATION = 9999
-};
-
+/*=================================================
+	Local Types
+=================================================*/
 typedef struct Bone : public D3DXFRAME
 {
 	char			_name[MAX_STRUCT_NAME_CHARS];
@@ -35,27 +45,30 @@ typedef struct Bone : public D3DXFRAME
 
 typedef struct MeshContainer : public D3DXMESHCONTAINER
 {
-	//General attributes
+	/* General attributes */
 	char				_name[MAX_STRUCT_NAME_CHARS];
 
-	//Mesh variables
+	/* Mesh variables */
     LPDIRECT3DTEXTURE9  _textures[MAX_STRUCT_MATERIALS];							// textures
 	D3DMATERIAL9		_materials[MAX_STRUCT_MATERIALS];	// material values
 	//D3DMATRIX			_boneOffsets[MAX_BONE_LIMIT];		// bone offsets
 	LPD3DXMATRIX		_frameMatrices[MAX_INFLUENCES];		// references to frame matrix for influences
 	LPD3DXMESH          _skinnedMesh;						// skin mesh
 	
-	//// Attribute table stuff
+	/* Attribute table stuff */
 	//LPD3DXATTRIBUTERANGE pAttributeTable;	// The attribute table
  //   DWORD               NumAttributeGroups;// The number of attribute groups;
 } _MeshContainer;
 
+/*=================================================
+	Macros and Inlines
+=================================================*/
 inline Sphere_PosRad CalculateMeshBoundSphere(LPD3DXMESH mesh)
 {
 	Sphere_PosRad ret;
 	::ZeroMemory(&ret, sizeof(ret));
 
-	// Calculate the bounding sphere
+	/* Calculate the bounding sphere */
 	LPVOID data;
 	if(FAILED(mesh->LockVertexBuffer(D3DLOCK_READONLY, &data)))
 	{
@@ -85,9 +98,9 @@ inline Sphere_PosRad CalculateMeshBoundSphere(LPD3DXMESH mesh)
 	return (ret);
 }
 
-////////////////////////////////////////////////////
-// Hierarchy Allocator Class
-////////////////////////////////////////////////////
+/*=================================================
+	Hierarchy Allocator Class
+=================================================*/
 class DefaultAllocator : public ID3DXAllocateHierarchy
 {
 
@@ -121,7 +134,7 @@ class DefaultAllocator : public ID3DXAllocateHierarchy
         LPD3DXSKININFO pSkinInfo, 
         LPD3DXMESHCONTAINER *ppNewMeshContainer)
 	{
-		// Create a Temp mesh contianer
+		/* Create a Temp mesh container */
 		// Using my drived struct here
 		MeshContainer *container = new MeshContainer();
 		*ppNewMeshContainer = container;
@@ -219,10 +232,9 @@ class DefaultAllocator : public ID3DXAllocateHierarchy
 	}
 };
 
-////////////////////////////////////////////////////
-// Base Model Class
-////////////////////////////////////////////////////
-
+/*=================================================
+	Base Model Class
+=================================================*/
 static DefaultAllocator		s_allocator;
 
 BaseModel::BaseModel(void) : m_mesh(NULL),
@@ -238,10 +250,15 @@ BaseModel::BaseModel(void) : m_mesh(NULL),
 							m_activeAnimation(INVALID_ANIMATION),
 							m_isAnimating(false),
 							m_numOfBones(0),
-							m_boundSphereOutOfDate(true)
+							m_boundSphereOutOfDate(true),
+							m_pRenderFunc(NULL)
 {
 	m_filename[0] = 0;
 	::ZeroMemory(&m_sphereBounds, sizeof(m_sphereBounds));
+
+	RenderFuncs.lightAndColored.P = this;
+	RenderFuncs.lightAndTexture.P = this;
+	RenderFuncs.xpLightAndColored.P = this;
 }
 
 BaseModel::~BaseModel(void)
@@ -255,10 +272,9 @@ BaseModel::~BaseModel(void)
 	COM_SAFERELEASE(m_skeletonVB);
 }
 
-//////////////////////////////////////////////////////////////////////////
-// Setup Functions
-//////////////////////////////////////////////////////////////////////////
-
+/*=================================================
+	Setup Functions
+=================================================*/
 
 bool BaseModel::LoadXMeshFromFile(LPCSTR pFilename, IDirect3DDevice9* pDevice)
 {
@@ -316,28 +332,23 @@ bool BaseModel::LoadXMeshHierarchyFromFile(LPCSTR pFilename, IDirect3DDevice9* p
 	RecurseFillOutBone( m_rootBone, 0 );
 	assert( m_numOfBones > 0 );
 
-	//////////////////////
-	// Vertices //////////
+	/* Vertices */
 	const unsigned int vb_sz = (m_numOfBones+1) * sizeof(SkeletonVertex);
 	HR(pDevice->CreateVertexBuffer( vb_sz/*length*/, D3DUSAGE_WRITEONLY/*usage*/, 
 		SkeletonVertex::FVF/*fvf format*/, D3DPOOL_MANAGED/*pool*/, &m_skeletonVB, 0/*share handle*/ ));
 	
-	/////////////////////
-	// Indices //////////
+	/* Indices */
 	const unsigned int ib_sz = 2 * m_numOfBones * sizeof(WORD);
 	HR(pDevice->CreateIndexBuffer( ib_sz, D3DUSAGE_WRITEONLY/*usage*/, 
 		D3DFMT_INDEX16/*format*/, D3DPOOL_MANAGED/*pool*/, &m_skeletonIB, 0/*share handle*/ ));
 
 	UpdateBoneMatrices();
-	if( m_headMeshContainer )
-	{
-		UpdateSkinnedMeshes( pDevice );
-	}
+	if( m_headMeshContainer ) UpdateSkinnedMeshes( pDevice );
 
 	return true;
 }
 
-// Computes the combined bone transformation and increments the bone count
+/* Computes the combined bone transformation and increments the bone count */
 void BaseModel::RecurseFillOutBone( Bone* bone, unsigned int parentIndex )
 {
 	static int s_boneDepth = 0;
@@ -345,16 +356,16 @@ void BaseModel::RecurseFillOutBone( Bone* bone, unsigned int parentIndex )
 	m_numOfBones++;
 	assert( m_numOfBones < MAX_BONE_LIMIT );
 
-	// save the skeleton verts and indices for rendering
+	/* Save the skeleton verts and indices for rendering */
 	bone->vertIndex = m_numOfBones;
 	bone->parentIndex = parentIndex;
 	bone->jointIndex = jointIndex;
 
-	// link the meshes influences to the actual frame combined matrix
+	/* Link the meshes influences to the actual frame combined matrix */
 	MeshContainer* pMeshContainer = (MeshContainer*)bone->pMeshContainer;
 	if(pMeshContainer != NULL)
 	{
-		// if this is the first mesh container, save it for rendering
+		/* If this is the first mesh container, save it for rendering */
 		m_headMeshContainer = ( m_headMeshContainer ? m_headMeshContainer : pMeshContainer );
 
 		const DWORD numBones = pMeshContainer->pSkinInfo->GetNumBones();
@@ -374,11 +385,11 @@ void BaseModel::RecurseFillOutBone( Bone* bone, unsigned int parentIndex )
 			device, &pMeshContainer->_skinnedMesh );
 	}
 	
-	// siblings
+	/* Siblings */
 	if( bone->pFrameSibling != NULL )
 		RecurseFillOutBone( (Bone*) bone->pFrameSibling, parentIndex );
 
-	// kids
+	/* Kids */
 	if( s_boneDepth < MAX_BONE_DEPTH )
 	{
 		s_boneDepth++;
@@ -397,7 +408,7 @@ void BaseModel::LoadTeapot(IDirect3DDevice9* pDevice)
 	HR(D3DXCreateTeapot(pDevice, &m_mesh, 0));
 	m_meshType = eSimpleMesh;
 	
-	// Teapot Material
+	/* Teapot Material */
 	D3DXCOLOR matColor = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
 	D3DMATERIAL9 mat;
 	mat.Ambient		= matColor;
@@ -414,7 +425,7 @@ void BaseModel::LoadCenteredUnitCube(IDirect3DDevice9* pDevice)
 	HR(D3DXCreateBox( pDevice, 1.0f, 1.0f, 1.0f, &m_mesh, NULL ));
 	m_meshType = eSimpleMesh;
 
-	// Cube Material
+	/* Cube Material */
 	D3DXCOLOR matColor = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
 	D3DMATERIAL9 mat;
 	mat.Ambient		= matColor;
@@ -431,7 +442,7 @@ void BaseModel::LoadCenteredUnitCylinder(IDirect3DDevice9* pDevice)
 	HR(D3DXCreateCylinder( pDevice, 0.5f, 0.5f, 1.0f, 16, 2, &m_mesh, NULL ));
 	m_meshType = eSimpleMesh;
 
-	// Cylinder Material
+	/* Cylinder Material */
 	D3DXCOLOR matColor = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
 	D3DMATERIAL9 mat;
 	mat.Ambient		= matColor;
@@ -448,7 +459,7 @@ void BaseModel::LoadCenteredUnitSphere(IDirect3DDevice9* pDevice)
 	HR(D3DXCreateSphere( pDevice, 1.0f, 32, 32, &m_mesh, NULL ));
 	m_meshType = eSimpleMesh;
 
-	// Sphere Material
+	/* Sphere Material */
 	D3DXCOLOR matColor = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
 	D3DMATERIAL9 mat;
 	mat.Ambient		= matColor;
@@ -490,7 +501,7 @@ void BaseModel::CreateDebugAxes()
 	if(m_debugAxesVB == NULL)
 		return;
 
-	// debug origin lines
+	/* Create debug origin lines */
 	DebugAxesVertex* coord = NULL;
 	HRESULT hr = m_debugAxesVB->Lock(0, 0, (void**)&coord, 0);
 	if(FAILED(hr))
@@ -520,97 +531,14 @@ void BaseModel::CreateDebugAxes()
 	m_debugAxesVB->Unlock();
 }
 
-//////////////////////////////////////////////////////////////////////////
-// Render Functions
-//////////////////////////////////////////////////////////////////////////
-
+/*=================================================
+	Render Functions
+=================================================*/
 void BaseModel::Render(CRenderEngine& rndr, D3DXMATRIX worldTransform, CShaderManagerEx &shaderMgr)
 {
-	assert( m_meshType );
+	assert( m_pRenderFunc != NULL );
 
-	// apply the mesh specific transforms before rendering
-	LPDIRECT3DDEVICE9 device = rndr.GetDevice();
-	CCamera& camera = rndr.GetSceneManager().GetDefaultCamera();
-	rndr.GetLightDirection();
-	Matrix4x4 worldMatrix = GetMeshMatrix() * worldTransform;
-	shaderMgr.SetEffect(EFFECT_LIGHTTEX);
-	shaderMgr.SetDefaultTechnique();
-	shaderMgr.SetWorldTransformEx(worldMatrix);
-	shaderMgr.SetViewProjectionEx(camera.GetViewMatrix(), camera.GetProjectionMatrix());
-	shaderMgr.SetLightDirection(rndr.GetLightDirection());
-
-	// Render Skeleton
-	if( m_meshType == eMeshHierarchy )
-	{
-		// Draw Skeleton
-		//HR(device->SetTexture( 0, 0 ));
-		//HR(device->SetStreamSource( 0, m_skeletonVB, 0, sizeof(SkeletonVertex) ));
-		//HR(device->SetIndices( m_skeletonIB ));
-		//HR(device->SetFVF( SkeletonVertex::FVF ));
-		//HR(device->DrawIndexedPrimitive(D3DPT_LINELIST, 0, 0, m_numOfBones+1, 10, m_numOfBones ));
-	
-		// Draw Skin
-		int numPasses = shaderMgr.BeginEffect();
-		for( int p = 0; p < numPasses; p++ )
-		{
-			shaderMgr.Pass(p);
-
-			MeshContainer* pDrawContainer = (MeshContainer*)m_headMeshContainer;
-			while( pDrawContainer != NULL )
-			{
-				for( DWORD i = 0; i < pDrawContainer->NumMaterials; i++ )
-				{
-					shaderMgr.SetMaterialEx(pDrawContainer->_materials[i]);
-					HR(device->SetFVF( pDrawContainer->pSkinInfo->GetFVF() ));
-					shaderMgr.SetTexture("tex0", pDrawContainer->_textures[i]);
-					shaderMgr.CommitEffectParams();
-
-					HR((pDrawContainer->_skinnedMesh->DrawSubset(i)));
-				}
-				pDrawContainer = (MeshContainer*)pDrawContainer->pNextMeshContainer;
-			}
-
-			shaderMgr.FinishPass();
-		}
-
-		shaderMgr.FinishEffect();
-
-	}
-	else
-	{
-		assert(m_meshType == eSimpleMesh);
-		
-		int numPasses = shaderMgr.BeginEffect();
-		for( int p = 0; p < numPasses; p++ )
-		{
-			shaderMgr.Pass(p);
-			for(int i = 0, j = m_arrMats.size(); i < j; i++)
-			{
-				shaderMgr.SetMaterialEx(m_arrMats[i]);
-				device->SetFVF(m_mesh->GetFVF());
-				shaderMgr.SetTexture("tex0", m_arrTexs[i]);
-				shaderMgr.CommitEffectParams();
-				HR(m_mesh->DrawSubset(i));
-			}
-
-			shaderMgr.FinishPass();
-		}
-
-		shaderMgr.FinishEffect();
-		device->SetTexture(0, 0);
-	}
-
-#ifdef _DEBUG
-	// draw debug origin lines		
-	if(m_debugAxesVB)
-	{
-		device->SetTexture(0,0);
-		device->SetStreamSource(0, m_debugAxesVB, 0, sizeof(DebugAxesVertex));
-		device->SetFVF(DebugAxesVertex::FVF);
-		device->DrawPrimitive(D3DPT_LINELIST, 0, 3);
-	}
-#endif
-	
+	m_pRenderFunc->Render(rndr, worldTransform, shaderMgr);
 }
 
 Sphere_PosRad BaseModel::GetSphereBounds()
@@ -649,23 +577,20 @@ Sphere_PosRad BaseModel::GetSphereBounds()
 	return (m_sphereBounds);
 }
 
-//////////////////////////////////////////////////////////////////////////
-// Update Functions
-//////////////////////////////////////////////////////////////////////////
+/*=================================================
+	Update Functions
+=================================================*/
 
 void BaseModel::Update( LPDIRECT3DDEVICE9 device, float elapsedMillis )
 {
-	if( m_meshType == eMeshHierarchy )
+	if( m_meshType == eMeshHierarchy && m_animController && m_isAnimating )
 	{
-		if(m_animController && m_isAnimating )
-		{
-			m_animController->AdvanceTime( elapsedMillis, NULL );
+		m_animController->AdvanceTime( elapsedMillis, NULL );
 
-			UpdateBoneMatrices();
-			if( m_headMeshContainer )
-			{
-				UpdateSkinnedMeshes( device );
-			}
+		UpdateBoneMatrices();
+		if( m_headMeshContainer )
+		{
+			UpdateSkinnedMeshes( device );
 		}
 	}
 }
@@ -680,7 +605,7 @@ void BaseModel::UpdateBoneMatrices()
 	SkeletonVertex verts[ MAX_BONE_LIMIT ];	
 	::ZeroMemory( &verts, sizeof(verts) );
 
-	// Calcuate the frame matrices
+	/* Calcuate the frame matrices */
 	D3DXMATRIX mat;
 	D3DXMatrixIdentity( &mat );
 	RecurseCalculateBoneMatrices( m_rootBone, &mat, verts, indices );
@@ -706,7 +631,7 @@ void BaseModel::UpdateSkinnedMeshes( LPDIRECT3DDEVICE9 device )
 		if( container->pSkinInfo == NULL )
 			continue;
 
-		// software skinning
+		/* Software skinning */
 		LPD3DXMESH srcMesh = container->MeshData.pMesh;
 		LPD3DXMESH destMesh = container->_skinnedMesh;
 
@@ -730,7 +655,7 @@ void BaseModel::UpdateSkinnedMeshes( LPDIRECT3DDEVICE9 device )
 
 	}
 
-	// update the bound sphere
+	/* Update the bound sphere */
 	m_boundSphereOutOfDate = true;
 }
 
@@ -745,11 +670,11 @@ void BaseModel::RecurseCalculateBoneMatrices( Bone* bone, LPD3DXMATRIX parentTra
 	arrIndices[bone->jointIndex<<1] = bone->parentIndex;
 	arrIndices[(bone->jointIndex<<1)+1] = bone->vertIndex;
 
-	// siblings
+	/* Siblings */
 	if( bone->pFrameSibling != NULL )
 		RecurseCalculateBoneMatrices( (Bone*) bone->pFrameSibling, parentTransform, arrVertices, arrIndices );
 
-	// kids
+	/* Kids */
 	if( s_boneDepth < MAX_BONE_DEPTH )
 	{
 		s_boneDepth++;
@@ -796,4 +721,266 @@ void BaseModel::SetDrawColor( ColorRGBA32 clr )
 
 	m_arrMats.push_back(mat);
 	m_arrTexs.push_back(CTextureManager::GetInstance()->GetTexture(GLOBAL_TEX_CONTEXT, DEFAULT_TEXTURE));
+}
+
+/*=================================================
+	Functor Classes
+=================================================*/
+
+/* Light & Texture */
+void rfLightAndTexture::Render(CRenderEngine& rndr, D3DXMATRIX worldTransform, CShaderManagerEx &shaderMgr)
+{
+	assert( P->m_meshType );
+
+	/* Apply the mesh specific transforms before rendering */
+	LPDIRECT3DDEVICE9 device = rndr.GetDevice();
+	CCamera& camera = rndr.GetSceneManager().GetDefaultCamera();
+	Matrix4x4 worldMatrix = P->GetMeshMatrix() * worldTransform;
+	shaderMgr.SetEffect(EFFECT_LIGHTTEX);
+	shaderMgr.SetDefaultTechnique();
+	shaderMgr.SetWorldTransformEx(worldMatrix);
+	shaderMgr.SetViewProjectionEx(camera.GetViewMatrix(), camera.GetProjectionMatrix());
+	shaderMgr.SetLightDirection(rndr.GetLightDirection());
+
+	/* Render Skeleton */
+	if( P->m_meshType == eMeshHierarchy )
+	{
+		/* Draw Skeleton */
+		//HR(device->SetTexture( 0, 0 ));
+		//HR(device->SetStreamSource( 0, m_skeletonVB, 0, sizeof(SkeletonVertex) ));
+		//HR(device->SetIndices( m_skeletonIB ));
+		//HR(device->SetFVF( SkeletonVertex::FVF ));
+		//HR(device->DrawIndexedPrimitive(D3DPT_LINELIST, 0, 0, m_numOfBones+1, 10, m_numOfBones ));
+	
+		/* Draw Skin */
+		int numPasses = shaderMgr.BeginEffect();
+		for( int p = 0; p < numPasses; p++ )
+		{
+			shaderMgr.Pass(p);
+
+			MeshContainer* pDrawContainer = (MeshContainer*)P->m_headMeshContainer;
+			while( pDrawContainer != NULL )
+			{
+				for( DWORD i = 0; i < pDrawContainer->NumMaterials; i++ )
+				{
+					shaderMgr.SetMaterialEx(pDrawContainer->_materials[i]);
+					HR(device->SetFVF( pDrawContainer->pSkinInfo->GetFVF() ));
+					shaderMgr.SetTexture("tex0", pDrawContainer->_textures[i]);
+					shaderMgr.CommitEffectParams();
+
+					HR((pDrawContainer->_skinnedMesh->DrawSubset(i)));
+				}
+				pDrawContainer = (MeshContainer*)pDrawContainer->pNextMeshContainer;
+			}
+
+			shaderMgr.FinishPass();
+		}
+
+		shaderMgr.FinishEffect();
+
+	}
+	else
+	{
+		assert(P->m_meshType == eSimpleMesh);
+		
+		int numPasses = shaderMgr.BeginEffect();
+		for( int p = 0; p < numPasses; p++ )
+		{
+			shaderMgr.Pass(p);
+			for(int i = 0, j = P->m_arrMats.size(); i < j; i++)
+			{
+				shaderMgr.SetMaterialEx(P->m_arrMats[i]);
+				device->SetFVF(P->m_mesh->GetFVF());
+				shaderMgr.SetTexture("tex0", P->m_arrTexs[i]);
+				shaderMgr.CommitEffectParams();
+				HR(P->m_mesh->DrawSubset(i));
+			}
+
+			shaderMgr.FinishPass();
+		}
+
+		shaderMgr.FinishEffect();
+		device->SetTexture(0, 0);
+	}
+
+	/* Draw debug origin lines */
+#ifdef _DEBUG
+	if(P->m_debugAxesVB)
+	{
+		device->SetTexture(0,0);
+		device->SetStreamSource(0, P->m_debugAxesVB, 0, sizeof(DebugAxesVertex));
+		device->SetFVF(DebugAxesVertex::FVF);
+		device->DrawPrimitive(D3DPT_LINELIST, 0, 3);
+	}
+#endif
+}
+
+/* Light & Color */
+void rfLightAndColored::Render(CRenderEngine& rndr, D3DXMATRIX worldTransform, CShaderManagerEx &shaderMgr)
+{
+	assert( P->m_meshType );
+
+	/* Apply the mesh specific transforms before rendering */
+	LPDIRECT3DDEVICE9 device = rndr.GetDevice();
+	CCamera& camera = rndr.GetSceneManager().GetDefaultCamera();
+	Matrix4x4 worldMatrix = P->GetMeshMatrix() * worldTransform;
+	shaderMgr.SetEffect(EFFECT_DEBUGDRAW);
+	shaderMgr.SetTechnique("LightColor");
+	shaderMgr.SetWorldTransformEx(worldMatrix);
+	shaderMgr.SetViewProjectionEx(camera.GetViewMatrix(), camera.GetProjectionMatrix());
+	shaderMgr.SetLightDirection(rndr.GetLightDirection());
+
+	/* Render Skeleton */
+	if( P->m_meshType == eMeshHierarchy )
+	{
+		/* Draw Skeleton */
+		//HR(device->SetTexture( 0, 0 ));
+		//HR(device->SetStreamSource( 0, m_skeletonVB, 0, sizeof(SkeletonVertex) ));
+		//HR(device->SetIndices( m_skeletonIB ));
+		//HR(device->SetFVF( SkeletonVertex::FVF ));
+		//HR(device->DrawIndexedPrimitive(D3DPT_LINELIST, 0, 0, m_numOfBones+1, 10, m_numOfBones ));
+	
+		/* Draw Skin */
+		int numPasses = shaderMgr.BeginEffect();
+		for( int p = 0; p < numPasses; p++ )
+		{
+			shaderMgr.Pass(p);
+
+			MeshContainer* pDrawContainer = (MeshContainer*)P->m_headMeshContainer;
+			while( pDrawContainer != NULL )
+			{
+				for( DWORD i = 0; i < pDrawContainer->NumMaterials; i++ )
+				{
+					shaderMgr.SetMaterialEx(pDrawContainer->_materials[i]);
+					HR(device->SetFVF( pDrawContainer->pSkinInfo->GetFVF() ));
+					shaderMgr.CommitEffectParams();
+
+					HR((pDrawContainer->_skinnedMesh->DrawSubset(i)));
+				}
+				pDrawContainer = (MeshContainer*)pDrawContainer->pNextMeshContainer;
+			}
+
+			shaderMgr.FinishPass();
+		}
+
+		shaderMgr.FinishEffect();
+
+	}
+	else
+	{
+		assert(P->m_meshType == eSimpleMesh);
+		
+		int numPasses = shaderMgr.BeginEffect();
+		for( int p = 0; p < numPasses; p++ )
+		{
+			shaderMgr.Pass(p);
+			for(int i = 0, j = P->m_arrMats.size(); i < j; i++)
+			{
+				shaderMgr.SetMaterialEx(P->m_arrMats[i]);
+				device->SetFVF(P->m_mesh->GetFVF());
+				shaderMgr.CommitEffectParams();
+				HR(P->m_mesh->DrawSubset(i));
+			}
+
+			shaderMgr.FinishPass();
+		}
+
+		shaderMgr.FinishEffect();
+	}
+
+	/* Draw debug origin lines */
+#ifdef _DEBUG
+	if(P->m_debugAxesVB)
+	{
+		device->SetTexture(0,0);
+		device->SetStreamSource(0, P->m_debugAxesVB, 0, sizeof(DebugAxesVertex));
+		device->SetFVF(DebugAxesVertex::FVF);
+		device->DrawPrimitive(D3DPT_LINELIST, 0, 3);
+	}
+#endif
+}
+
+/* Transparency Light & Color */
+void rfXPLightAndColored::Render(CRenderEngine& rndr, D3DXMATRIX worldTransform, CShaderManagerEx &shaderMgr)
+{
+	assert( P->m_meshType );
+
+	/* Apply the mesh specific transforms before rendering */
+	LPDIRECT3DDEVICE9 device = rndr.GetDevice();
+	CCamera& camera = rndr.GetSceneManager().GetDefaultCamera();
+	Matrix4x4 worldMatrix = P->GetMeshMatrix() * worldTransform;
+	shaderMgr.SetEffect(EFFECT_DEBUGDRAW);
+	shaderMgr.SetTechnique("XPLightColor");
+	shaderMgr.SetWorldTransformEx(worldMatrix);
+	shaderMgr.SetViewProjectionEx(camera.GetViewMatrix(), camera.GetProjectionMatrix());
+	shaderMgr.SetLightDirection(rndr.GetLightDirection());
+
+	/* Render Skeleton */
+	if( P->m_meshType == eMeshHierarchy )
+	{
+		/* Draw Skeleton */
+		//HR(device->SetTexture( 0, 0 ));
+		//HR(device->SetStreamSource( 0, m_skeletonVB, 0, sizeof(SkeletonVertex) ));
+		//HR(device->SetIndices( m_skeletonIB ));
+		//HR(device->SetFVF( SkeletonVertex::FVF ));
+		//HR(device->DrawIndexedPrimitive(D3DPT_LINELIST, 0, 0, m_numOfBones+1, 10, m_numOfBones ));
+	
+		/* Draw Skin */
+		int numPasses = shaderMgr.BeginEffect();
+		for( int p = 0; p < numPasses; p++ )
+		{
+			shaderMgr.Pass(p);
+
+			MeshContainer* pDrawContainer = (MeshContainer*)P->m_headMeshContainer;
+			while( pDrawContainer != NULL )
+			{
+				for( DWORD i = 0; i < pDrawContainer->NumMaterials; i++ )
+				{
+					shaderMgr.SetMaterialEx(pDrawContainer->_materials[i]);
+					HR(device->SetFVF( pDrawContainer->pSkinInfo->GetFVF() ));
+					shaderMgr.CommitEffectParams();
+
+					HR((pDrawContainer->_skinnedMesh->DrawSubset(i)));
+				}
+				pDrawContainer = (MeshContainer*)pDrawContainer->pNextMeshContainer;
+			}
+
+			shaderMgr.FinishPass();
+		}
+
+		shaderMgr.FinishEffect();
+
+	}
+	else
+	{
+		assert(P->m_meshType == eSimpleMesh);
+		
+		int numPasses = shaderMgr.BeginEffect();
+		for( int p = 0; p < numPasses; p++ )
+		{
+			shaderMgr.Pass(p);
+			for(int i = 0, j = P->m_arrMats.size(); i < j; i++)
+			{
+				shaderMgr.SetMaterialEx(P->m_arrMats[i]);
+				device->SetFVF(P->m_mesh->GetFVF());
+				shaderMgr.CommitEffectParams();
+				HR(P->m_mesh->DrawSubset(i));
+			}
+
+			shaderMgr.FinishPass();
+		}
+
+		shaderMgr.FinishEffect();
+	}
+
+	/* Draw debug origin lines */
+#ifdef _DEBUG
+	if(P->m_debugAxesVB)
+	{
+		device->SetTexture(0,0);
+		device->SetStreamSource(0, P->m_debugAxesVB, 0, sizeof(DebugAxesVertex));
+		device->SetFVF(DebugAxesVertex::FVF);
+		device->DrawPrimitive(D3DPT_LINELIST, 0, 3);
+	}
+#endif
 }

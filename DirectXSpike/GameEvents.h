@@ -1,5 +1,11 @@
 #pragma once
-
+/********************************************************************
+	created:	2012/04/16
+	filename: 	GameEvents.h
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #include "MathUtil.h"
 
 interface IEventHandler 
@@ -10,7 +16,8 @@ interface IEventHandler
 //////////////////////////////////////
 // Events
 //////////////////////////////////////
-typedef enum {
+typedef enum _EEventIds
+{
 	EVT_UPDATE		 = 1, 
 	EVT_RENDER,			  
 	EVT_INIT,       
@@ -31,25 +38,25 @@ typedef enum {
 	EVT_GETTEXCONTEXT,
 	EVT_ATTACH_CAMERA,
 	EVT_CNT
-};
+} EEventIds;
 
 //////////////////////////////////////
 // Event Arg Types
 //////////////////////////////////////
 
 // EVT_MOVECMD
-typedef enum 
+typedef enum _EMovementStateType
 {
 	MOVE_FORWARD, 
 	MOVE_BACKWARD, 
 	MOVE_LEFT, 
 	MOVE_RIGHT
 	/* note: order matters */
-} MovementStateType;
+} EMovementStateType;
 
-typedef struct
+typedef struct _MovementCommandType
 {
-	MovementStateType	state;
+	EMovementStateType	state;
 	bool				clearFlag;
 } MovementCommandType;
 

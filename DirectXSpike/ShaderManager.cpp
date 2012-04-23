@@ -1,3 +1,10 @@
+/********************************************************************
+	created:	2012/04/16
+	filename: 	ShaderManager.cpp
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #include "StdAfx.h"
 #include "ShaderManager.h"
 #include "Settings.h"
@@ -85,14 +92,14 @@ void CShaderManager::Setup()
 	primColoredPass.pPSConstTable->AddRef();
 	m_vecPasses.push_back(primColoredPass);*/
 
-	// DIRECTIONAL LIGHTS
-	D3DXCOLOR lightColor = D3DXCOLOR(1.f, 1.0f, 1.0f, 1.0f);
-	::ZeroMemory(&m_DirectionalLight, sizeof(m_DirectionalLight));
-	m_DirectionalLight.Type			= D3DLIGHT_DIRECTIONAL;
-	m_DirectionalLight.Ambient		= lightColor * 0.5f;
-	m_DirectionalLight.Diffuse		= lightColor;
-	m_DirectionalLight.Specular		= lightColor * 0.3f;
-	m_DirectionalLight.Direction	= D3DXVECTOR3(0.0f, -1.0f, 0.0f);//D3DXVECTOR3(-0.7f, -1.0f, -0.7f);
+	//// DIRECTIONAL LIGHTS
+	//D3DXCOLOR lightColor = D3DXCOLOR(1.f, 1.0f, 1.0f, 1.0f);
+	//::ZeroMemory(&m_DirectionalLight, sizeof(m_DirectionalLight));
+	//m_DirectionalLight.Type			= D3DLIGHT_DIRECTIONAL;
+	//m_DirectionalLight.Ambient		= lightColor * 0.5f;
+	//m_DirectionalLight.Diffuse		= lightColor;
+	//m_DirectionalLight.Specular		= lightColor * 0.3f;
+	//m_DirectionalLight.Direction	= D3DXVECTOR3(0.0f, -1.0f, 0.0f);//D3DXVECTOR3(-0.7f, -1.0f, -0.7f);
 }	
 	
 void CShaderManager::CreatePixelShader(ShaderPass &pass, LPCSTR psFileName)
@@ -145,9 +152,7 @@ void CShaderManager::CreateVertexShader(ShaderPass &pass, LPCSTR vsFileName)
 
 void CShaderManager::Update(float elapsed)
 {
-	bool settingsBool;
-	Settings_GetBool(DEBUG_ROTATE_SUN, settingsBool);
-	if( settingsBool == true)
+	if( Settings_GetBool(DEBUG_ROTATE_SUN) )
 	{
 		float rotationAmount = elapsed * LightXRotationRateRadianSec;
 		D3DXVECTOR3 direction = m_DirectionalLight.Direction, outDir;
@@ -157,7 +162,7 @@ void CShaderManager::Update(float elapsed)
 	}
 }
 
-void CShaderManager::SetVertexShader(ePassID vtShaderId)
+void CShaderManager::SetVertexShader(EPassId vtShaderId)
 {
 	m_device->SetVertexShader(GetVertexShaderByPass(vtShaderId));
 
@@ -167,7 +172,7 @@ void CShaderManager::SetVertexShader(ePassID vtShaderId)
 	m_currentVS = vtShaderId;
 }
 
-void CShaderManager::SetPixelShader(ePassID pxShaderId)
+void CShaderManager::SetPixelShader(EPassId pxShaderId)
 {
 	m_device->SetPixelShader(GetPixelShaderByPass(pxShaderId));
 	
@@ -177,7 +182,7 @@ void CShaderManager::SetPixelShader(ePassID pxShaderId)
 	m_currentPS = pxShaderId;
 }
 
-void CShaderManager::ReloadPixelShader(ePassID passId)
+void CShaderManager::ReloadPixelShader(EPassId passId)
 {
 	if(m_currentPS == passId)
 		return;
@@ -209,7 +214,7 @@ void CShaderManager::ReloadPixelShader(ePassID passId)
 
 }
 
-void CShaderManager::ReloadVertexShader(ePassID passId)
+void CShaderManager::ReloadVertexShader(EPassId passId)
 {
 	if(m_currentVS == passId)
 		return;
@@ -294,7 +299,7 @@ bool CShaderManager::SetShaderConstant( ID3DXConstantTable *pConsts, LPCSTR cons
 	return true;
 }
 
-void CShaderManager::SetWorldTransform(ePassID pass, D3DXMATRIX worldTransform)
+void CShaderManager::SetWorldTransform(EPassId pass, D3DXMATRIX worldTransform)
 {
 	ShaderVariant &v = m_vecPasses[pass].params.worldTransform;
 	v.type = SHADER_VAR_MATRIX;
@@ -302,7 +307,7 @@ void CShaderManager::SetWorldTransform(ePassID pass, D3DXMATRIX worldTransform)
 	SetShaderConstant( m_vecPasses[pass].pVSConstTable, "matWorld", v );	
 }
 
-void CShaderManager::SetViewProjection(ePassID pass, D3DXMATRIX viewTransform, D3DXMATRIX projectionTransform )
+void CShaderManager::SetViewProjection(EPassId pass, D3DXMATRIX viewTransform, D3DXMATRIX projectionTransform )
 { 
 	ShaderPass &sp = m_vecPasses[pass]; 
 	
@@ -319,7 +324,7 @@ void CShaderManager::SetViewProjection(ePassID pass, D3DXMATRIX viewTransform, D
 	SetShaderConstant( m_vecPasses[pass].pVSConstTable, "matView", v );
 }
 
-void CShaderManager::SetDrawColor(ePassID pass, D3DXCOLOR color )
+void CShaderManager::SetDrawColor(EPassId pass, D3DXCOLOR color )
 {
 	ShaderVariant v;
 	v.type = SHADER_VAR_FLOAT4;
@@ -327,7 +332,7 @@ void CShaderManager::SetDrawColor(ePassID pass, D3DXCOLOR color )
 	SetShaderConstant( m_vecPasses[pass].pVSConstTable, "drawColor", v );
 }
 
-void CShaderManager::SetMaterial(ePassID pass, const D3DMATERIAL9 &mat ) 
+void CShaderManager::SetMaterial(EPassId pass, const D3DMATERIAL9 &mat ) 
 {
 	ShaderVariant* v = &m_vecPasses[pass].params.matDiffuse;
 	v->type = SHADER_VAR_FLOAT4;
@@ -340,7 +345,7 @@ void CShaderManager::SetMaterial(ePassID pass, const D3DMATERIAL9 &mat )
 	SetShaderConstant( m_vecPasses[pass].pVSConstTable, "ambientMaterial", *v );
 }
 
-void CShaderManager::SetInvViewport(ePassID pass, float viewWidth, float viewHeight, bool pixelShader/*=false*/)
+void CShaderManager::SetInvViewport(EPassId pass, float viewWidth, float viewHeight, bool pixelShader/*=false*/)
 {
 	float invWidth = 1.0f/viewWidth;
 	float invHeight = 1.0f/viewHeight;

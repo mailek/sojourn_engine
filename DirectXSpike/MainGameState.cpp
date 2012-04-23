@@ -1,3 +1,10 @@
+/********************************************************************
+	created:	2012/04/16
+	filename: 	MainGameState.cpp
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #include "StdAfx.h"
 #include "MainGameState.h"
 #include "RenderEngine.h"

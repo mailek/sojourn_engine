@@ -307,15 +307,15 @@
 				Name="Shaders"
 				>
 				<File
+					RelativePath="..\Engine\Shaders\DebugDraw.fx"
+					>
+				</File>
+				<File
 					RelativePath="..\Engine\Shaders\FlatShade.fx"
 					>
 				</File>
 				<File
 					RelativePath="..\Engine\Shaders\GaussBlur.fx"
-					>
-				</File>
-				<File
-					RelativePath="..\Engine\Shaders\Primitives.fx"
 					>
 				</File>
 				<File

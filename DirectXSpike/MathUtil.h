@@ -1,7 +1,11 @@
 #pragma once
-//////////////////////////////////////////////////////////////////////////
-// MathUtil.h - 2011 Matthew Alford
-//////////////////////////////////////////////////////////////////////////
+/********************************************************************
+	created:	2012/04/23
+	filename: 	MathUtil.h
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 
 //////////////////////////////////////
 // Includes
@@ -67,38 +71,45 @@ typedef D3DXQUATERNION Quaternion;
 Matrix4x4 Matrix4x4_LookAtQuaternion( Matrix4x4 *mat_out, Vector_3 *eye, Vector_3 *target );
 
 /* Geometry Types */
-typedef struct {
+typedef struct _Polygon_ABC
+{
 	Vector_3		a;
 	Vector_3		b;
 	Vector_3		c;
 } Polygon_ABC;
 
-typedef struct {
+typedef struct _ABB_MaxMin
+{
 	Vector_3		max;
 	Vector_3		min;
 } ABB_MaxMin;
 
-typedef struct {
+typedef struct _Ray_Vec3Pt
+{
 	Vector_3		origin;
 	Vector_3		normal;
 } Ray_Vec3Pt;
 
-typedef struct {
+typedef struct _Plane_Vec3PtNorm
+{
 	Vector_3		origin;
 	Vector_3		normal;
 } Plane_Vec3PtNorm;
 
-typedef struct {
+typedef struct _Sphere_PosRad
+{
 	Vector_3		pos;
 	float			radius;
 } Sphere_PosRad;
 
-typedef struct {
+typedef struct _Capsule 
+{
 	Sphere_PosRad	s;
 	Vector_3		v;
 } Capsule;
 
-typedef struct {
+typedef struct _Frustum_Camera
+{
 	Point_3D		cameraPos;		/* world position of the camera										*/
 	Vector_3		cameraX;		/* normalized X axis world orientation 								*/
 	Vector_3		cameraY;		/* normalized Y axis world orientation 								*/
@@ -119,12 +130,12 @@ const float HALF_PI		= PI / 2.0f;
 const float TWO_PI		= 2 * PI;
 
 /* Collision */
-typedef enum {
+typedef enum _EIntersectType {
 	COLLIDE_INVALID =0,
 	COLLIDE_OUTSIDE,
 	COLLIDE_INTERSECT,
 	COLLIDE_CONTAINED
-} IntersectType;
+} EIntersectType;
 
 //////////////////////////////////////
 // Function Declarations
@@ -139,7 +150,7 @@ extern inline float fclamp(float x, float min, float max);
 extern inline bool fcompare(float a, float b);
 
 /* Collision */
-typedef enum
+typedef enum _ECollideAxesType
 {
 	TEST_1D_X	= 1,
 	TEST_1D_Y	= 2,
@@ -148,16 +159,16 @@ typedef enum
 	TEST_2D_XZ	= 5,
 	TEST_2D_YZ	= 6,
 	TEST_3D_XYZ	= 7
-} CollideAxesType;
+} ECollideAxesType;
 
 bool Collide_PointToBox(const Point_3D &p, const ABB_MaxMin &abb, WORD axes=TEST_3D_XYZ);
 bool Collide_PointToFrustum(Point_3D &testPt, const Frustum_Camera &f, bool ignoreY = false);
-IntersectType Collide_ABBToFrustum(const ABB_MaxMin testABB, const Frustum_Camera &f, bool bTest2DXZ /*= false*/);
-IntersectType Collide_SphereToFrustum(const Sphere_PosRad &s, const Frustum_Camera &f, bool bTest2DXZ);
+EIntersectType Collide_ABBToFrustum(const ABB_MaxMin testABB, const Frustum_Camera &f, bool bTest2DXZ /*= false*/);
+EIntersectType Collide_SphereToFrustum(const Sphere_PosRad &s, const Frustum_Camera &f, bool bTest2DXZ);
 bool Collide_SphereToBox(const Sphere_PosRad &s, const ABB_MaxMin &abb);
 bool Collide_SphereToSphere(const Sphere_PosRad &s1, const Sphere_PosRad &s2);
 bool Collide_SphereToCapsule(const Sphere_PosRad &s, const Capsule &c);
-IntersectType Collide_SphereToPlane(const Sphere_PosRad &s, const Plane_Vec3PtNorm p, /*out*/Point_3D* sphereIntersect);
+EIntersectType Collide_SphereToPlane(const Sphere_PosRad &s, const Plane_Vec3PtNorm p, /*out*/Point_3D* sphereIntersect);
 bool Collide_RayToPlane(const Ray_Vec3Pt &r, const Plane_Vec3PtNorm p);
 
 /* ABB Routines */

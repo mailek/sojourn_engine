@@ -1,3 +1,10 @@
+/********************************************************************
+	created:	2012/04/23
+	filename: 	Skybox.cpp
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #include "StdAfx.h"
 #include "Skybox.h"
 #include "ShaderManager.h"

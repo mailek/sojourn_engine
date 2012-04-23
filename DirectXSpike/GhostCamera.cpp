@@ -1,3 +1,10 @@
+/********************************************************************
+	created:	2012/04/23
+	filename: 	GhostCamera.cpp
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #include "StdAfx.h"
 #include "GhostCamera.h"
 #include "camera.h"
@@ -6,14 +13,15 @@
 // Type Definitions
 //////////////////////////////////////
 
-typedef enum {
+typedef enum _EMovementFlagType 
+{
 	MOVE_FORWARD_FLAG	= (1<<0), 
 	MOVE_BACKWARD_FLAG	= (1<<1), 
 	MOVE_LEFT_FLAG		= (1<<2), 
 	MOVE_RIGHT_FLAG		= (1<<3),
 	/* all flags */
 	MOVE_FLAG_MASK		= MOVE_FORWARD_FLAG | MOVE_BACKWARD_FLAG | MOVE_LEFT_FLAG | MOVE_RIGHT_FLAG
-	} MovementFlagType;
+} EMovementFlagType;
 
 //////////////////////////////////////////////////////////////////////////
 // Setup Functions
@@ -35,7 +43,7 @@ CGhostCamera::~CGhostCamera(void)
 
 bool CGhostCamera::HandleEvent(UINT eventId, void* data, UINT data_sz)
 {
-	static const MovementFlagType movementMap[] = {
+	static const EMovementFlagType movementMap[] = {
 		MOVE_FORWARD_FLAG	/* = MOVE_FORWARD*/,
 		MOVE_BACKWARD_FLAG	/* = MOVE_BACKWARD*/,
 		MOVE_LEFT_FLAG		/* = MOVE_LEFT*/,

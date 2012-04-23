@@ -1,12 +1,18 @@
 #pragma once
-
+/********************************************************************
+	created:	2012/04/23
+	filename: 	FileIO.h
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #include <fstream>
 
 typedef std::ifstream InputFileType;
 typedef std::ofstream OutputFileType;
 
 typedef const char* FileNameType;
-typedef struct 
+typedef struct _IOVector3
 {
 	float x;
 	float y;

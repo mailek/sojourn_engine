@@ -1,3 +1,10 @@
+/********************************************************************
+	created:	2012/04/23
+	filename: 	MathUtil.cpp
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #include "stdafx.h"
 #include "mathutil.h"
 
@@ -492,7 +499,7 @@ bool Collide_PointToFrustum(
 }
 
 /* Collide ABB to Frustum */
-IntersectType Collide_ABBToFrustum(
+EIntersectType Collide_ABBToFrustum(
 	const ABB_MaxMin testABB, 
 	const Frustum_Camera &f, 
 	bool bTest2D_XZ /*= false*/
@@ -534,7 +541,7 @@ IntersectType Collide_ABBToFrustum(
 }
 
 /* Collide Sphere to Frustum */
-IntersectType Collide_SphereToFrustum(
+EIntersectType Collide_SphereToFrustum(
 	const Sphere_PosRad &s, 
 	const Frustum_Camera &f,
 	bool bTest2D_XZ
@@ -594,7 +601,7 @@ bool Collide_RayToPlane(const Ray_Vec3Pt &r, const Plane_Vec3PtNorm p)
 }
 
 /* Collide Sphere with Plane */
-IntersectType Collide_SphereToPlane(const Sphere_PosRad &s, const Plane_Vec3PtNorm p, /*out*/Point_3D* sphereIntersect)
+EIntersectType Collide_SphereToPlane(const Sphere_PosRad &s, const Plane_Vec3PtNorm p, /*out*/Point_3D* sphereIntersect)
 {
 	*sphereIntersect = Point_3D(0,0,0);
 	assert(false);

@@ -1,5 +1,11 @@
 #pragma once
-
+/********************************************************************
+	created:	2012/04/23
+	filename: 	LevelLoader.h
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #include "fileio.h"
 #include "skybox.h"
 

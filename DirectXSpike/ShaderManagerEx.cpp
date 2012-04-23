@@ -1,3 +1,10 @@
+/********************************************************************
+	created:	2012/04/16
+	filename: 	ShaderManagerEx.cpp
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #include "StdAfx.h"
 #include "ShaderManagerEx.h"
 
@@ -19,8 +26,17 @@ void CShaderManagerEx::Setup(void)
 	LoadShader( "SkyDome.fx",		EFFECT_SKYDOME );
 	LoadShader( "GaussBlur.fx",		EFFECT_GAUSSBLUR );
 	LoadShader( "ScreenQuad.fx",	EFFECT_SCREENQUAD );
-	LoadShader( "Primitives.fx",	EFFECT_PRIMITIVES );
+	LoadShader( "DebugDraw.fx",	    EFFECT_DEBUGDRAW );
 	LoadShader( "FlatShade.fx",		EFFECT_LIGHTTEX );
+
+	// DIRECTIONAL LIGHTS
+	D3DXCOLOR lightColor = D3DXCOLOR(1.f, 1.0f, 1.0f, 1.0f);
+	::ZeroMemory(&m_DirectionalLight, sizeof(m_DirectionalLight));
+	m_DirectionalLight.Type			= D3DLIGHT_DIRECTIONAL;
+	m_DirectionalLight.Ambient		= lightColor * 0.5f;
+	m_DirectionalLight.Diffuse		= lightColor;
+	m_DirectionalLight.Specular		= lightColor * 0.3f;
+	m_DirectionalLight.Direction	= D3DXVECTOR3(0.0f, -1.0f, 0.0f);//D3DXVECTOR3(-0.7f, -1.0f, -0.7f);
 }
 
 void CShaderManagerEx::SetWorldTransformEx(D3DXMATRIX worldTransform)
@@ -84,7 +100,7 @@ void CShaderManagerEx::FinishPass()
 	HR(m_currentEffect->EndPass());
 }
 
-void CShaderManagerEx::SetEffect(eEffectID effectId)
+void CShaderManagerEx::SetEffect(EEffectID effectId)
 {
 	assert(effectId < EFFECT_CNT && effectId >= 0);
 
@@ -95,7 +111,7 @@ void CShaderManagerEx::SetEffect(eEffectID effectId)
 	}
 }
 
-void CShaderManagerEx::ReloadEffect(eEffectID effectId)
+void CShaderManagerEx::ReloadEffect(EEffectID effectId)
 {
 	switch(effectId)
 	{
@@ -113,7 +129,7 @@ void CShaderManagerEx::ReloadEffect(eEffectID effectId)
 			SetEffectConstant( "fInvViewportHeight", v );
 			break;
 		}
-	case EFFECT_PRIMITIVES:
+	case EFFECT_DEBUGDRAW:
 		break;
 	default:
 		assert(false);

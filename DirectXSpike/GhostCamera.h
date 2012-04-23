@@ -1,5 +1,11 @@
 #pragma once
-
+/********************************************************************
+	created:	2012/04/23
+	filename: 	GhostCamera.h
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #include "gameevents.h"
 
 class CGhostCamera : public IEventHandler

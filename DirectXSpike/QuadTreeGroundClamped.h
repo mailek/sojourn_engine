@@ -1,7 +1,11 @@
 #pragma once
-//////////////////////////////////////////////////////////////////////////
-// QuadTreeGroundClamped.h - 2011 Matthew Alford
-//////////////////////////////////////////////////////////////////////////
+/********************************************************************
+	created:	2012/04/23
+	filename: 	QuadTreeGroundClamped.h
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 
 //////////////////////////////////////
 // Includes
@@ -377,7 +381,7 @@ int QuadTree_GroundClamped<T,U>::FrustumRecurseCollideQuadChildren( NODE_INDEX_T
 	{
 		QuadTreeNode *node = &m_quadTreeArray[i];
 
-		IntersectType result = COLLIDE_INVALID;
+		EIntersectType result = COLLIDE_INVALID;
 		if(nRecursionLevel < DEPTHOFSPHERETEST)
 		{
 			// if at the top of the quad tree, then use sphere collision for faster results

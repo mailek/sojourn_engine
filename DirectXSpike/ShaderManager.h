@@ -1,11 +1,12 @@
 #pragma once
-//////////////////////////////////////////////////////////////////////////
-// ShaderManager.h - 2011 Matthew Alford
-// 
-// Description: Creates, loads, and unloads shader programs.  Provides
-//	shader parameter persistance and ability to reload shaders.
-//
-//////////////////////////////////////////////////////////////////////////
+/********************************************************************
+	created:	2012/04/16
+	filename: 	ShaderManager.h
+	author:		Matthew Alford
+	
+	purpose:	Creates, loads, and unloads shader programs.  Provides
+	            shader parameter persistance and ability to reload shaders.
+*********************************************************************/
 
 //////////////////////////////////////
 // Includes
@@ -20,23 +21,25 @@
 //////////////////////////////////////
 // Constants
 //////////////////////////////////////
-enum ePassID {
-		//PASS_DEFAULT,
-		//PASS_RTPLAIN,
-		//PASS_RTBLURH,
-		//PASS_RTBLURV,
-		//PASS_PRIMITIVE,
-		//PASS_PRIM_COLORED,
-		PASS_CNT,
-		PASS_INVALID = -1
-	};
+typedef enum _EPassId 
+{
+	//PASS_DEFAULT,
+	//PASS_RTPLAIN,
+	//PASS_RTBLURH,
+	//PASS_RTBLURV,
+	//PASS_PRIMITIVE,
+	//PASS_PRIM_COLORED,
+	PASS_CNT,
+	PASS_INVALID = -1
+} EPassId;
 
-enum SHADER_VAR_TYPE {
-		SHADER_VAR_INVALID,
-		SHADER_VAR_MATRIX,
-		SHADER_VAR_FLOAT4,
-		SHADER_VAR_FLOAT
-	};
+typedef enum _EShaderVarType 
+{
+	SHADER_VAR_INVALID,
+	SHADER_VAR_MATRIX,
+	SHADER_VAR_FLOAT4,
+	SHADER_VAR_FLOAT
+} EShaderVarType;
 
 
 //////////////////////////////////////
@@ -76,8 +79,8 @@ public:
 	} ShaderPass;
 
 	typedef struct {
-		ePassID					VSPass;
-		ePassID					PSPass;
+		EPassId					VSPass;
+		EPassId					PSPass;
 	} ShaderStackItem;
 
 public:
@@ -86,20 +89,19 @@ public:
 
 private:
 	std::vector<ShaderPass>		m_vecPasses;
-	D3DLIGHT9					m_DirectionalLight;
 	std::stack<ShaderStackItem> m_shaderStack;
-	ePassID						m_currentVS;
-	ePassID						m_currentPS;
+	EPassId						m_currentVS;
+	EPassId						m_currentPS;
 
-	void ReloadPixelShader(ePassID passId);
-	void ReloadVertexShader(ePassID passId);
+	void ReloadPixelShader(EPassId passId);
+	void ReloadVertexShader(EPassId passId);
 	void CreateVertexShader(ShaderPass &pass, LPCSTR vsFileName);
 	void CreatePixelShader(ShaderPass &pass, LPCSTR psFileName);
-	void SetInvViewport(ePassID pass, float viewWidth, float viewHeight, bool pixelShader=false);
+	void SetInvViewport(EPassId pass, float viewWidth, float viewHeight, bool pixelShader=false);
 	bool SetShaderConstant( ID3DXConstantTable *pConsts, LPCSTR constName, ShaderVariant &variant );
 	
-	inline IDirect3DVertexShader9 *GetVertexShaderByPass(ePassID id) {return m_vecPasses[id].pVS;}
-	inline IDirect3DPixelShader9 *GetPixelShaderByPass(ePassID id) {return m_vecPasses[id].pPS;}
+	inline IDirect3DVertexShader9 *GetVertexShaderByPass(EPassId id) {return m_vecPasses[id].pVS;}
+	inline IDirect3DPixelShader9 *GetPixelShaderByPass(EPassId id) {return m_vecPasses[id].pPS;}
 
 protected:
 	virtual void Setup();
@@ -107,16 +109,17 @@ protected:
 	LPDIRECT3DDEVICE9			m_device;
 	unsigned int				m_iViewportWidth;
 	unsigned int				m_iViewportHeight;
+	D3DLIGHT9					m_DirectionalLight;
 
 public:
 	void SetDevice(LPDIRECT3DDEVICE9 device);
-	void SetWorldTransform(ePassID pass, D3DXMATRIX worldTransform);
-	void SetViewProjection(ePassID pass, D3DXMATRIX viewTransform, D3DXMATRIX projectionTransform);
-	void SetMaterial(ePassID pass, const D3DMATERIAL9 &mat );
-	void SetDrawColor(ePassID pass, D3DXCOLOR color );
+	void SetWorldTransform(EPassId pass, D3DXMATRIX worldTransform);
+	void SetViewProjection(EPassId pass, D3DXMATRIX viewTransform, D3DXMATRIX projectionTransform);
+	void SetMaterial(EPassId pass, const D3DMATERIAL9 &mat );
+	void SetDrawColor(EPassId pass, D3DXCOLOR color );
 
-	void SetVertexShader(ePassID vtShaderId);
-	void SetPixelShader(ePassID pxShaderId);
+	void SetVertexShader(EPassId vtShaderId);
+	void SetPixelShader(EPassId pxShaderId);
 	void Update(float elapsed);
 	void PushCurrentShader();
 	void PopCurrentShader();

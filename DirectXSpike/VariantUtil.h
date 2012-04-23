@@ -1,13 +1,19 @@
 #pragma once
-
-typedef enum
+/********************************************************************
+	created:	2012/04/23
+	filename: 	VariantUtil.h
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
+typedef enum _EVariantValueType
 {
 	eBoolean,
 	eSInt32,
 	ePointer
 } EVariantValueType;
 
-typedef struct
+typedef struct _Variant
 {
 	union
 	{

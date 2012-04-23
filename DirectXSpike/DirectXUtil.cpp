@@ -1,3 +1,10 @@
+/********************************************************************
+	created:	2012/04/16
+	filename: 	DirectXUtil.cpp
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #include "stdafx.h"
 #include "directxutil.h"
 

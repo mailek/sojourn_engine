@@ -1,3 +1,10 @@
+/********************************************************************
+	created:	2012/04/16
+	filename: 	RenderEngine.cpp
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #include "StdAfx.h"
 #include "RenderEngine.h"
 #include "Hud.h"
@@ -89,7 +96,7 @@ bool CRenderEngine::CreateRenderTarget(void)
 
 void CRenderEngine::RenderScene()
 {
-	// PASS 0: Render Entire Scene to Texture
+	/* PASS 0: Render Entire Scene to Texture */
 	if(m_nBlurPasses > 0)
 		m_device->SetRenderTarget(0, m_surRenderTarget1);
 	else
@@ -101,11 +108,8 @@ void CRenderEngine::RenderScene()
 	**      3D Environment View        **
 	** =============================== */
 
-	// ** DEBUG ** 
-	// Render quadtree cell lines
-	bool settingBool;
-	Settings_GetBool(DEBUG_DRAW_SCENE_TREE, settingBool);
-	if(settingBool == true)
+	/* DEBUG - Render quadtree cell lines */
+	if(Settings_GetBool(DEBUG_DRAW_SCENE_TREE))
 	{
 		m_sceneMgr.Render( *this );
 	}
@@ -132,7 +136,6 @@ void CRenderEngine::RenderScene()
 
 	SceneMgrSortList transList;
 	{// TRANSPARENT OBJECTS
-	
 	
 	// keyed transparency
 	dxEnableAlphaTest();
@@ -171,70 +174,19 @@ void CRenderEngine::RenderScene()
 
 	}
 
-	// ** (DEBUG) **
-	// Render the sphere camera clipping geometry for each scene object
-	bool showClipBounds = false;
-	Settings_GetBool(DEBUG_SHOW_CLIP_BOUNDS, showClipBounds);
-	if(showClipBounds)
+	/* (DEBUG) - Render the sphere camera clipping geometry for each scene object */
+	if(Settings_GetBool(DEBUG_SHOW_CLIP_BOUNDS))
 	{
-		/*m_shaderMgr.SetVertexShader(PASS_DEFAULT);
-		m_shaderMgr.SetPixelShader(PASS_DEFAULT);*/
-		assert(false);	// TODO: add begin/end effect and draw support
+		ColorRGBA32 clr = {0.5f, 0.1f, 0.1f, 0.45f};
+		SceneMgrSortList sphereList;
+		m_sceneMgr.GetAllObjectsDrawListB2F(sphereList);
+		sphereList.reverse();
 
-
-		m_device->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
-		m_device->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
-		m_device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-		m_device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
-		m_device->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
-		m_device->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
-
-		ColorRGBA32 clr;
-
-		Matrix4x4 world;
-		CDoubleLinkedList<IRenderable> sphereList;
-		for(RenderList::iterator it = opaqueList.begin(), _it = opaqueList.end(); it != _it; it++)
-			sphereList.AddItemToEnd(*it);
-
-		for(SceneMgrSortList::iterator it = transList.begin(), _it = transList.end(); it != _it; it++)
-			sphereList.AddItemToEnd(it->p);
-
-		clr.r = 1.5f;
-		clr.g = 0.7f;
-		clr.b = 0.7f;
-		clr.a = 0.3f;
-		for(CDoubleLinkedList<IRenderable>::DoubleLinkedListItem* s = sphereList.first; s != NULL; s = s->next)
+		for(SceneMgrSortList::iterator it = sphereList.begin(), _it = sphereList.end(); it != _it; it++)
 		{
-			Sphere_PosRad sphere = s->item->GetBoundingSphere();
+			Sphere_PosRad sphere = it->p->GetBoundingSphere();	
 			DrawDebugSphere(sphere, clr);
 		}
-
-		m_device->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
-		for(CDoubleLinkedList<IRenderable>::DoubleLinkedListItem* s = sphereList.first; s != NULL; s = s->next)
-		{
-			Sphere_PosRad sphere = s->item->GetBoundingSphere();
-			DrawDebugSphere(sphere, clr);
-		}
-
-		m_device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-		/* testing lines */
-		Vector_3 vx, vy;
-		clr.r = 1.0f;
-		clr.g = 1.0f;
-		clr.b = 1.0f;
-		clr.a = 1.0f;
-
-		vx.x = 0.0f;
-		vx.y = 0.0f;
-		vx.z = 0.0f;
-		
-		vy.x = 0.0f;
-		vy.y = 10.0f;
-		vy.z = 0.0f;
-
-		m_device->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
-		DrawDebugLine3D(vx, vy, clr, true);
-		/* end testing lines */
 
 		Vector_3 orig;
 		orig.x = 0;
@@ -295,10 +247,7 @@ void CRenderEngine::RenderScene()
 	/* =============================== **
 	**              HUD                **
 	** =============================== */
-
-	bool settingsBool;
-	Settings_GetBool(HUD_SHOW_HUD, settingsBool);
-	if(settingsBool == true)
+	if(Settings_GetBool(HUD_SHOW_HUD))
 	{
 		m_device->BeginScene();
 		m_pHud->Render();
@@ -333,6 +282,15 @@ void CRenderEngine::DrawDebugSphere(Sphere_PosRad& sphere, ColorRGBA32 color)
 	BaseModel *model;
 	m_meshMgr.GetGlobalMesh(eUnitSphere, &model);
 
+	if( color.a < 1.0f )
+	{
+		model->SetRenderFunc(model->RenderFuncs.xpLightAndColored);
+	}
+	else
+	{
+		model->SetRenderFunc(model->RenderFuncs.lightAndColored);
+	}
+
 	model->SetDrawColor(color);
 	model->Render(*this, world, m_shaderMgr);
 }
@@ -360,9 +318,9 @@ void CRenderEngine::DrawDebugAxes(Vector_3 location)
 	/* end points */
 	Vector_3 xend, yend, zend;
 	xend = yend = zend = location;
-	xend.x += 100.0f;
-	yend.y += 100.0f;
-	zend.z += 100.0f;
+	xend.x += 1.0f;
+	yend.y += 1.0f;
+	zend.z += 1.0f;
 
 	/* draw lines */
 	DrawDebugLine3D(location, xend, xclr, true);
@@ -394,12 +352,6 @@ void CRenderEngine::DrawDebugLine3D(Vector_3 start, Vector_3 end, ColorRGBA32 co
 	mid.x = (start.x + end.x) * 0.5f;
 	mid.y = (start.y + end.y) * 0.5f;
 	mid.z = (start.z + end.z) * 0.5f;
-	///* testing - draw middle point (pivot) */
-	//Sphere_PosRad s;
-	//s.pos = mid;
-	//s.radius = 0.05f;
-	//DrawDebugSphere(s, color);
-	///* end testing */
 
 	/* stretch the rod to cover the gap between points */
 	Vector_3 startend = end - start;
@@ -425,5 +377,6 @@ void CRenderEngine::DrawDebugLine3D(Vector_3 start, Vector_3 end, ColorRGBA32 co
 
 	/* draw rod */
 	rod->SetDrawColor(color);
+	rod->SetRenderFunc(rod->RenderFuncs.lightAndColored);
 	rod->Render(*this, world, m_shaderMgr);
 }

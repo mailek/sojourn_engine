@@ -1,5 +1,11 @@
 #pragma once
-
+/********************************************************************
+	created:	2012/04/23
+	filename: 	DoubleLinkedList.h
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #define MAX_ITEMS   100
 
 template <typename T>

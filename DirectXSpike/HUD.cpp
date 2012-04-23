@@ -1,3 +1,10 @@
+/********************************************************************
+	created:	2012/04/23
+	filename: 	HUD.cpp
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #include "StdAfx.h"
 #include "HUD.h"
 #include "Settings.h"
@@ -71,9 +78,7 @@ void CHUD::Render()
 	rect.bottom	= 100; rect.right = 500;
 	m_debugFont->DrawTextA(0, szOutput, -1, &rect, DT_TOP | DT_LEFT, D3DCOLOR_ARGB(255,255,220,200));
 
-	bool settingsBool;
-	Settings_GetBool(HUD_SHOW_LIGHT_DIR, settingsBool);
-	if(settingsBool == true)
+	if(Settings_GetBool(HUD_SHOW_LIGHT_DIR))
 	{
 		// Debug Light Position
 		rect.top = 75; rect.left = 25;

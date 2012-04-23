@@ -1,8 +1,11 @@
 #include "stdafx.h"
-//////////////////////////////////////////////////////////////////////////
-// DirectXSpike.cpp : Defines the entry point for the application.
-// 2011 Matthew Alford
-//////////////////////////////////////////////////////////////////////////
+/********************************************************************
+	created:	2012/04/23
+	filename: 	DirectXSpike.cpp
+	author:		Matthew Alford
+	
+	purpose:	Defines the entry point for the application.
+*********************************************************************/
 
 //////////////////////////////////////
 // Includes
@@ -27,14 +30,14 @@ static const int			MAX_WIN_MSGS_PER_FRAME = 20;
 //////////////////////////////////////
 // Type Definitions
 //////////////////////////////////////
-struct APPLICATIONSTATE
+typedef struct _ApplicationState
 {
 	HINSTANCE		hInst;							// current instance
 	TCHAR			szTitle[MAX_LOADSTRING];		// The title bar text
 	TCHAR			szWindowClass[MAX_LOADSTRING];	// the main window class name
 	HWND			hWnd;
 	float			frameCount;
-};
+} ApplicationState;
 
 //////////////////////////////////////
 // Local Variables
@@ -43,7 +46,7 @@ struct APPLICATIONSTATE
 static CRenderEngine		s_renderEngine;
 static CHUD					s_hud;
 static CInputManager		s_inputMgr;
-static APPLICATIONSTATE		m_appState;
+static ApplicationState		m_appState;
 static CGameStateStack*		s_gameState;
 
 //////////////////////////////////////

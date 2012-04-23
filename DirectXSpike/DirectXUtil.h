@@ -1,4 +1,12 @@
 #pragma once
+/********************************************************************
+	created:	2012/04/16
+	filename: 	c:\git_root\sojourn_engine\DirectXSpike\DirectXUtil.h
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
+#define Color_4 D3DXCOLOR
 
 void dxPowerUp( LPDIRECT3DDEVICE9 device );
 void dxClear(int count,CONST D3DRECT* pRects, DWORD flags, D3DCOLOR color, float z, DWORD stencil);

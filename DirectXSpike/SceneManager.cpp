@@ -1,3 +1,10 @@
+/********************************************************************
+	created:	2012/04/16
+	filename: 	SceneManager.cpp
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 #include "stdafx.h"
 
 #include "SceneManager.h"
@@ -130,6 +137,27 @@ void CSceneManager::GetTransparentDrawListB2F(SceneMgrSortList &list)
 	list = m_transparentList;
 }
 
+void CSceneManager::GetAllObjectsDrawListB2F(SceneMgrSortList &list)
+{
+	UpdateDrawLists();
+	list.clear();
+
+	list = m_transparentList;
+	for(SceneMgrRenderList::iterator it = m_opaqueList.begin(), _it = m_opaqueList.end(); it != _it; it++)
+	{
+		ZSortableRenderable item;
+		item.p = *it;
+
+		D3DXVECTOR3 v(0,0,0);
+		D3DXVec3TransformCoord(&v, &v, &D3DXMATRIX((*it)->GetWorldTransform() * m_camera.GetViewMatrix()));
+		item.viewSpaceZ = v.z;
+
+		list.push_back(item);
+	}
+
+	list.sort();
+}
+
 void CSceneManager::AddNonclippableObjectToScene(IRenderable* obj)
 {
 	assert(obj);
@@ -154,8 +182,8 @@ void CSceneManager::Render( CRenderEngine &rndr )
 
 	/* render the quad tree nodes for debug purposes */
 	shaderMgr.PushCurrentShader();
-	shaderMgr.SetEffect(EFFECT_PRIMITIVES);
-	shaderMgr.SetTechnique("ColorDraw");
+	shaderMgr.SetEffect(EFFECT_DEBUGDRAW);
+	shaderMgr.SetTechnique("FixedColor");
 	shaderMgr.SetViewProjectionEx( m_camera.GetViewMatrix(), m_camera.GetProjectionMatrix() );
 
 	device->SetFVF(m_debugMesh->GetFVF());

@@ -1,9 +1,12 @@
 #pragma once
-//////////////////////////////////////////////////////////////////////////
-// VertexTypes.h - 2011 Matthew Alford
-//		This file defines the various vertex definitions used through the
-//		render engine.
-//////////////////////////////////////////////////////////////////////////
+/********************************************************************
+	created:	2012/04/16
+	filename: 	VertexTypes.h
+	author:		Matthew Alford
+	
+	purpose:	Defines the various vertex definitions used throughout
+				the render engine.
+*********************************************************************/
 
 //////////////////////////////////////
 // Terrain.cpp

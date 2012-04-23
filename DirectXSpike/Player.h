@@ -1,7 +1,11 @@
 #pragma once
-//////////////////////////////////////////////////////////////////////////
-// Player.h - 2011 Matthew Alford
-//////////////////////////////////////////////////////////////////////////
+/********************************************************************
+	created:	2012/04/23
+	filename: 	Player.h
+	author:		Matthew Alford
+	
+	purpose:	
+*********************************************************************/
 
 //////////////////////////////////////
 // Includes
@@ -23,10 +27,11 @@ class CTerrain;
 // Type Definitions
 //////////////////////////////////////
 
-typedef struct {
+typedef struct _PlayerProperties
+{
 	float collideSphereRadius;	// size of collide sphere
 	float maxRotateSpeed;		// radians per sec
-	} PlayerProperties;
+} PlayerProperties;
 
 //////////////////////////////////////
 // Class Definition

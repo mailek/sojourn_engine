@@ -19,11 +19,12 @@ class CPlayer;
 //////////////////////////////////////
 // Type Definitions
 //////////////////////////////////////
-enum {
+typedef enum _EGameStates
+{
 	STATE_MAIN_MENU = 0x00FF,
 	STATE_MAIN_GAME,
 	STATE_PAUSED
-};
+} EGameStates;
 
 //////////////////////////////////////
 // Class Definition
