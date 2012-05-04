@@ -15,7 +15,7 @@
 //////////////////////////////////////
 // Forward Declarations
 //////////////////////////////////////
-class CTerrain;
+class CTerrainChunk;
 
 //////////////////////////////////////
 // Type Definitions
@@ -58,7 +58,7 @@ public:
 	void SetDevice(LPDIRECT3DDEVICE9 device);
 	void GetMesh(EMeshType meshName, BaseModel **retMesh);
 	void GetGlobalMesh(EGlobalMeshType meshName, BaseModel **retMesh);
-	void Update( LPDIRECT3DDEVICE9 device, float elapsedMillis );
+	void Update( float elapsedMillis );
 	
 	inline MeshList* GetMeshList(void) {return &m_arrMeshes;}
 	

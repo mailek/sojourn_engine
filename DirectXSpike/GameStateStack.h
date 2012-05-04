@@ -16,6 +16,8 @@
 class CRenderEngine;
 class CPlayer;
 
+using namespace GameEvents;
+
 //////////////////////////////////////
 // Type Definitions
 //////////////////////////////////////
@@ -37,7 +39,7 @@ private:
 	~CGameStateStack(void);
 
 public:
-	void Update( LPDIRECT3DDEVICE9 device, float elapsedMillis );
+	void Update(float elapsedMillis );
 	void PushNewState( const UINT stateId );
 	void PopCurrentState();
 	IEventHandler* GetCurrentState();

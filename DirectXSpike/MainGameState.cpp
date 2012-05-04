@@ -10,11 +10,15 @@
 #include "RenderEngine.h"
 #include "Player.h"
 #include "Skybox.h"
-#include "Terrain.h"
+#include "TerrainChunk.h"
 #include "Keyboard.h"
 #include "mathutil.h"
 #include "collisionmanager.h"
 #include "texturemanager.h"
+
+//////////////////////////////////////////////////////////////////////////
+// Setup Functions
+//////////////////////////////////////////////////////////////////////////
 
 CMainGameState::CMainGameState(void) :  m_pPlayer(NULL),
 										m_pLevelMgr(NULL),
@@ -29,6 +33,106 @@ CMainGameState::~CMainGameState(void)
 {
 }
 
+/************************************************
+*   Name:   CMainGameState::Init
+*   Desc:   
+************************************************/
+bool CMainGameState::Init( CRenderEngine *renderEngine )
+{
+	LPDIRECT3DDEVICE9		device = renderEngine->GetDevice();
+	CMeshManager*			meshMgr = &renderEngine->GetMeshManager();
+
+	m_pLevelMgr = new CLevelManager();
+	m_pSceneMgr = renderEngine->GetSceneManager();
+	m_pCamera = &m_pSceneMgr->GetDefaultCamera();
+	m_pCollision = CCollisionManager::GetInstance();
+
+	m_pTextureMgr = &renderEngine->GetTextureManager();
+	m_texContext = m_pTextureMgr->CreateTextureContext("MainGame");
+
+	// level objects
+	if(!m_pLevelMgr->LoadDefaultLevel( renderEngine))
+	{
+		PTR_SAFEDELETE(m_pLevelMgr);
+		return false;	
+	}
+
+	m_pLevelMgr->RegisterStaticCollision(m_pCollision);
+
+	// player
+	m_pPlayer = new CPlayer();
+	m_pPlayer->Setup(*meshMgr);
+	m_pSceneMgr->AddNonclippableObjectToScene(m_pPlayer);
+	m_pCollision->RegisterDynamicCollidable(m_pPlayer);
+
+	// camera
+	//m_pSceneMgr->SetCamera(camera);
+	SetAvatar(m_pPlayer);
+	m_pCamera->SetTerrainToClamp(m_pLevelMgr->GetTerrain());
+	m_pPlayer->SetGroundClampTerrain(m_pLevelMgr->GetTerrain());
+
+	// terrain clamping
+	//m_pCollision->RegisterStaticCollidable(pTerrain); // this should be handled now in levelmgr:registerstaticcollision
+
+	return true;
+}
+
+/************************************************
+*   Name:   CMainGameState::Destroy
+*   Desc:   
+************************************************/
+void CMainGameState::Destroy()
+{
+	if(m_pLevelMgr)
+	{
+		delete m_pLevelMgr;
+		m_pLevelMgr = NULL;
+	}
+
+	if(m_pPlayer)
+	{
+		delete m_pPlayer;
+		m_pPlayer = NULL;
+	}
+
+	m_pCollision->UnregisterCollidable(m_pPlayer);
+	CCollisionManager::DestroySingleton();
+
+	m_pTextureMgr->UnloadTextureContext(m_texContext);
+
+}
+
+//////////////////////////////////////////////////////////////////////////
+// Update Functions
+//////////////////////////////////////////////////////////////////////////
+
+/************************************************
+*   Name:   CMainGameState::Update
+*   Desc:   
+************************************************/
+void CMainGameState::Update( float elapsedMillis )
+{
+	/* update dynamic objects */
+	if(m_pPlayer)
+	{
+		m_pPlayer->HandleEvent(EVT_UPDATE, &elapsedMillis, sizeof(elapsedMillis));
+	}
+
+	/* check collisions */
+	m_pCollision->Update();
+
+	/* update camera */
+	m_cameraGhost.HandleEvent(EVT_UPDATE, &elapsedMillis, sizeof(elapsedMillis));
+	m_pSceneMgr->GetDefaultCamera().Update(elapsedMillis);
+
+	/* update level manager */
+	m_pLevelMgr->HandleEvent(EVT_UPDATE, &elapsedMillis, sizeof(elapsedMillis));
+}
+
+/************************************************
+*   Name:   CMainGameState::HandleEvent
+*   Desc:   
+************************************************/
 bool CMainGameState::HandleEvent( UINT eventId, void* data, UINT data_sz )
 {
 	switch( eventId )
@@ -42,9 +146,9 @@ bool CMainGameState::HandleEvent( UINT eventId, void* data, UINT data_sz )
 		break;
 		}
 	case EVT_GETAVATAR:
-		assert( data_sz == sizeof(void*) );
+		assert( data_sz == sizeof(GetAvatarEventArgType) );
 		assert( data != NULL );
-		*(IEventHandler**)data = m_pAvatar;
+		*(GetAvatarEventArgType)data = m_pAvatar;
 		break;
 	case EVT_UPDATE:
 		assert( data_sz == sizeof(float) );
@@ -94,85 +198,10 @@ bool CMainGameState::HandleEvent( UINT eventId, void* data, UINT data_sz )
 	return true;
 }
 
-bool CMainGameState::Init( CRenderEngine *renderEngine )
-{
-	LPDIRECT3DDEVICE9		device = renderEngine->GetDevice();
-	CMeshManager*			meshMgr = &renderEngine->GetMeshManager();
-
-	m_pLevelMgr = new CLevelManager();
-	m_pSceneMgr = &renderEngine->GetSceneManager();
-	m_pCamera = &m_pSceneMgr->GetDefaultCamera();
-	m_pCollision = CCollisionManager::GetInstance();
-	
-	m_pTextureMgr = &renderEngine->GetTextureManager();
-	m_texContext = m_pTextureMgr->CreateTextureContext("MainGame");
-	
-	// level objects
-	CTerrain*				pTerrain;
-	CSkybox*				pSkyDome;
-	if(!m_pLevelMgr->LoadDefaultLevel( renderEngine, &pTerrain, &pSkyDome ))
-	{
-		PTR_SAFEDELETE(m_pLevelMgr);
-		return false;	
-	}
-
-	m_pLevelMgr->RegisterStaticCollision(m_pCollision);
-
-	// player
-	m_pPlayer = new CPlayer();
-	m_pPlayer->Setup(*meshMgr);
-	m_pSceneMgr->AddNonclippableObjectToScene(m_pPlayer);
-	m_pCollision->RegisterDynamicCollidable(m_pPlayer);
-	
-	// camera
-	//m_pSceneMgr->SetCamera(camera);
-	SetAvatar(m_pPlayer);
-	m_pCamera->SetTerrainToClamp(pTerrain);
-	pSkyDome->SetCameraObjectToFollow(m_pCamera);
-
-	// terrain clamping
-	m_pCollision->RegisterStaticCollidable(pTerrain);
-	m_pPlayer->SetGroundClampTerrain(*pTerrain);
-
-	return true;
-}
-void CMainGameState::Destroy()
-{
-	if(m_pLevelMgr)
-	{
-		delete m_pLevelMgr;
-		m_pLevelMgr = NULL;
-	}
-
-	if(m_pPlayer)
-	{
-		delete m_pPlayer;
-		m_pPlayer = NULL;
-	}
-
-	m_pCollision->UnregisterCollidable(m_pPlayer);
-	CCollisionManager::DestroySingleton();
-
-	m_pTextureMgr->UnloadTextureContext(m_texContext);
-	
-}
-
-void CMainGameState::Update( float elapsedMillis )
-{
-	// update dynamic objects
-	if(m_pPlayer)
-	{
-		m_pPlayer->HandleEvent(EVT_UPDATE, &elapsedMillis, sizeof(elapsedMillis));
-	}
-
-	// check collisions
-	m_pCollision->Update();
-
-	// update camera
-	m_cameraGhost.HandleEvent(EVT_UPDATE, &elapsedMillis, sizeof(elapsedMillis));
-	m_pSceneMgr->GetDefaultCamera().Update(elapsedMillis);
-}
-
+/************************************************
+*   Name:   CMainGameState::KeyUp
+*   Desc:   
+************************************************/
 void CMainGameState::KeyUp( UINT vk )
 {
 	MovementCommandType arg;
@@ -203,6 +232,10 @@ void CMainGameState::KeyUp( UINT vk )
 	}
 }
 
+/************************************************
+*   Name:   CMainGameState::KeyDown
+*   Desc:   
+************************************************/
 void CMainGameState::KeyDown( UINT vk )
 {
 	MovementCommandType arg;
@@ -232,6 +265,11 @@ void CMainGameState::KeyDown( UINT vk )
 		m_pAvatar->HandleEvent(EVT_MOVECMD, &arg, sizeof(arg));
 	}
 }
+
+/************************************************
+*   Name:   CMainGameState::MouseMoved
+*   Desc:   
+************************************************/
 void CMainGameState::MouseMoved( D3DXVECTOR2 mouseDisplacement )
 {
 	//if( m_pPlayer )
@@ -259,6 +297,10 @@ void CMainGameState::MouseMoved( D3DXVECTOR2 mouseDisplacement )
 	}
 }
 
+/************************************************
+*   Name:   CMainGameState::MouseWheel
+*   Desc:   
+************************************************/
 void CMainGameState::MouseWheel( int mouseDelta )
 {
 	if(m_pCamera)
@@ -268,6 +310,10 @@ void CMainGameState::MouseWheel( int mouseDelta )
 	}
 }
 
+/************************************************
+*   Name:   CMainGameState::SetAvatar
+*   Desc:   
+************************************************/
 void CMainGameState::SetAvatar(IEventHandler* avatar)
 {
 	IEventHandler* old = m_pAvatar;
@@ -286,4 +332,5 @@ void CMainGameState::SetAvatar(IEventHandler* avatar)
 
 	m_pCamera->SetCameraAttach(m_pAvatar);
 	m_pAvatar->HandleEvent(EVT_ATTACH_CAMERA, m_pCamera, sizeof(m_pCamera));
+	m_pLevelMgr->HandleEvent(EVT_SETAVATAR, avatar, sizeof(avatar));
 }

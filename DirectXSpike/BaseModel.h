@@ -15,7 +15,7 @@
 // Forward Declarations
 //////////////////////////////////////
 class CShaderManagerEx;
-class CTerrain;
+class CTerrainChunk;
 class CRenderEngine;
 struct SkeletonVertex;
 struct Bone;
@@ -106,19 +106,19 @@ private:
 	void RecurseFillOutBone( Bone* bone, unsigned int parentIndex );
 	void RecurseCalculateBoneMatrices( Bone* bone, LPD3DXMATRIX parentTransform, SkeletonVertex* arrVertices, WORD* arrIndices );
 	void UpdateBoneMatrices();
-	void UpdateSkinnedMeshes( LPDIRECT3DDEVICE9 device );
+	void UpdateSkinnedMeshes();
 
 public:
 	bool LoadXMeshFromFile(LPCSTR pFilename, IDirect3DDevice9* pDevice);
 	bool LoadXMeshHierarchyFromFile(LPCSTR pFilename, IDirect3DDevice9* pDevice);
-	void LoadTeapot(IDirect3DDevice9* pDevice);
-	void LoadCenteredUnitCube(IDirect3DDevice9* device);
-	void LoadCenteredUnitCylinder(IDirect3DDevice9* device);
-	void LoadCenteredUnitSphere(IDirect3DDevice9* pDevice);
-	void LoadScreenOrientedQuad(IDirect3DDevice9* pDevice);
+	void LoadTeapot();
+	void LoadCenteredUnitCube();
+	void LoadCenteredUnitCylinder();
+	void LoadCenteredUnitSphere();
+	void LoadScreenOrientedQuad();
 	void Render(CRenderEngine& rndr, D3DXMATRIX worldTransform, CShaderManagerEx &shaderMgr);
 	Sphere_PosRad GetSphereBounds();
-	void Update( LPDIRECT3DDEVICE9 device, float elapsedMillis );
+	void Update( float elapsedMillis );
 	void SetAnimation( DWORD animationId );
 	void SetDrawColor( ColorRGBA32 clr );
 	
@@ -142,6 +142,7 @@ public:
 		rfLightAndTexture		lightAndTexture;
 		rfLightAndColored		lightAndColored;
 		rfXPLightAndColored		xpLightAndColored;
-	}									RenderFuncs;
+	}
+	RenderFuncs;
 
 };

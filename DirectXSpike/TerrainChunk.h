@@ -1,7 +1,7 @@
 #pragma once
 /********************************************************************
 	created:	2012/04/23
-	filename: 	Terrain.h
+	filename: 	TerrainChunk.h
 	author:		Matthew Alford
 	
 	purpose:	
@@ -21,16 +21,16 @@ class CShaderManager;
 //////////////////////////////////////
 // Class Definition
 //////////////////////////////////////
-class CTerrain : public IRenderable, public ICollidable
+class CTerrainChunk : public IRenderable, public ICollidable
 {
 public:
-	CTerrain(void);
-	~CTerrain(void);
+	CTerrainChunk(void);
+	~CTerrainChunk(void);
 
 private:
 	int GetHeightMapEntry(int row, int col);
 	void SetHeightMapEntry(int row, int col, int &value);
-	bool SetupMesh(LPDIRECT3DDEVICE9 device);
+	bool SetupMesh();
 
 	std::vector<int>			m_heightMap;
 	std::string					m_strFilename;
@@ -43,6 +43,7 @@ private:
 	float						m_fYOffset;
 	UINT						m_numTriangles;
 	ABB_MaxMin					m_abbBounds;
+	Matrix4x4					m_worldMatrix;
 	
 	LPDIRECT3DVERTEXBUFFER9		m_VertexBuffer;
 	LPDIRECT3DINDEXBUFFER9		m_IndexBuffer;
@@ -53,9 +54,9 @@ private:
 	
 public:
 	float GetTerrainHeightAtXZ(float xCoord, float ZCoord);
-	/*Deprecated*/bool LoadTerrain(LPCSTR pFilename, LPCSTR pTextureFilename, int rows, int cols, float vertSpacing, float fYScale, float uvScale, LPDIRECT3DDEVICE9 device);
 	void SetYOffset(float offset) {m_fYOffset = offset;}
 	ABB_MaxMin CalculateBoundingBox(void);
+	/* deprecated */bool LoadTerrain( LPCSTR pFilename, LPCSTR pTextureFilename, int rows, int cols, float vertSpacing, float fYScale, float uvScale );
 	
 	virtual D3DXMATRIX GetWorldTransform() {D3DXMATRIX worldMatrix;	D3DXMatrixIdentity(&worldMatrix); return worldMatrix;}
 	virtual void Render( CRenderEngine &rndr );

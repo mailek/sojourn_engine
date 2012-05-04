@@ -8,6 +8,10 @@
 #include "StdAfx.h"
 #include "SettingsManager.h"
 
+//////////////////////////////////////////////////////////////////////////
+// Setup Functions
+//////////////////////////////////////////////////////////////////////////
+
 CSettingsManager::CSettingsManager(void)
 {
 }
@@ -16,6 +20,10 @@ CSettingsManager::~CSettingsManager(void)
 {
 }
 
+/************************************************
+*   Name:   CSettingsManager::Init
+*   Desc:   
+************************************************/
 void CSettingsManager::Init()
 {
 	for(int i = 0; i < SETTINGS_CNT; i++)
@@ -40,12 +48,24 @@ void CSettingsManager::Init()
 	}
 }
 
+//////////////////////////////////////////////////////////////////////////
+// Update Functions
+//////////////////////////////////////////////////////////////////////////
+
+/************************************************
+*   Name:   CSettingsManager::GetSettingValue
+*   Desc:   
+************************************************/
 void CSettingsManager::GetSettingValue(ESettingId id, SettingValue** out)
 {
 	assert(id == m_settings[id].key);
 	*out = &m_settings[id].value;
 }
 
+/************************************************
+*   Name:   CSettingsManager::SetSettingValue
+*   Desc:   
+************************************************/
 void CSettingsManager::SetSettingValue(ESettingId id, SettingValue* in)
 {
 	assert(id == m_settings[id].key);

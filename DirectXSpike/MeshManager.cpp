@@ -7,7 +7,7 @@
 *********************************************************************/
 #include "StdAfx.h"
 #include "MeshManager.h"
-#include "Terrain.h"
+#include "TerrainChunk.h"
 
 /*=================================================
 	MeshManager Class
@@ -27,6 +27,11 @@ CMeshManager::~CMeshManager(void)
 	Setup Functions
 =================================================*/
 
+/************************************************
+*   Name:   CMeshManager::SetDevice
+*   Desc:   Set the DirectX device and load the
+*           the debug meshes.
+************************************************/
 void CMeshManager::SetDevice(LPDIRECT3DDEVICE9 device) 
 {
 	m_device=device;
@@ -34,10 +39,12 @@ void CMeshManager::SetDevice(LPDIRECT3DDEVICE9 device)
 	LoadGlobalMeshes();
 }
 
+/************************************************
+*   Name:   CMeshManager::LoadGlobalMeshes
+*   Desc:   Loads the palette of debug meshes.
+************************************************/
 bool CMeshManager::LoadGlobalMeshes(void)
 {
-	assert(m_device);
-
 	BaseModel *model;
 
 	for(int i = 0; i < globalMeshCnt; i++)
@@ -47,23 +54,19 @@ bool CMeshManager::LoadGlobalMeshes(void)
 		switch(i)
 		{
 		case eUnitSphere:
-			// Create the unit sphere
-			model->LoadCenteredUnitSphere(m_device);
+			model->LoadCenteredUnitSphere();
 			break;
 		case eUnitCylinder:
-			model->LoadCenteredUnitCylinder(m_device);
+			model->LoadCenteredUnitCylinder();
 			break;
 		case eTeapot:
-			// Create the teapot
-			model->LoadTeapot(m_device);
+			model->LoadTeapot();
 			break;
 		case eCenteredUnitABB:
-			// Create Debug Centered ABB Cube
-			model->LoadCenteredUnitCube(m_device);
+			model->LoadCenteredUnitCube();
 			break;
 		case eScreenQuad:
-			// Create Screen Oriented Quad
-			model->LoadScreenOrientedQuad(m_device);
+			model->LoadScreenOrientedQuad();
 			break;
 		default:
 			assert(false);
@@ -75,7 +78,11 @@ bool CMeshManager::LoadGlobalMeshes(void)
 	return true;
 }
 
-/* Loads the meshes to be rendered */
+/************************************************
+*   Name:   CMeshManager::LoadMeshes
+*   Desc:   Loads the level's models.  Currently
+*           all meshes are loaded statically.
+************************************************/
 bool CMeshManager::LoadMeshes(void)
 {
 	assert(m_device);
@@ -89,7 +96,6 @@ bool CMeshManager::LoadMeshes(void)
 		strcpy_s(tiny->m_filename, "tiny.x");
 
 		// NOTE: IN HERE GOES ANY CORRECTIONS NEEDED TO THE MODEL, THESE WILL BE APPLIED BEFORE ANY OTHER TRANFORMS
-
 		float scaleFactor(0.025f);
 		tiny->SetScale(D3DXVECTOR3(scaleFactor, scaleFactor, scaleFactor)); // tiny model is way too big, scale down
 		tiny->SetXRotationRadians(-D3DX_PI * 0.5f); // flip to standing orientation
@@ -156,11 +162,19 @@ bool CMeshManager::LoadMeshes(void)
 
 }
 
+/************************************************
+*   Name:   CMeshManager::GetMesh
+*   Desc:   Retrieve a loaded model.
+************************************************/
 void CMeshManager::GetMesh(EMeshType meshName, BaseModel **retMesh)
 {
 	(*retMesh) = m_arrMeshes[meshName];
 }
 
+/************************************************
+*   Name:   CMeshManager::GetGlobalMesh
+*   Desc:   Retrieve a debug model.
+************************************************/
 void CMeshManager::GetGlobalMesh(EGlobalMeshType meshName, BaseModel **retMesh)
 {
 	(*retMesh) = m_arrGlobalMeshes[meshName];
@@ -170,8 +184,13 @@ void CMeshManager::GetGlobalMesh(EGlobalMeshType meshName, BaseModel **retMesh)
 	Update Functions
 =================================================*/
 
-void CMeshManager::Update( LPDIRECT3DDEVICE9 device, float elapsedMillis )
+/************************************************
+*   Name:   CMeshManager::Update
+*   Desc:   Send the animated models the update 
+*           signal.
+************************************************/
+void CMeshManager::Update( float elapsedMillis )
 {
 	for(MeshList::iterator it = m_arrMeshes.begin(), _it = m_arrMeshes.end(); it != _it; it++)
-		(*it)->Update( device, elapsedMillis );
+		(*it)->Update( elapsedMillis );
 }

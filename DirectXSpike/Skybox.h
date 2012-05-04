@@ -10,6 +10,7 @@
 // Includes
 //////////////////////////////////////
 #include "IRenderable.h"
+#include "GameEvents.h"
 #include "basemodel.h"
 
 //////////////////////////////////////
@@ -26,8 +27,8 @@ class CSkybox : public IRenderable
 public:
 	CSkybox(void);
 	~CSkybox(void);
-	bool LoadSkyDome(LPDIRECT3DDEVICE9 device, float radius, UINT slices, UINT stacks);
-	inline void SetCameraObjectToFollow(CCamera* camera) {m_pCamera = camera;}
+	void LoadSkyDome(float radius, UINT slices, UINT stacks);
+	inline void SetObjectToFollow(GameEvents::IEventHandler* attach) {m_pAttach = attach;}
 	
 	virtual void Render( CRenderEngine &rndr );
 	virtual D3DXMATRIX GetWorldTransform();
@@ -37,11 +38,11 @@ public:
 	virtual Sphere_PosRad GetBoundingSphere() { Sphere_PosRad s; ::ZeroMemory(&s, sizeof(s)); return s; }
 
 private:
-	LPDIRECT3DTEXTURE9		m_texSkyTexture;
-	LPD3DXMESH				m_mesh;
-	//BaseModel				m_baseMesh;
-	D3DMATERIAL9			m_skyMaterial;
-	CCamera*				m_pCamera;			// pointer to camera object to follow
-	float					m_sphereRadius;
+	LPDIRECT3DTEXTURE9			m_texSkyTexture;
+	LPD3DXMESH					m_mesh;
+	//BaseModel					m_baseMesh;
+	D3DMATERIAL9				m_skyMaterial;
+	GameEvents::IEventHandler  *m_pAttach;
+	float						m_sphereRadius;
 
 };

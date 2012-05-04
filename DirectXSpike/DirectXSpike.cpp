@@ -81,11 +81,7 @@ void Cleanup
 	void
 	);
 
-void Display
-	(
-	float elapsedmills, 
-	LPDIRECT3DDEVICE9 device
-	);
+void Display ( float elapsedmills );
 
 void Update
 	(
@@ -194,8 +190,6 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 		::MessageBox(0, _T("Setup Failed"), _T("Error"), 0);
 		return FALSE;
 	}
-
-	dxPowerUp( __theDevice );
 	
 	// Event Loop
 	while (TRUE)
@@ -228,7 +222,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 		QueryPerformanceCounter(&lCurrent);
 		timeDelta = float(lCurrent.QuadPart - lLastCount.QuadPart) / float(lCounterFreq.QuadPart);
 		Update(__theDevice, timeDelta);
-		Display(timeDelta, __theDevice);	
+		Display(timeDelta);	
 
 		lLastCount = lCurrent;
 
@@ -505,11 +499,10 @@ void Cleanup()
 	s_gameState->ShutDown();
 }
 
-void Display(float elapsedmills, LPDIRECT3DDEVICE9 device)
+void Display( float elapsedmills )
 {
-	assert(device);
 	s_renderEngine.RenderScene();
-	device->Present(0, 0, 0, 0);
+	dxPresent(0, 0, 0, 0);
 }
 
 void Update( LPDIRECT3DDEVICE9 device, float elapsedmills )
@@ -529,8 +522,8 @@ void Update( LPDIRECT3DDEVICE9 device, float elapsedmills )
 	s_hud.SetCurrentLightDir(s_renderEngine.GetLightDirection());
 
 	s_inputMgr.Update();
-	s_renderEngine.Update( device, elapsedmills);
-	s_gameState->Update( device, elapsedmills);
+	s_renderEngine.Update(elapsedmills);
+	s_gameState->Update(elapsedmills);
 }
 
 void CalculateFPS(float timeDelta)

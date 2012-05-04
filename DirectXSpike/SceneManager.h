@@ -17,7 +17,7 @@
 // Forward Declarations
 //////////////////////////////////////
 class CCamera;
-class CTerrain;
+class CTerrainChunk;
 class CMeshManager;
 class BaseModel;
 
@@ -62,7 +62,7 @@ public:
 	void GetAllObjectsDrawListB2F(SceneMgrSortList &list);
 	void AddRenderableObjectToScene(IRenderable* obj);
 	void AddNonclippableObjectToScene(IRenderable* obj);
-	void Setup(LPDIRECT3DDEVICE9 device, CTerrain& terrain, CMeshManager& meshMgr);
+	void Setup(CMeshManager& meshMgr);
 	
     void SetNextClipStrategy(int strategy = -1);
 	inline CCamera& GetDefaultCamera() {return m_camera;}
@@ -73,4 +73,5 @@ public:
 	virtual void SetLastRenderFrame(UINT frameNum) {};
 	virtual UINT GetLastRenderFrame() {return 0;}
 	virtual Sphere_PosRad GetBoundingSphere() { Sphere_PosRad s; ::ZeroMemory(&s, sizeof(s)); return s; }
+	void BuildQuadTreeFromCurrentTerrain( CTerrainContainer terrain );
 };

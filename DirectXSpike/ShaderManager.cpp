@@ -32,12 +32,20 @@ CShaderManager::~CShaderManager(void)
 	}
 }
 
+/************************************************
+*   Name:   CShaderManager::SetDevice
+*   Desc:   Set the DirectX device and initialize.
+************************************************/
 void CShaderManager::SetDevice(LPDIRECT3DDEVICE9 device) 
 {
 	m_device = device;
 	Setup();
 }
 
+/************************************************
+*   Name:   CShaderManager::Setup
+*   Desc:   Load the individual shader programs.
+************************************************/
 void CShaderManager::Setup()
 {
 	////// FLAT SHADE PASS
@@ -102,6 +110,11 @@ void CShaderManager::Setup()
 	//m_DirectionalLight.Direction	= D3DXVECTOR3(0.0f, -1.0f, 0.0f);//D3DXVECTOR3(-0.7f, -1.0f, -0.7f);
 }	
 	
+/************************************************
+*   Name:   CShaderManager::CreatePixelShader
+*   Desc:   Compile a pixel shader 2.0 program
+*           specified by a given filename.
+************************************************/
 void CShaderManager::CreatePixelShader(ShaderPass &pass, LPCSTR psFileName)
 {
 	ID3DXBuffer* shader(NULL);
@@ -124,6 +137,11 @@ void CShaderManager::CreatePixelShader(ShaderPass &pass, LPCSTR psFileName)
 	COM_SAFERELEASE(errors);
 }
 
+/************************************************
+*   Name:   CShaderManager::CreateVertexShader
+*   Desc:   Compile a vertex shader 2.0 program
+*           specified by a given filename.
+************************************************/
 void CShaderManager::CreateVertexShader(ShaderPass &pass, LPCSTR vsFileName)
 {
 	ID3DXBuffer* shader(NULL);
@@ -150,6 +168,11 @@ void CShaderManager::CreateVertexShader(ShaderPass &pass, LPCSTR vsFileName)
 // Update Functions
 //////////////////////////////////////////////////////////////////////////
 
+/************************************************
+*   Name:   CShaderManager::Update
+*   Desc:   Rotate the parallel light at a fixed
+*           constant rate.
+************************************************/
 void CShaderManager::Update(float elapsed)
 {
 	if( Settings_GetBool(DEBUG_ROTATE_SUN) )
@@ -162,26 +185,41 @@ void CShaderManager::Update(float elapsed)
 	}
 }
 
+/************************************************
+*   Name:   CShaderManager::SetVertexShader
+*   Desc:   Activate a vertex shader program, and
+*           reload its constant table.
+************************************************/
 void CShaderManager::SetVertexShader(EPassId vtShaderId)
 {
 	m_device->SetVertexShader(GetVertexShaderByPass(vtShaderId));
 
 	ReloadVertexShader(vtShaderId);
 
-	// must be set after reload
+	/* must be set after reload */
 	m_currentVS = vtShaderId;
 }
 
+/************************************************
+*   Name:   CShaderManager::SetPixelShader
+*   Desc:   Activate a pixel shader program, and
+*           reload its constant table.
+************************************************/
 void CShaderManager::SetPixelShader(EPassId pxShaderId)
 {
 	m_device->SetPixelShader(GetPixelShaderByPass(pxShaderId));
 	
 	ReloadPixelShader(pxShaderId);
 
-	// must be set after reload
+	/* must be set after reload */
 	m_currentPS = pxShaderId;
 }
 
+/************************************************
+*   Name:   CShaderManager::ReloadPixelShader
+*   Desc:   Apply the latest shader constants
+*           (uniforms) to the given pixel program.
+************************************************/
 void CShaderManager::ReloadPixelShader(EPassId passId)
 {
 	if(m_currentPS == passId)
@@ -214,6 +252,11 @@ void CShaderManager::ReloadPixelShader(EPassId passId)
 
 }
 
+/************************************************
+*   Name:   CShaderManager::ReloadVertexShader
+*   Desc:   Apply the latest shader constants
+*           (uniforms) to the given vertex program.
+************************************************/
 void CShaderManager::ReloadVertexShader(EPassId passId)
 {
 	if(m_currentVS == passId)
@@ -272,6 +315,11 @@ void CShaderManager::ReloadVertexShader(EPassId passId)
 
 }
 
+/************************************************
+*   Name:   CShaderManager::SetShaderConstant
+*   Desc:   Set a provided shader constant to
+*           the associated shader program.
+************************************************/
 bool CShaderManager::SetShaderConstant( ID3DXConstantTable *pConsts, LPCSTR constName, ShaderVariant &variant )
 {
 	D3DXHANDLE constHnd = pConsts->GetConstantByName( 0, constName );
@@ -299,6 +347,11 @@ bool CShaderManager::SetShaderConstant( ID3DXConstantTable *pConsts, LPCSTR cons
 	return true;
 }
 
+/************************************************
+*   Name:   CShaderManager::SetWorldTransform
+*   Desc:   Set the world transform for the requested
+*           shader.
+************************************************/
 void CShaderManager::SetWorldTransform(EPassId pass, D3DXMATRIX worldTransform)
 {
 	ShaderVariant &v = m_vecPasses[pass].params.worldTransform;
@@ -307,6 +360,11 @@ void CShaderManager::SetWorldTransform(EPassId pass, D3DXMATRIX worldTransform)
 	SetShaderConstant( m_vecPasses[pass].pVSConstTable, "matWorld", v );	
 }
 
+/************************************************
+*   Name:   CShaderManager::SetViewProjection
+*   Desc:   Set the ViewProjection transform for
+*           the requested shader.
+************************************************/
 void CShaderManager::SetViewProjection(EPassId pass, D3DXMATRIX viewTransform, D3DXMATRIX projectionTransform )
 { 
 	ShaderPass &sp = m_vecPasses[pass]; 
@@ -324,6 +382,11 @@ void CShaderManager::SetViewProjection(EPassId pass, D3DXMATRIX viewTransform, D
 	SetShaderConstant( m_vecPasses[pass].pVSConstTable, "matView", v );
 }
 
+/************************************************
+*   Name:   CShaderManager::SetDrawColor
+*   Desc:   Set the draw color for the requested
+*           shader.
+************************************************/
 void CShaderManager::SetDrawColor(EPassId pass, D3DXCOLOR color )
 {
 	ShaderVariant v;
@@ -332,6 +395,11 @@ void CShaderManager::SetDrawColor(EPassId pass, D3DXCOLOR color )
 	SetShaderConstant( m_vecPasses[pass].pVSConstTable, "drawColor", v );
 }
 
+/************************************************
+*   Name:   CShaderManager::SetMaterial
+*   Desc:   Set the material attributes for the
+*           requested shader.
+************************************************/
 void CShaderManager::SetMaterial(EPassId pass, const D3DMATERIAL9 &mat ) 
 {
 	ShaderVariant* v = &m_vecPasses[pass].params.matDiffuse;
@@ -345,6 +413,11 @@ void CShaderManager::SetMaterial(EPassId pass, const D3DMATERIAL9 &mat )
 	SetShaderConstant( m_vecPasses[pass].pVSConstTable, "ambientMaterial", *v );
 }
 
+/************************************************
+*   Name:   CShaderManager::SetInvViewport
+*   Desc:   Set the inverse viewport size for
+*           the requested shader.
+************************************************/
 void CShaderManager::SetInvViewport(EPassId pass, float viewWidth, float viewHeight, bool pixelShader/*=false*/)
 {
 	float invWidth = 1.0f/viewWidth;
@@ -360,6 +433,11 @@ void CShaderManager::SetInvViewport(EPassId pass, float viewWidth, float viewHei
 	SetShaderConstant( table, "fInverseViewportHeight", v );
 }
 
+/************************************************
+*   Name:   CShaderManager::PushCurrentShader
+*   Desc:   Save the current shader pair on the
+*           stack and invalid the current pair.
+************************************************/
 void CShaderManager::PushCurrentShader()
 {
 	ShaderStackItem s;
@@ -373,6 +451,11 @@ void CShaderManager::PushCurrentShader()
 	
 }
 
+/************************************************
+*   Name:   CShaderManager::PopCurrentShader
+*   Desc:   Restore and reload the last 
+*           shader pair.
+************************************************/
 void CShaderManager::PopCurrentShader()
 {
 //	SetPixelShader(m_shaderStack.top().PSPass);

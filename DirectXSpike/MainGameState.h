@@ -18,7 +18,7 @@ class CLevelManager;
 class CSceneManager;
 class CCamera;
 class CCollisionManager;
-class CTextureManager;
+class CTextureField;
 
 //////////////////////////////////////
 // Class Definition
@@ -38,7 +38,7 @@ private:
 	CCamera					   *m_pCamera;
 	CCollisionManager		   *m_pCollision;
 	int							m_texContext;
-	CTextureManager*			m_pTextureMgr;
+	CTextureField*			m_pTextureMgr;
 	IEventHandler			   *m_pAvatar;
 	CGhostCamera			    m_cameraGhost;
 

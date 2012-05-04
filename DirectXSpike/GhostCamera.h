@@ -8,6 +8,11 @@
 *********************************************************************/
 #include "gameevents.h"
 
+//////////////////////////////////////
+// Forward Declarations
+//////////////////////////////////////
+using namespace GameEvents;
+
 class CGhostCamera : public IEventHandler
 {
 public:

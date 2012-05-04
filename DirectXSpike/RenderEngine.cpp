@@ -3,7 +3,7 @@
 	filename: 	RenderEngine.cpp
 	author:		Matthew Alford
 	
-	purpose:	
+	purpose:	Controls render order and manages display lists.
 *********************************************************************/
 #include "StdAfx.h"
 #include "RenderEngine.h"
@@ -13,10 +13,9 @@
 
 #define WORLD_UP Vector_3(0,1,0)
 
-//////////////////////////////////////////////////////////////////////////
-// Setup Functions
-//////////////////////////////////////////////////////////////////////////
-
+/*------------------------------------------------------------------------
+	Setup Functions
+------------------------------------------------------------------------*/
 CRenderEngine::CRenderEngine(void) : m_device(NULL),
 									m_renderQuadGeo(NULL),
 									m_texRenderTarget1(NULL),
@@ -29,13 +28,18 @@ CRenderEngine::CRenderEngine(void) : m_device(NULL),
 									m_nBlurPasses(0),
 									m_pHud(NULL)
 {
-	m_texMgr = CTextureManager::GetInstance();
+	m_texMgr = CTextureField::GetInstance();
 }
 
 CRenderEngine::~CRenderEngine(void)
 {
 }
 
+/************************************************
+*   Name:   CRenderEngine::Setup
+*   Desc:   Initializes the render engine and
+*           submodules.
+************************************************/
 bool CRenderEngine::Setup(unsigned int viewportWidth, unsigned int viewportHeight)
 {
 	m_meshMgr.SetDevice(m_device);
@@ -49,7 +53,10 @@ bool CRenderEngine::Setup(unsigned int viewportWidth, unsigned int viewportHeigh
 	m_shaderMgr.SetDevice(m_device);
 
 	// setup the texture manager
-	m_texMgr->Init(m_device);
+	m_texMgr->Init();
+
+	/* setup the scene manager */
+	m_sceneMgr.Setup(m_meshMgr);
 
 	// Setup the Camera (view matrix)
 	m_sceneMgr.GetDefaultCamera().SetViewPort(viewportWidth, viewportHeight);
@@ -58,18 +65,33 @@ bool CRenderEngine::Setup(unsigned int viewportWidth, unsigned int viewportHeigh
 	return true;
 }
 
+
+/************************************************
+*   Name:   CRenderEngine::SetDevice
+*   Desc:   Sets the DirectX device handle, and
+*           initializes the render engine.
+************************************************/
 void CRenderEngine::SetDevice(LPDIRECT3DDEVICE9 device, unsigned int viewportWidth, unsigned int viewportHeight) 
 {
 	m_device = device;
-	bool success = Setup(viewportWidth, viewportHeight);
-	assert(success);
+	dxPowerUp( m_device );
+	VERIFY(Setup(viewportWidth, viewportHeight));
 }
 
+/************************************************
+*   Name:   CRenderEngine::SetWireframeMode
+*   Desc:   Toggles mesh wireframe rendering.
+************************************************/
 void CRenderEngine::SetWireframeMode(bool enable)
 {
 	dxFillMode( enable ? D3DFILL_WIREFRAME : D3DFILL_SOLID );
 }
 
+/************************************************
+*   Name:   CRenderEngine::CreateRenderTarget
+*   Desc:   Initializes the render targets used
+*           by the engine.
+************************************************/
 bool CRenderEngine::CreateRenderTarget(void)
 {
 	// Create the RT's texture and surface
@@ -90,10 +112,14 @@ bool CRenderEngine::CreateRenderTarget(void)
 	return true;
 }
 
-//////////////////////////////////////////////////////////////////////////
-// Render Functions
-//////////////////////////////////////////////////////////////////////////
+/*------------------------------------------------------------------------
+	Render Functions
+------------------------------------------------------------------------*/
 
+/************************************************
+*   Name:   CRenderEngine::RenderScene
+*   Desc:   Main render manager and order.
+************************************************/
 void CRenderEngine::RenderScene()
 {
 	/* PASS 0: Render Entire Scene to Texture */
@@ -255,20 +281,28 @@ void CRenderEngine::RenderScene()
 	}
 }
 
-//////////////////////////////////////////////////////////////////////////
-// Update Functions
-//////////////////////////////////////////////////////////////////////////
+/*------------------------------------------------------------------------
+	Update Functions
+------------------------------------------------------------------------*/
 
-void CRenderEngine::Update( LPDIRECT3DDEVICE9 device, float elapsedMillis)
+/************************************************
+*   Name:   CRenderEngine::Update
+*   Desc:   Updates modules owned by Render Engine
+************************************************/
+void CRenderEngine::Update( float elapsedMillis )
 {
 	m_shaderMgr.Update(elapsedMillis);
-	m_meshMgr.Update( device, elapsedMillis);
+	m_meshMgr.Update(elapsedMillis);
 }
 
+/*------------------------------------------------------------------------
+	Debug Draw Functions
+------------------------------------------------------------------------*/
 
-//////////////////////////////////////////////////////////////////////////
-// Debug Draw Functions
-//////////////////////////////////////////////////////////////////////////
+/************************************************
+*   Name:   CRenderEngine::DrawDebugSphere
+*   Desc:   Draws a colored 3D sphere.
+************************************************/
 void CRenderEngine::DrawDebugSphere(Sphere_PosRad& sphere, ColorRGBA32 color)
 {
 	Matrix4x4 scaling, translation, world;
@@ -295,6 +329,11 @@ void CRenderEngine::DrawDebugSphere(Sphere_PosRad& sphere, ColorRGBA32 color)
 	model->Render(*this, world, m_shaderMgr);
 }
 
+/************************************************
+*   Name:   CRenderEngine::DrawDebugAxes
+*   Desc:   Draws an XYZ axis at the given location
+*           Axis is rotated to face world orientation.
+************************************************/
 void CRenderEngine::DrawDebugAxes(Vector_3 location)
 {
 	/* draw x axis red */
@@ -328,6 +367,12 @@ void CRenderEngine::DrawDebugAxes(Vector_3 location)
 	DrawDebugLine3D(location, zend, zclr, true);
 }
 
+/************************************************
+*   Name:   CRenderEngine::DrawDebugLine3D
+*   Desc:   Draws a 3D colored line from given 
+*           start to end.  Optionally draws the
+*           spherical end-points.
+************************************************/
 void CRenderEngine::DrawDebugLine3D(Vector_3 start, Vector_3 end, ColorRGBA32 color, bool showPoints/*= false*/)
 {
 	static const float thickness = 0.05f;

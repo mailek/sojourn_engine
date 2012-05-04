@@ -9,7 +9,7 @@
 #include "LevelManager.h"
 #include "SceneManager.h"
 #include "MeshManager.h"
-#include "Terrain.h"
+#include "TerrainChunk.h"
 #include "mathutil.h"
 #include "RenderEngine.h"
 #include "CollisionManager.h"
@@ -19,6 +19,7 @@
 //////////////////////////////////////////////////////////////////////////
 // SceneObject Functions
 //////////////////////////////////////////////////////////////////////////
+/* NOTE: Need to refactor this out of levelmgr, as it shouldn't be here */
 
 CLevelManager::SceneObject::SceneObject() : m_pMesh(NULL),
 											m_lastFrame(0),
@@ -79,54 +80,36 @@ CLevelManager::~CLevelManager(void)
 	}
 }
 
-bool CLevelManager::LoadDefaultLevel(CRenderEngine *renderEngine, CTerrain **retTerrain, CSkybox **retSkybox)
+bool CLevelManager::LoadDefaultLevel( CRenderEngine *renderEngine )
 {
 	CMeshManager& meshMgr = renderEngine->GetMeshManager();
-	CSceneManager& sceneMgr = renderEngine->GetSceneManager();
-	LPDIRECT3DDEVICE9 device = renderEngine->GetDevice();
+	m_pSceneMgr = renderEngine->GetSceneManager();
 
-	if(!meshMgr.LoadMeshes())
-		return false;
+	VERIFY(meshMgr.LoadMeshes());
 
-	// create skybox
-	m_pSkyDome = new CSkybox();
-	if(retSkybox)
-		*retSkybox = m_pSkyDome;
-	
-	if(!m_pSkyDome->LoadSkyDome(device, DRAW_DIST*0.8, 16, 16))
-		return false;
+	m_skyDome.LoadSkyDome(DRAW_DIST*0.8, 16, 16);
 
-	// create terrain
-	m_pTerrain = new CTerrain();
-	if(retTerrain)
-		*retTerrain = m_pTerrain;
+	/* load terrain */
+	m_terrainMgr.Load("heightMap.raw", "groundTexture.dds", 128, 128, 20.0f, 0.9f, 30.0f);
+	m_terrainMgr.SetYOffset(0.0f);
 
-	m_pTerrain->SetYOffset(0.0f);
-	if(!m_pTerrain->LoadTerrain("heightMap.raw", "groundTexture.dds", 128, 128, 20.0f, 0.9f, 30.0f, device ))
-		return false;
-
-	renderEngine->GetSceneManager().Setup(device, *m_pTerrain, meshMgr);
-
-	// add the terrain and skydome
-	sceneMgr.AddNonclippableObjectToScene(m_pTerrain);
-	sceneMgr.AddNonclippableObjectToScene(m_pSkyDome);
+	/* load the level objects */
 
 	SceneObject* obj;
-	// generate some trees and place randomly in level
+	/* generate some trees and place randomly in level */
 	for(int i = 0; i < NUM_OF_TREES; i++)
-	//if(0)
 	{
 		obj = new SceneObject();
 
 		// generate some random x, z points, 
-		ABB_MaxMin terrainBounds = m_pTerrain->CalculateBoundingBox();
+		ABB_MaxMin terrainBounds = m_terrainMgr.GetCurrentTerrain().CalculateBoundingBox();
 		D3DXVECTOR3 diff = terrainBounds.max - terrainBounds.min;
 		diff *= 0.5f;
 		
 		D3DXVECTOR3 newTreeLocation(fabs(diff.x)*(2.0f*frand() - 1.0f), 0, fabs(diff.z)*(2.0f*frand() - 1.0f));
 
 		// ground clamp 
-		newTreeLocation.y = m_pTerrain->GetTerrainHeightAtXZ(newTreeLocation.x, newTreeLocation.z);
+		newTreeLocation.y = m_terrainMgr.GetCurrentTerrain().GetTerrainHeightAtXZ(newTreeLocation.x, newTreeLocation.z);
 
 		// set random position
 		obj->SetLocalPosition(newTreeLocation);
@@ -136,7 +119,6 @@ bool CLevelManager::LoadDefaultLevel(CRenderEngine *renderEngine, CTerrain **ret
 		const float fXZRandomScale = 3.0f + frand()*fXZScaleFactor;
 		const float fYRandomScale = 3.0f + frand()*fYScaleFactor;
 		obj->SetScale(Vector_3(fXZRandomScale, fYRandomScale, fXZRandomScale));
-		//obj->SetScale(Vector_3(1,1,1));
 
 		// random rotation
 		obj->SetYRotationRadians(frand()*TWO_PI);
@@ -147,21 +129,22 @@ bool CLevelManager::LoadDefaultLevel(CRenderEngine *renderEngine, CTerrain **ret
 
 		//then add to scene mgr draw list
 		m_staticLevelObjects.AddItemToEnd(obj);
-		sceneMgr.AddRenderableObjectToScene(reinterpret_cast<IRenderable*>(obj));
 	}
 
-	// well object on the origin
-	obj = new SceneObject();
+	/* well object on the origin */
+	/*obj = new SceneObject();
 	Vector_3 wellPos = Vector_3(0, 0, 0);
-	wellPos.y = m_pTerrain->GetTerrainHeightAtXZ(wellPos.x,wellPos.y);
+	wellPos.y = m_terrainMgr.GetCurrentTerrain().GetTerrainHeightAtXZ(wellPos.x,wellPos.y);
 	obj->SetLocalPosition(wellPos);
 	meshMgr.GetMesh(CMeshManager::eWell, &obj->m_pMesh);
-	//m_staticLevelObjects.AddItemToEnd(obj);
-	//sceneMgr.AddRenderableObjectToScene(reinterpret_cast<IRenderable*>(obj));
+	m_staticLevelObjects.AddItemToEnd(obj);*/
 
 	/* setup lights */
 	memset(m_lights, 0, sizeof(m_lights));
 	AddDirLight(Vector_3(0.0f, -1.0f, 0.0f), Color_4(1.f, 1.0f, 1.0f, 1.0f));
+
+	/* build the initial scene tree */
+	RefreshSceneManager();
 
 	return true;
 }
@@ -172,6 +155,9 @@ void CLevelManager::RegisterStaticCollision(CCollisionManager* cm)
 	{
 		cm->RegisterStaticCollidable(it->item);
 	}
+
+	/* set the collision manager on the terrain manager, so it can register new terrain as it is loaded */
+	m_terrainMgr.SetCollisionMgr(cm);
 }
 
 void CLevelManager::AddDirLight(Vector_3 lightDir, Color_4 lightColor)
@@ -193,4 +179,67 @@ void CLevelManager::AddDirLight(Vector_3 lightDir, Color_4 lightColor)
 	l->light.Diffuse	= lightColor;
 	l->light.Ambient	= lightColor * 0.5f;
 	l->light.Specular	= lightColor * 0.3f;
+}
+
+void CLevelManager::OnTerrainGridChanged( CTerrainContainer* terrainGrid ) 
+{
+	RefreshSceneManager();
+}
+
+bool CLevelManager::HandleEvent( UINT eventId, void* data, UINT data_sz )
+{
+	switch( eventId )
+	{
+	case EVT_UPDATE:
+		assert( data_sz == sizeof(float) );
+		assert( data != NULL );
+		Update( *(float*)data );
+		break;
+	case EVT_SETAVATAR:
+		assert( data_sz == sizeof(SetAvatarEventArgType) );
+		assert( data != NULL );
+		m_terrainMgr.SetAvatar((SetAvatarEventArgType)data);
+		m_skyDome.SetObjectToFollow((SetAvatarEventArgType)data);
+		break;
+	case EVT_TERRAIN_GRIDCHANGED:
+		assert( data_sz == sizeof(TerrainGridChangedArgType) );
+		assert( data != NULL );
+		OnTerrainGridChanged((CTerrainContainer*)data);
+		break;
+	default:
+		assert(false);
+		break;
+	}
+
+	return true;
+}
+
+void CLevelManager::Update( float elapsedMillis )
+{
+	m_terrainMgr.Update( elapsedMillis );
+}
+
+void CLevelManager::RefreshSceneManager()
+{
+	/* rebuild the scene tree */
+	CTerrainContainer terrain = m_terrainMgr.GetCurrentTerrain();
+	m_pSceneMgr->BuildQuadTreeFromCurrentTerrain(terrain);
+
+	/* add the terrain and skydome */
+	for(int i = 0; i < 3; i++)
+		for(int j = 0; j < 3; j++)
+		{
+			if(!terrain.m_terrainGrid[i][j])
+				continue;
+
+			m_pSceneMgr->AddNonclippableObjectToScene(terrain.m_terrainGrid[i][j]);
+		}
+
+	m_pSceneMgr->AddNonclippableObjectToScene(&m_skyDome);
+
+	/* add static objects */
+	for( CDoubleLinkedList<SceneObject>::DoubleLinkedListItem* it = m_staticLevelObjects.first; it != NULL; it = it->next)
+	{
+		m_pSceneMgr->AddRenderableObjectToScene(it->item);
+	}
 }

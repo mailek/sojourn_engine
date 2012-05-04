@@ -8,6 +8,11 @@
 *********************************************************************/
 #include "MathUtil.h"
 
+class CTerrainContainer;
+
+namespace GameEvents 
+{
+
 interface IEventHandler 
 {
 	virtual bool HandleEvent( UINT eventId, void* data, UINT data_sz )=0;
@@ -26,6 +31,7 @@ typedef enum _EEventIds
 	EVT_SETFACINGVEC,
 	EVT_GETPOSITIONVEC,
 	EVT_SETPOSITIONVEC,
+	EVT_SETAVATAR,
 	EVT_GETAVATAR,
 	EVT_DEBUGCAMERA,
 	EVT_CONTROL_GAIN_FOCUS,
@@ -37,6 +43,7 @@ typedef enum _EEventIds
 	EVT_MOVECMD,
 	EVT_GETTEXCONTEXT,
 	EVT_ATTACH_CAMERA,
+	EVT_TERRAIN_GRIDCHANGED,
 	EVT_CNT
 } EEventIds;
 
@@ -74,3 +81,14 @@ typedef Vector_3 GetPosEventArgType;
 
 // EVT_SETPOSITIONVEC
 typedef Vector_3 SetPosEventArgType;
+
+// EVT_SETAVATAR
+typedef IEventHandler* SetAvatarEventArgType;
+
+// EVT_GETAVATAR
+typedef IEventHandler** GetAvatarEventArgType;
+
+//EVT_TERRAIN_GRIDCHANGED
+typedef CTerrainContainer* TerrainGridChangedArgType;
+
+} /* end namespace GameEvents */

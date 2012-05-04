@@ -5,6 +5,7 @@
 	author:		Matthew Alford
 	
 	purpose:	
+	notes:		Handles gameevents.
 *********************************************************************/
 //////////////////////////////////////
 // Includes
@@ -17,7 +18,9 @@
 // Forward Declarations
 //////////////////////////////////////
 class CPlayer;
-class CTerrain;
+class CTerrainManager;
+
+using namespace GameEvents;
 
 //////////////////////////////////////
 // Class Definition
@@ -38,15 +41,15 @@ private:
 	D3DXMATRIX			m_projectionMatrix;
 	D3DXMATRIX			m_viewMatrix;
 
-	IEventHandler			   *m_pAttachParent;  // object which camera is attached to
-	CTerrain*			m_pTerrain; // camera needs terrain to find ground clamp
+	IEventHandler	   *m_pAttachParent;  // object which camera is attached to
+	CTerrainManager	   *m_pTerrain; // camera needs terrain to find ground clamp
 
 public:
 	void Update(float elapsedMillis);
 	void AdjustFOVAngle( float deltaRads );
 
 	inline void SetCameraAttach(IEventHandler *parent) {m_pAttachParent = parent;}
-	inline void SetTerrainToClamp(CTerrain *terrain) {m_pTerrain = terrain;}
+	inline void SetTerrainToClamp(CTerrainManager *terrain) {m_pTerrain = terrain;}
 
 	inline void SetViewPort(unsigned int viewWidth, unsigned int viewHeight) { m_frustum.ASPECT = (float)viewWidth/(float)viewHeight; D3DXMatrixPerspectiveFovLH(&m_projectionMatrix, m_frustum.FOVANGLE, m_frustum.ASPECT, m_frustum.NEARDIST, m_frustum.FARDIST); }
 	inline void Set3DPosition(D3DXVECTOR3 &pos) {m_frustum.cameraPos = pos;}

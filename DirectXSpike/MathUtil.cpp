@@ -43,7 +43,7 @@ float fclamp(float x, float min, float max)
 	return x < min ? min : (x > max ? max : x);
 }
 
-bool fcompare(float a, float b)
+bool feq(float a, float b)
 {
 	return (::fabs(a-b) < FLT_EPSILON);
 }
@@ -149,7 +149,7 @@ inline float ABB_CalcWidth( const ABB_MaxMin &abb )
 }
 
 /*	Find the smallest ABB (from starting ABB) that includes the given point		*/
-void ABB_GrowToInclude3DPoint(const Point_3D &p, ABB_MaxMin &abb)
+inline void ABB_GrowToInclude3DPoint(const Point_3D &p, ABB_MaxMin &abb)
 {
 	abb.min.x = fmin(abb.min.x, p.x);
 	abb.min.y = fmin(abb.min.y, p.y);
@@ -157,6 +157,18 @@ void ABB_GrowToInclude3DPoint(const Point_3D &p, ABB_MaxMin &abb)
 	abb.max.x = fmax(abb.max.x, p.x);
 	abb.max.y = fmax(abb.max.y, p.y);
 	abb.max.z = fmax(abb.max.z, p.z);
+}
+
+/*	Find the smallest ABB (from starting ABB) that includes the given ABB		*/
+inline void ABB_GrowToIncludeABB( const ABB_MaxMin &add, ABB_MaxMin &abb )
+{
+	ABB_GrowToInclude3DPoint(add.max, abb);
+	ABB_GrowToInclude3DPoint(add.min, abb);
+}
+
+inline bool ABB_PointInsideABB(const Point_3D &p, const ABB_MaxMin &abb)
+{
+	return ((p.x >= abb.min.x) && (p.x <= abb.max.x) && (p.y >= abb.min.y) && (p.y <= abb.max.y) && (p.z >= abb.min.z) && (p.z <= abb.max.z));
 }
 
 /*  Calculates a world transform matrix that transforms an origin-centered 

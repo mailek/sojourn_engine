@@ -147,7 +147,7 @@ extern inline float fmax(float a, float b );
 extern inline float fmin(float a, float b );
 extern inline float frand(void);
 extern inline float fclamp(float x, float min, float max);
-extern inline bool fcompare(float a, float b);
+extern inline bool feq(float a, float b);
 
 /* Collision */
 typedef enum _ECollideAxesType
@@ -176,7 +176,9 @@ extern inline int ABB_Divide( const ABB_MaxMin target, int xDivs, int yDivs, int
 extern inline ABB_MaxMin ABB_Scale( const ABB_MaxMin &abb, float xScale, float yScale, float zScale );
 extern inline float ABB_CalcDepth( const ABB_MaxMin &abb );
 extern inline float ABB_CalcWidth( const ABB_MaxMin &abb );
-void ABB_GrowToInclude3DPoint(const Point_3D &p, ABB_MaxMin &abb);
+extern inline void ABB_GrowToInclude3DPoint(const Point_3D &p, ABB_MaxMin &abb);
+extern inline void ABB_GrowToIncludeABB(const ABB_MaxMin &add, ABB_MaxMin &abb);
+extern inline bool ABB_PointInsideABB(const Point_3D &p, const ABB_MaxMin &abb);
 extern inline D3DXMATRIX ABB_CalcUnitTransform( const ABB_MaxMin abb );
 extern inline Sphere_PosRad ABB_CalcMinSphereContaining( const ABB_MaxMin abb );
 extern inline Sphere_PosRad ABB_CalcMaxSphereContainedBy( const ABB_MaxMin abb );

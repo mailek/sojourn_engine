@@ -14,6 +14,8 @@
 #include "doublelinkedlist.h"
 #include "ICollidable.h"
 #include "mathutil.h"
+#include "TerrainField.h"
+#include "Skybox.h"
 
 //////////////////////////////////////
 // Forward Declarations
@@ -21,15 +23,16 @@
 class BaseModel;
 class CMeshManager;
 class CSceneManager;
-class CTerrain;
-class CSkybox;
 class CRenderEngine;
 class CCollisionManager;
+class CSceneManager;
+
+using namespace GameEvents;
 
 //////////////////////////////////////
 // Class Definition
 //////////////////////////////////////
-class CLevelManager
+class CLevelManager : public IEventHandler
 {
 	//////////////////////////////////
 	// SceneObject
@@ -74,17 +77,26 @@ class CLevelManager
 
 private:
 	CDoubleLinkedList<SceneObject>	m_staticLevelObjects;
-	CTerrain					   *m_pTerrain;
-	CSkybox					       *m_pSkyDome;
+	CSkybox					        m_skyDome;
 	LightObject						m_lights[MAX_LIGHTS];
+	CTerrainManager					m_terrainMgr;
+	CSceneManager				   *m_pSceneMgr;
 
 public:
 	CLevelManager(void);
 	~CLevelManager(void);
 
-	bool LoadDefaultLevel(CRenderEngine *renderEngine, CTerrain **retTerrain, CSkybox **retSkybox);
+	bool LoadDefaultLevel(CRenderEngine *renderEngine);
 	void RegisterStaticCollision(CCollisionManager* cm);
+	CTerrainManager* GetTerrain() {return &m_terrainMgr;}
+
+	/* IEventHandler */
+	virtual bool HandleEvent( UINT eventId, void* data, UINT data_sz );
 
 private:
 	void AddDirLight(Vector_3 lightDir, Color_4 lightColor);
+	void Update( float elapsedMillis );
+	void RefreshSceneManager();
+	void OnTerrainGridChanged( CTerrainContainer* terrainGrid );
+
 };

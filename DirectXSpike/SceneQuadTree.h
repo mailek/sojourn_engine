@@ -11,7 +11,7 @@
 //////////////////////////////////////
 #include "quadtreegroundclamped.h"
 #include "IRenderable.h"
-#include "terrain.h"
+#include "TerrainMiscTypes.h"
 
 //////////////////////////////////////
 // Forward Declarations
@@ -33,7 +33,7 @@ typedef std::list<ZSortableRenderable> SceneMgrSortList;
 //////////////////////////////////////
 // Class Definition
 //////////////////////////////////////
-class CSceneQuadTree : public QuadTree_GroundClamped<IRenderable, CTerrain>
+class CSceneQuadTree : public QuadTree_GroundClamped<IRenderable, CTerrainContainer>
 {
 public:
 	CSceneQuadTree(void);

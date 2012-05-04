@@ -24,7 +24,7 @@
 
 CSkybox::CSkybox(void) : m_texSkyTexture(NULL),
 						m_mesh(NULL),
-						m_pCamera(NULL),
+						m_pAttach(NULL),
 						m_sphereRadius(0.0f)
 {
 }
@@ -33,20 +33,20 @@ CSkybox::~CSkybox(void)
 {
 }
 
-bool CSkybox::LoadSkyDome(LPDIRECT3DDEVICE9 device, float radius, UINT slices, UINT stacks)
+void CSkybox::LoadSkyDome( float radius, UINT slices, UINT stacks )
 {
 	// texture
 	TextureContextIdType texContext;
 	CGameStateStack::GetInstance()->GetCurrentState()->HandleEvent(EVT_GETTEXCONTEXT, &texContext, sizeof(texContext));
-	CTextureManager* texMgr = CTextureManager::GetInstance();
+	CTextureField* texMgr = CTextureField::GetInstance();
 	m_texSkyTexture = texMgr->GetTexture(texContext, "skyTexture.dds");
 
 	// model
-	HR(D3DXCreateSphere(device, radius, slices, stacks, &m_mesh, NULL));
+	dxCreateSphere(radius, slices, stacks, &m_mesh, NULL);
 	m_sphereRadius = radius;
 
 	LPD3DXMESH texturedMesh;
-    HR(m_mesh->CloneMeshFVF(D3DXMESH_SYSTEMMEM, D3DFVF_XYZ | D3DFVF_TEX1, device, &texturedMesh));
+    dxCloneMeshFVF(m_mesh, D3DXMESH_SYSTEMMEM, D3DFVF_XYZ | D3DFVF_TEX1, &texturedMesh);
     m_mesh->Release();
 	m_mesh = texturedMesh;
 
@@ -69,11 +69,9 @@ bool CSkybox::LoadSkyDome(LPDIRECT3DDEVICE9 device, float radius, UINT slices, U
 
 	m_mesh->UnlockVertexBuffer();
 
-	D3DXCOLOR matColor = D3DXCOLOR(0.8f, 0.8f, 1.0f, 1.0f);
-	m_skyMaterial.Ambient		= matColor*50.0f;
-	m_skyMaterial.Diffuse		= matColor;
-
-	return true;
+	D3DXCOLOR matColor		= D3DXCOLOR(0.8f, 0.8f, 1.0f, 1.0f);
+	m_skyMaterial.Ambient	= matColor*50.0f;
+	m_skyMaterial.Diffuse	= matColor;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -85,7 +83,7 @@ void CSkybox::Render( CRenderEngine &rndr )
 	D3DXMATRIX world = GetWorldTransform();
 	CShaderManagerEx &shaderMgr = rndr.GetShaderManager();
 	LPDIRECT3DDEVICE9 device = rndr.GetDevice();
-	CCamera& camera = rndr.GetSceneManager().GetDefaultCamera();
+	CCamera& camera = rndr.GetSceneManager()->GetDefaultCamera();
 	
 	shaderMgr.SetEffect(EFFECT_SKYDOME);
 	shaderMgr.SetTechnique("FlatTexture");
@@ -106,9 +104,11 @@ void CSkybox::Render( CRenderEngine &rndr )
 
 D3DXMATRIX CSkybox::GetWorldTransform() 
 {
+	Vector_3 parentPos;
+	m_pAttach->HandleEvent(EVT_GETPOSITIONVEC, &parentPos, sizeof(parentPos));
+
 	D3DXMATRIX worldMatrix;
 	D3DXMatrixIdentity(&worldMatrix);
-	D3DXVECTOR3 cameraPos = m_pCamera->Get3DPosition();
-	D3DXMatrixTranslation(&worldMatrix, cameraPos.x, cameraPos.y - m_sphereRadius*SPHEREYSINK_MOD, cameraPos.z);
+	D3DXMatrixTranslation(&worldMatrix, parentPos.x, parentPos.y - m_sphereRadius*SPHEREYSINK_MOD, parentPos.z);
 	return worldMatrix;
 }

@@ -50,8 +50,10 @@ extern inline void COM_SAFERELEASE(IUnknown* ptr);
 /* assert */
 #ifndef _DEBUG
 #define VERIFY(x) x
+#define DASSERT(x)
 #else
 #define VERIFY(x) assert(x)
+#define DASSERT(x) assert(x)
 #endif
 
 /* memory */

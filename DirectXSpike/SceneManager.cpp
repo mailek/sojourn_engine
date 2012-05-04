@@ -9,7 +9,7 @@
 
 #include "SceneManager.h"
 #include "ShaderManager.h"
-#include "Terrain.h"
+#include "TerrainChunk.h"
 #include "MathUtil.h"
 #include "vertextypes.h"
 #include "MeshManager.h"
@@ -30,17 +30,13 @@ CSceneManager::~CSceneManager(void)
 	
 }
 
-void CSceneManager::Setup(LPDIRECT3DDEVICE9 device, CTerrain& terrain, CMeshManager& meshMgr)
+/************************************************
+*   Name:   CSceneManager::Setup
+*   Desc:   Initialize global class resources
+************************************************/
+void CSceneManager::Setup( CMeshManager& meshMgr )
 {
 	meshMgr.GetGlobalMesh(eCenteredUnitABB, &m_debugMesh);
-
-	// Create the quad tree for frustum culling acceleration
-	ABB_MaxMin abb = terrain.CalculateBoundingBox();
-	QuadTree_GroundClamped<IRenderable, CTerrain>::GCQTDefinition qtdef;
-	qtdef.branchHeight = 500.0f;
-	qtdef.leafHeight = 50.0f;
-	qtdef.quadTreeDepth = 5;
-	m_quadTree.Setup( abb, terrain, qtdef );
 
 }
 
@@ -48,6 +44,12 @@ void CSceneManager::Setup(LPDIRECT3DDEVICE9 device, CTerrain& terrain, CMeshMana
 // Update Functions
 //////////////////////////////////////////////////////////////////////////
 
+/************************************************
+*   Name:   CSceneManager::UpdateDrawLists
+*   Desc:   Build the FtoB and BtoF potentially
+*           visible sets for the current camera
+*           view.
+************************************************/
 void CSceneManager::UpdateDrawLists()
 {
 	/* if camera hasn't moved then no need to recalculate */
@@ -115,6 +117,11 @@ void CSceneManager::UpdateDrawLists()
 	m_lastViewSpace = currentViewSpace;
 }
 
+/************************************************
+*   Name:   CSceneManager::GetOpaqueDrawListF2B
+*   Desc:   Retrieve the PVS of opaque objects
+*           sorted FtoB.
+************************************************/
 void CSceneManager::GetOpaqueDrawListF2B(std::list<IRenderable*> &list)
 {
 	UpdateDrawLists();
@@ -126,6 +133,11 @@ void CSceneManager::GetOpaqueDrawListF2B(std::list<IRenderable*> &list)
 	list = m_opaqueList;
 }
 
+/************************************************
+*   Name:   CSceneManager::GetTransparentDrawListB2F
+*   Desc:   Retrieve the PVS of transparent objects
+*           sorted BtoF.
+************************************************/
 void CSceneManager::GetTransparentDrawListB2F(SceneMgrSortList &list)
 {
 	UpdateDrawLists();
@@ -137,6 +149,10 @@ void CSceneManager::GetTransparentDrawListB2F(SceneMgrSortList &list)
 	list = m_transparentList;
 }
 
+/************************************************
+*   Name:   CSceneManager::GetAllObjectsDrawListB2F
+*   Desc:   Retrieve all the PVS objects sorted BtoF.
+************************************************/
 void CSceneManager::GetAllObjectsDrawListB2F(SceneMgrSortList &list)
 {
 	UpdateDrawLists();
@@ -158,12 +174,23 @@ void CSceneManager::GetAllObjectsDrawListB2F(SceneMgrSortList &list)
 	list.sort();
 }
 
+/************************************************
+*   Name:   CSceneManager::AddNonclippableObjectToScene
+*   Desc:   Add an object to the scene which will
+*	        always be included in the PVS.
+************************************************/
 void CSceneManager::AddNonclippableObjectToScene(IRenderable* obj)
 {
 	assert(obj);
 	m_noClipList.AddItemToEnd(obj);
 }
 
+/************************************************
+*   Name:   CSceneManager::AddRenderableObjectToScene
+*   Desc:   Add an object to the scene which may be
+*           culled from the PVS if not in the camera
+*           view.
+************************************************/
 void CSceneManager::AddRenderableObjectToScene(IRenderable* obj)
 {
 	assert(obj);
@@ -174,6 +201,11 @@ void CSceneManager::AddRenderableObjectToScene(IRenderable* obj)
 // Render Functions
 //////////////////////////////////////////////////////////////////////////
 
+/************************************************
+*   Name:   CSceneManager::Render
+*   Desc:   Draw a debug grid to visualize the 
+*           quad tree sectors.
+************************************************/
 void CSceneManager::Render( CRenderEngine &rndr )
 {
 	assert(m_debugMesh);
@@ -256,6 +288,10 @@ void CSceneManager::Render( CRenderEngine &rndr )
 	COM_SAFERELEASE(vertices);
 }
 
+/************************************************
+*   Name:   CSceneManager::SetNextClipStrategy
+*   Desc:   Set the PVS determining algorithm.
+************************************************/
 void CSceneManager::SetNextClipStrategy(int strategy/* = -1*/)
 {
 	if(strategy >= FIRST_STRATEGY) 
@@ -265,4 +301,15 @@ void CSceneManager::SetNextClipStrategy(int strategy/* = -1*/)
 		m_clipStrategy++; 
 		m_clipStrategy = m_clipStrategy >= STRATEGY_CNT ? FIRST_STRATEGY : m_clipStrategy; 
 	} 
+}
+
+void CSceneManager::BuildQuadTreeFromCurrentTerrain( CTerrainContainer terrain )
+{
+	/* Create the quad tree for frustum culling acceleration */
+	ABB_MaxMin abb = terrain.CalculateBoundingBox();
+	QuadTree_GroundClamped<IRenderable, CTerrainContainer>::GCQTDefinition qtdef;
+	qtdef.branchHeight = 500.0f;
+	qtdef.leafHeight = 50.0f;
+	qtdef.quadTreeDepth = 5;
+	m_quadTree.Setup( abb, terrain, qtdef );
 }

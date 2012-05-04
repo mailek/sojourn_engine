@@ -48,15 +48,15 @@ typedef struct _TextureInstanceType
 
 } TextureInstanceType;
 
-class CTextureManager : public SingleThreadSingleton<CTextureManager>
+class CTextureField : public SingleThreadSingleton<CTextureField>
 {
-	friend class SingleThreadSingleton<CTextureManager>;
+	friend class SingleThreadSingleton<CTextureField>;
 private:
-	CTextureManager(void);
-	~CTextureManager(void);
+	CTextureField(void);
+	~CTextureField(void);
 
 public:
-	void Init(LPDIRECT3DDEVICE9 device);
+	void Init();
 	TextureContextIdType CreateTextureContext(const char* name);
 	void UnloadTextureContext(TextureContextIdType contextId);
 	LPDIRECT3DTEXTURE9 GetTexture(TextureContextIdType context, const char* filename);

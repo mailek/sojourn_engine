@@ -29,7 +29,7 @@ bool CGameStateStack::Init( CRenderEngine *renderEngine )
 	return true;
 }
 
-void CGameStateStack::Update( LPDIRECT3DDEVICE9 device, float elapsedMillis )
+void CGameStateStack::Update( float elapsedMillis )
 {
 	for( CDoubleLinkedList<IEventHandler>::DoubleLinkedListItem* it = m_stateStack.first; it != NULL; it = it->next )
 	{

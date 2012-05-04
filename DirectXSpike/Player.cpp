@@ -8,7 +8,7 @@
 #include "StdAfx.h"
 #include "Player.h"
 #include "MeshManager.h"
-#include "Terrain.h"
+#include "TerrainField.h"
 #include "mathutil.h"
 #include "renderengine.h"
 #include "camera.h"
@@ -62,7 +62,7 @@ void CPlayer::Setup(CMeshManager& meshMgr)
 
 void CPlayer::Update(float deltaTime)
 {
-	::ZeroMemory(m_vecVelocity, sizeof(m_vecVelocity));
+	m_vecVelocity = Vector_3(0,0,0);
 	if(m_movementState & MOVE_FORWARD_FLAG)
 		m_vecVelocity.z += 150.0f;
 
@@ -124,14 +124,13 @@ void CPlayer::Update(float deltaTime)
 
 void CPlayer::GroundClampTerrain()
 {
-	if(m_pTerrain == NULL)
-		return;
+	DASSERT(m_pTerrain);
 
 	Vector_3 pos = m_transform.GetTranslation();
-	if(fcompare(pos.x, m_vecLastPos.x) && fcompare(pos.z, m_vecLastPos.z))
+	if(feq(pos.x, m_vecLastPos.x) && feq(pos.z, m_vecLastPos.z))
 		return;
 
-	pos.y = m_pTerrain->GetTerrainHeightAtXZ(pos.x, pos.z);
+	pos.y = m_pTerrain->GetTerrainByLocation(pos)->GetTerrainHeightAtXZ(pos.x, pos.z);
 	m_transform.SetTranslation(pos);
 }
 

@@ -31,6 +31,11 @@ CSceneQuadTree::~CSceneQuadTree(void)
 // Update Functions
 //////////////////////////////////////////////////////////////////////////
 
+/************************************************
+*   Name:   CSceneQuadTree::AddObjectToTree
+*   Desc:   Insert a new object sorted into quad
+*           tree.
+************************************************/
 void CSceneQuadTree::AddObjectToTree(IRenderable* obj)
 {
 	const int MAXLEAVES(200);
@@ -67,7 +72,14 @@ void CSceneQuadTree::AddObjectToTree(IRenderable* obj)
 
 }
 
-// Grabs all the objects in a given quad node index, sorts into opaque and transparent lists, and optionally get all objects from children without scrutiny
+/************************************************
+*   Name:   CSceneQuadTree::AddObjectsToRenderListsByQuadIndex
+*   Desc:   Grabs all the objects in a given quad 
+*           node index, sorts into opaque and 
+*           transparent lists, and optionally get 
+*           all objects from children without 
+*           scrutiny.
+************************************************/
 void CSceneQuadTree::AddObjectsToRenderListsByQuadIndex(long *index, long numNodes, const D3DXMATRIX &viewMatrix, SceneMgrRenderList &opaque, SceneMgrSortList &transparent, bool recurseGrabChildren/*=false*/)
 {
 	long idx = *index;
@@ -105,6 +117,12 @@ void CSceneQuadTree::AddObjectsToRenderListsByQuadIndex(long *index, long numNod
 //////////////////////////////////////////////////////////////////////////
 // Query Functions
 //////////////////////////////////////////////////////////////////////////
+
+/************************************************
+*   Name:   CSceneQuadTree::GetRenderListsByCamera
+*   Desc:   Find all the objects inside the camera's
+*           frustum.
+************************************************/
 void CSceneQuadTree::GetRenderListsByCamera( const CCamera& camera, SceneMgrRenderList &opaque, SceneMgrSortList &transparent )
 {
 	D3DXMATRIX view = camera.GetViewMatrix();
@@ -117,6 +135,11 @@ void CSceneQuadTree::GetRenderListsByCamera( const CCamera& camera, SceneMgrRend
 	AddObjectsToRenderListsByQuadIndex( objectNodes, nodeCnt, view, opaque, transparent );
 }
 
+/************************************************
+*   Name:   CSceneQuadTree::GetAllRenderObjects
+*   Desc:   Retrieve all the objects in the quad
+*           tree structure.
+************************************************/
 void CSceneQuadTree::GetAllRenderObjects( const D3DXMATRIX &view, SceneMgrRenderList &opaque, SceneMgrSortList &transparent )
 {
 	NODE_INDEX_TYPE objectNodes[MAX_OBJECT_NODES];
@@ -125,6 +148,3 @@ void CSceneQuadTree::GetAllRenderObjects( const D3DXMATRIX &view, SceneMgrRender
 
 	AddObjectsToRenderListsByQuadIndex( objectNodes, nodeCnt, view, opaque, transparent );
 }
-
-
-

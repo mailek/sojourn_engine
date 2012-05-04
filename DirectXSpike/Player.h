@@ -21,7 +21,9 @@
 //////////////////////////////////////
 class CShaderManager;
 class CMeshManager;
-class CTerrain;
+class CTerrainManager;
+
+using namespace GameEvents;
 
 //////////////////////////////////////
 // Type Definitions
@@ -48,8 +50,8 @@ private:
 	Vector_3				m_vecLastPos;
 	Vector_3				m_vecRotationVelocity;
 
-	BaseModel*				m_pModel;
-	CTerrain*				m_pTerrain;
+	BaseModel              *m_pModel;
+	CTerrainManager        *m_pTerrain;
 	PlayerProperties		m_properties;
 	ComplexTransform		m_transform;
 
@@ -60,7 +62,7 @@ public:
 	
 	inline Vector_3 GetPosition3D() {return m_transform.GetTranslation();}
 	inline void SetScale(Vector_3 &scale) {m_transform.SetScale(scale);}
-	inline void SetGroundClampTerrain(CTerrain &terrain) {m_pTerrain = &terrain; GroundClampTerrain();}
+	inline void SetGroundClampTerrain(CTerrainManager *terrain) {m_pTerrain = terrain; GroundClampTerrain();}
 
 	// IRenderable
 	virtual void Render( CRenderEngine &rndr );

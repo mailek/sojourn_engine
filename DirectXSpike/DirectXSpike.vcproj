@@ -91,8 +91,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)..\Engine\$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)..\Engine\"
+			IntermediateDirectory="$(SolutionDir)..\_build\$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="2"
 			WholeProgramOptimization="1"
@@ -448,11 +448,23 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Terrain.cpp"
+				RelativePath=".\TerrainChunk.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Terrain.h"
+				RelativePath=".\TerrainChunk.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TerrainField.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TerrainField.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TerrainMiscTypes.h"
 				>
 			</File>
 		</Filter>

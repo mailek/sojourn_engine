@@ -13,7 +13,7 @@
 
 #include "RenderEngine.h"
 #include "BaseModel.h"
-#include "Terrain.h"
+#include "TerrainChunk.h"
 #include "ShaderManagerEx.h"
 #include "vertextypes.h"
 #include "texturemanager.h"
@@ -170,7 +170,7 @@ class DefaultAllocator : public ID3DXAllocateHierarchy
 
 		TextureContextIdType texContext;
 		CGameStateStack::GetInstance()->GetCurrentState()->HandleEvent(EVT_GETTEXCONTEXT, &texContext, sizeof(texContext));
-		CTextureManager* texMgr = CTextureManager::GetInstance();
+		CTextureField* texMgr = CTextureField::GetInstance();
 
 		container->pMaterials = NULL;
 		for(DWORD dw = 0; dw < NumMaterials; dw++)
@@ -276,6 +276,11 @@ BaseModel::~BaseModel(void)
 	Setup Functions
 =================================================*/
 
+/************************************************
+*   Name:   BaseModel::LoadXMeshFromFile
+*   Desc:   Loads an X mesh model and any associated
+*           textures.
+************************************************/
 bool BaseModel::LoadXMeshFromFile(LPCSTR pFilename, IDirect3DDevice9* pDevice)
 {
 	assert(pDevice);
@@ -293,7 +298,7 @@ bool BaseModel::LoadXMeshFromFile(LPCSTR pFilename, IDirect3DDevice9* pDevice)
 	m_meshType = eSimpleMesh;
 	TextureContextIdType texContext;
 	CGameStateStack::GetInstance()->GetCurrentState()->HandleEvent(EVT_GETTEXCONTEXT, &texContext, sizeof(texContext));
-	CTextureManager* texMgr = CTextureManager::GetInstance();
+	CTextureField* texMgr = CTextureField::GetInstance();
 
 	D3DXMATERIAL* mats = (D3DXMATERIAL*)matBuffer->GetBufferPointer();
 	for(int i = 0, j = numMats; i < j; i++)
@@ -318,6 +323,10 @@ bool BaseModel::LoadXMeshFromFile(LPCSTR pFilename, IDirect3DDevice9* pDevice)
 	return true;
 }
 
+/************************************************
+*   Name:   BaseModel::LoadXMeshHierarchyFromFile
+*   Desc:   Loads an animated model from X file.
+************************************************/
 bool BaseModel::LoadXMeshHierarchyFromFile(LPCSTR pFilename, IDirect3DDevice9* pDevice)
 {
 	assert(pDevice);
@@ -343,12 +352,16 @@ bool BaseModel::LoadXMeshHierarchyFromFile(LPCSTR pFilename, IDirect3DDevice9* p
 		D3DFMT_INDEX16/*format*/, D3DPOOL_MANAGED/*pool*/, &m_skeletonIB, 0/*share handle*/ ));
 
 	UpdateBoneMatrices();
-	if( m_headMeshContainer ) UpdateSkinnedMeshes( pDevice );
+	if( m_headMeshContainer ) UpdateSkinnedMeshes();
 
 	return true;
 }
 
-/* Computes the combined bone transformation and increments the bone count */
+/************************************************
+*   Name:   BaseModel::RecurseFillOutBone
+*   Desc:   Computes the combined bone transformation 
+*           and increments the bone count.
+************************************************/
 void BaseModel::RecurseFillOutBone( Bone* bone, unsigned int parentIndex )
 {
 	static int s_boneDepth = 0;
@@ -401,11 +414,13 @@ void BaseModel::RecurseFillOutBone( Bone* bone, unsigned int parentIndex )
 
 }
 
-void BaseModel::LoadTeapot(IDirect3DDevice9* pDevice)
+/************************************************
+*   Name:   BaseModel::LoadTeapot
+*   Desc:   Loads the teapot debug mesh.
+************************************************/
+void BaseModel::LoadTeapot()
 {
-	assert(pDevice);
-
-	HR(D3DXCreateTeapot(pDevice, &m_mesh, 0));
+	dxCreateTeapot(&m_mesh, 0);
 	m_meshType = eSimpleMesh;
 	
 	/* Teapot Material */
@@ -418,11 +433,13 @@ void BaseModel::LoadTeapot(IDirect3DDevice9* pDevice)
 	m_arrTexs.push_back(0);
 }
 
-void BaseModel::LoadCenteredUnitCube(IDirect3DDevice9* pDevice)
+/************************************************
+*   Name:   BaseModel::LoadCenteredUnitCube
+*   Desc:   Loads a unit sized debug cube mesh.
+************************************************/
+void BaseModel::LoadCenteredUnitCube()
 {
-	assert(pDevice);
-
-	HR(D3DXCreateBox( pDevice, 1.0f, 1.0f, 1.0f, &m_mesh, NULL ));
+	dxCreateBox( 1.0f, 1.0f, 1.0f, &m_mesh, NULL );
 	m_meshType = eSimpleMesh;
 
 	/* Cube Material */
@@ -435,11 +452,13 @@ void BaseModel::LoadCenteredUnitCube(IDirect3DDevice9* pDevice)
 	m_arrTexs.push_back(0);
 }
 
-void BaseModel::LoadCenteredUnitCylinder(IDirect3DDevice9* pDevice)
+/************************************************
+*   Name:   BaseModel::LoadCenteredUnitCylinder
+*   Desc:   Loads a unit sized debug cylinder mesh.
+************************************************/
+void BaseModel::LoadCenteredUnitCylinder()
 {
-	assert(pDevice);
-
-	HR(D3DXCreateCylinder( pDevice, 0.5f, 0.5f, 1.0f, 16, 2, &m_mesh, NULL ));
+	dxCreateCylinder( 0.5f, 0.5f, 1.0f, 16, 2, &m_mesh, NULL );
 	m_meshType = eSimpleMesh;
 
 	/* Cylinder Material */
@@ -452,11 +471,13 @@ void BaseModel::LoadCenteredUnitCylinder(IDirect3DDevice9* pDevice)
 	m_arrTexs.push_back(0);
 }
 
-void BaseModel::LoadCenteredUnitSphere(IDirect3DDevice9* pDevice)
+/************************************************
+*   Name:   BaseModel::LoadCenteredUnitSphere
+*   Desc:   Loads a unit sized debug sphere mesh.
+************************************************/
+void BaseModel::LoadCenteredUnitSphere()
 {
-	assert(pDevice);
-
-	HR(D3DXCreateSphere( pDevice, 1.0f, 32, 32, &m_mesh, NULL ));
+	dxCreateSphere( 1.0f, 32, 32, &m_mesh, NULL );
 	m_meshType = eSimpleMesh;
 
 	/* Sphere Material */
@@ -469,17 +490,17 @@ void BaseModel::LoadCenteredUnitSphere(IDirect3DDevice9* pDevice)
 	m_arrTexs.push_back(0);
 }
 
-void BaseModel::LoadScreenOrientedQuad(IDirect3DDevice9* pDevice)
+/************************************************
+*   Name:   BaseModel::LoadScreenOrientedQuad
+*   Desc:   Loads a screen sized quad mesh.
+************************************************/
+void BaseModel::LoadScreenOrientedQuad()
 {
-	assert(pDevice);
-
-	D3DVERTEXELEMENT9 vertDecl[10];
-	HR(D3DXDeclaratorFromFVF( RenderQuadVertex::FVF, vertDecl ));
-	HR(D3DXCreateMesh( 2, 6, 0, vertDecl , pDevice, &m_mesh ));
+	dxCreateMeshFVF( 2, 6, 0, RenderQuadVertex::FVF, &m_mesh );
 	m_meshType = eSimpleMesh;
 
 	RenderQuadVertex* coord = NULL;
-	LPDIRECT3DVERTEXBUFFER9 vb =NULL;
+	LPDIRECT3DVERTEXBUFFER9 vb = NULL;
 	m_mesh->GetVertexBuffer(&vb);
 	HR(vb->Lock(0, 0, (void**)&coord, 0));
 	
@@ -496,6 +517,11 @@ void BaseModel::LoadScreenOrientedQuad(IDirect3DDevice9* pDevice)
 	COM_SAFERELEASE(vb);
 }
 
+/************************************************
+*   Name:   BaseModel::CreateDebugAxes
+*   Desc:   Loads an axis mesh scaled by the model's
+*			scale.
+************************************************/
 void BaseModel::CreateDebugAxes()
 {
 	if(m_debugAxesVB == NULL)
@@ -534,6 +560,12 @@ void BaseModel::CreateDebugAxes()
 /*=================================================
 	Render Functions
 =================================================*/
+
+/************************************************
+*   Name:   BaseModel::Render
+*   Desc:   Draws the model with the configured
+*           shading function.
+************************************************/
 void BaseModel::Render(CRenderEngine& rndr, D3DXMATRIX worldTransform, CShaderManagerEx &shaderMgr)
 {
 	assert( m_pRenderFunc != NULL );
@@ -541,6 +573,12 @@ void BaseModel::Render(CRenderEngine& rndr, D3DXMATRIX worldTransform, CShaderMa
 	m_pRenderFunc->Render(rndr, worldTransform, shaderMgr);
 }
 
+/************************************************
+*   Name:   BaseModel::GetSphereBounds
+*   Desc:   Calculates the world space encapsulating
+*           sphere.  Takes the current animation pose
+*           into account.
+************************************************/
 Sphere_PosRad BaseModel::GetSphereBounds()
 {
 	/* Recalculate the sphere bound if needed */
@@ -581,7 +619,12 @@ Sphere_PosRad BaseModel::GetSphereBounds()
 	Update Functions
 =================================================*/
 
-void BaseModel::Update( LPDIRECT3DDEVICE9 device, float elapsedMillis )
+/************************************************
+*   Name:   BaseModel::Update
+*   Desc:   Updates the model's skeleton pose using
+*           the current animation.
+************************************************/
+void BaseModel::Update( float elapsedMillis )
 {
 	if( m_meshType == eMeshHierarchy && m_animController && m_isAnimating )
 	{
@@ -590,11 +633,15 @@ void BaseModel::Update( LPDIRECT3DDEVICE9 device, float elapsedMillis )
 		UpdateBoneMatrices();
 		if( m_headMeshContainer )
 		{
-			UpdateSkinnedMeshes( device );
+			UpdateSkinnedMeshes();
 		}
 	}
 }
 
+/************************************************
+*   Name:   BaseModel::UpdateBoneMatrices
+*   Desc:   Updates the model's bone transforms.
+************************************************/
 void BaseModel::UpdateBoneMatrices()
 {
 	const unsigned int vb_sz = (m_numOfBones+1) * sizeof(SkeletonVertex);
@@ -605,7 +652,7 @@ void BaseModel::UpdateBoneMatrices()
 	SkeletonVertex verts[ MAX_BONE_LIMIT ];	
 	::ZeroMemory( &verts, sizeof(verts) );
 
-	/* Calcuate the frame matrices */
+	/* Calculate the frame matrices */
 	D3DXMATRIX mat;
 	D3DXMatrixIdentity( &mat );
 	RecurseCalculateBoneMatrices( m_rootBone, &mat, verts, indices );
@@ -622,7 +669,13 @@ void BaseModel::UpdateBoneMatrices()
 	HR(m_skeletonIB->Unlock());
 }
 
-void BaseModel::UpdateSkinnedMeshes( LPDIRECT3DDEVICE9 device )
+
+/************************************************
+*   Name:   BaseModel::UpdateSkinnedMeshes
+*   Desc:   Updates the models vertices using
+*           the posed skeleton and skin weights.
+************************************************/
+void BaseModel::UpdateSkinnedMeshes()
 {
 	MeshContainer *container = (MeshContainer*) this->m_headMeshContainer;
 
@@ -659,6 +712,12 @@ void BaseModel::UpdateSkinnedMeshes( LPDIRECT3DDEVICE9 device )
 	m_boundSphereOutOfDate = true;
 }
 
+
+/************************************************
+*   Name:   BaseModel::RecurseCalculateBoneMatrices
+*   Desc:   Recurse through the skeleton hierarchy
+*           and update each bone matrix in turn.
+************************************************/
 void BaseModel::RecurseCalculateBoneMatrices( Bone* bone, LPD3DXMATRIX parentTransform, SkeletonVertex* arrVertices, WORD* arrIndices )
 {
 	static int s_boneDepth = 0;
@@ -686,6 +745,10 @@ void BaseModel::RecurseCalculateBoneMatrices( Bone* bone, LPD3DXMATRIX parentTra
 
 }
 
+/************************************************
+*   Name:   BaseModel::SetAnimation
+*   Desc:   Sets the model's current animation.
+************************************************/
 void BaseModel::SetAnimation( DWORD animationId )
 {
 	if(m_meshType == eSimpleMesh)
@@ -708,6 +771,12 @@ void BaseModel::SetAnimation( DWORD animationId )
 	}
 }
 
+/************************************************
+*   Name:   BaseModel::SetDrawColor
+*   Desc:   Sets a draw color for the model.  This
+*           can be used to draw a debug mesh with
+*           a particular color.
+************************************************/
 void BaseModel::SetDrawColor( ColorRGBA32 clr )
 {
 	assert( m_meshType == eSimpleMesh );
@@ -720,21 +789,24 @@ void BaseModel::SetDrawColor( ColorRGBA32 clr )
 	mat.Diffuse = clr;
 
 	m_arrMats.push_back(mat);
-	m_arrTexs.push_back(CTextureManager::GetInstance()->GetTexture(GLOBAL_TEX_CONTEXT, DEFAULT_TEXTURE));
+	m_arrTexs.push_back(CTextureField::GetInstance()->GetTexture(GLOBAL_TEX_CONTEXT, DEFAULT_TEXTURE));
 }
 
 /*=================================================
 	Functor Classes
 =================================================*/
 
-/* Light & Texture */
+/************************************************
+*   Name:   rfLightAndTexture::Render
+*   Desc:   Light & Texture
+************************************************/
 void rfLightAndTexture::Render(CRenderEngine& rndr, D3DXMATRIX worldTransform, CShaderManagerEx &shaderMgr)
 {
 	assert( P->m_meshType );
 
 	/* Apply the mesh specific transforms before rendering */
 	LPDIRECT3DDEVICE9 device = rndr.GetDevice();
-	CCamera& camera = rndr.GetSceneManager().GetDefaultCamera();
+	CCamera& camera = rndr.GetSceneManager()->GetDefaultCamera();
 	Matrix4x4 worldMatrix = P->GetMeshMatrix() * worldTransform;
 	shaderMgr.SetEffect(EFFECT_LIGHTTEX);
 	shaderMgr.SetDefaultTechnique();
@@ -815,14 +887,17 @@ void rfLightAndTexture::Render(CRenderEngine& rndr, D3DXMATRIX worldTransform, C
 #endif
 }
 
-/* Light & Color */
+/************************************************
+*   Name:   rfLightAndColored::Render
+*   Desc:   Light & Color
+************************************************/
 void rfLightAndColored::Render(CRenderEngine& rndr, D3DXMATRIX worldTransform, CShaderManagerEx &shaderMgr)
 {
 	assert( P->m_meshType );
 
 	/* Apply the mesh specific transforms before rendering */
 	LPDIRECT3DDEVICE9 device = rndr.GetDevice();
-	CCamera& camera = rndr.GetSceneManager().GetDefaultCamera();
+	CCamera& camera = rndr.GetSceneManager()->GetDefaultCamera();
 	Matrix4x4 worldMatrix = P->GetMeshMatrix() * worldTransform;
 	shaderMgr.SetEffect(EFFECT_DEBUGDRAW);
 	shaderMgr.SetTechnique("LightColor");
@@ -900,14 +975,17 @@ void rfLightAndColored::Render(CRenderEngine& rndr, D3DXMATRIX worldTransform, C
 #endif
 }
 
-/* Transparency Light & Color */
+/************************************************
+*   Name:   rfXPLightAndColored::Render
+*   Desc:   Transparency Light & Color
+************************************************/
 void rfXPLightAndColored::Render(CRenderEngine& rndr, D3DXMATRIX worldTransform, CShaderManagerEx &shaderMgr)
 {
 	assert( P->m_meshType );
 
 	/* Apply the mesh specific transforms before rendering */
 	LPDIRECT3DDEVICE9 device = rndr.GetDevice();
-	CCamera& camera = rndr.GetSceneManager().GetDefaultCamera();
+	CCamera& camera = rndr.GetSceneManager()->GetDefaultCamera();
 	Matrix4x4 worldMatrix = P->GetMeshMatrix() * worldTransform;
 	shaderMgr.SetEffect(EFFECT_DEBUGDRAW);
 	shaderMgr.SetTechnique("XPLightColor");

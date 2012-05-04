@@ -8,7 +8,7 @@
 #include "StdAfx.h"
 #include "Camera.h"
 #include "Player.h"
-#include "Terrain.h"
+#include "TerrainChunk.h"
 
 const float FARPLANEDISTANCE	= DRAW_DIST;
 const float NEARPLANEDISTANCE	= 1.0f;
@@ -21,7 +21,7 @@ const float FOV_MAX_ANGLE_RAD	= HALF_PI*1.3f;
 //////////////////////////////////////////////////////////////////////////
 
 CCamera::CCamera(void) : m_pAttachParent(NULL),
-						m_pTerrain(NULL)
+						 m_pTerrain(NULL)
 {
 	::ZeroMemory(&m_frustum, sizeof(m_frustum));
 	::ZeroMemory(m_vecTargetLookAt, sizeof(m_vecTargetLookAt));
@@ -45,6 +45,11 @@ CCamera::CCamera(void) : m_pAttachParent(NULL),
 // Update Functions
 //////////////////////////////////////////////////////////////////////////
 
+/************************************************
+*   Name:   CCamera::Update
+*   Desc:   Update the position and orientation of
+*           a camera set to follow mode.
+************************************************/
 void CCamera::Update(float elapsedMillis)
  {
 	D3DXVECTOR3 augPos =  D3DXVECTOR3(0,0,m_vecPosLocalOffset.z);
@@ -90,6 +95,11 @@ void CCamera::Update(float elapsedMillis)
 	//D3DXVec3Normalize(&m_vecX, &m_vecX);
 }
 
+/************************************************
+*   Name:   CCamera::AdjustFOVAngle
+*   Desc:   Adjust the camera's projection matrix
+*           to the given field-of-view angle.
+************************************************/
 void CCamera::AdjustFOVAngle( float deltaRads )
 { 
 	m_frustum.FOVANGLE += deltaRads;

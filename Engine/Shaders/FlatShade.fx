@@ -108,9 +108,19 @@ sampler s2 = sampler_state
 
 static float4 clear = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
-float4 ps_main(vector col : COLOR0, float2 Txr1 : TEXCOORD0, float2 Txr2 : TEXCOORD1, float2 Txr3 : TEXCOORD2) : COLOR0
+float4 ps_tex(vector col : COLOR0, float2 Txr1 : TEXCOORD0, float2 Txr2 : TEXCOORD1, float2 Txr3 : TEXCOORD2) : COLOR0
 {  
    float4 val = tex2D(s0, Txr1) * col;
+
+//   if(any(val.rgb))
+  //     val = clear;
+
+   return val;
+}
+
+float4 ps_color(vector col : COLOR0, float2 Txr1 : TEXCOORD0, float2 Txr2 : TEXCOORD1, float2 Txr3 : TEXCOORD2) : COLOR0
+{  
+   float4 val = col;
 
 //   if(any(val.rgb))
   //     val = clear;
@@ -134,7 +144,47 @@ technique ShadedOpaque
         
         // pass setup 
 		vertexshader = compile vs_2_0 vs_main();
-        pixelshader = compile ps_2_0 ps_main();
+        pixelshader = compile ps_2_0 ps_tex();
         //fvf = XYZ | TEX0;
     }
+}
+
+technique ColoredTransparent
+{
+	Pass P0
+	{
+		// render states
+		AlphaBlendEnable = true;
+		BlendOp = ADD;
+		SrcBlend = SRCALPHA;
+		DestBlend = INVSRCALPHA;
+		Lighting = false;
+		SpecularEnable = false;
+		FogEnable = false;
+		CullMode = CW;
+		ZWriteEnable = true;
+		
+		// pass setup
+		vertexshader = compile vs_2_0 vs_main();
+		pixelshader = compile ps_2_0 ps_color();
+	}
+	
+	Pass P1
+	{
+		// render states
+		AlphaBlendEnable = true;
+		BlendOp = ADD;
+		SrcBlend = SRCALPHA;
+		DestBlend = INVSRCALPHA;
+		Lighting = false;
+		SpecularEnable = false;
+		FogEnable = false;
+		CullMode = CW;
+		ZWriteEnable = false;
+		CullMode = CCW;
+		
+		// pass setup
+		vertexshader = compile vs_2_0 vs_main();
+		pixelshader = compile ps_2_0 ps_color();
+	}
 }

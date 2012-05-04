@@ -9,7 +9,7 @@
 //////////////////////////////////////
 // Includes
 //////////////////////////////////////
-#include "Terrain.h"
+#include "TerrainChunk.h"
 #include "Skybox.h"
 #include "MeshManager.h"
 #include "ShaderManagerEx.h"
@@ -40,7 +40,7 @@ private:
 	CShaderManagerEx				m_shaderMgr;
 	CLevelManager					m_levelMgr;
 	CSceneManager					m_sceneMgr;
-	CTextureManager*				m_texMgr;
+	CTextureField*				m_texMgr;
 	
 	int								m_nBlurPasses;
 
@@ -67,17 +67,17 @@ public:
 	void RenderScene();
 	void SetWireframeMode(bool enable);
 	void SetPlayerObject(CPlayer* pPlayer);
-	void Update(LPDIRECT3DDEVICE9 device, float elapsedMillis);
+	void Update(float elapsedMillis);
 	
 	inline CMeshManager &GetMeshManager() {return m_meshMgr;}
-	inline CTextureManager &GetTextureManager() {return *m_texMgr;}
+	inline CTextureField &GetTextureManager() {return *m_texMgr;}
 	inline void SetBlur(int blurs) {m_nBlurPasses = blurs;}
 	inline void SetHUD(CHUD *hud) {m_pHud = hud;}
 	inline D3DXVECTOR3 GetLightDirection(void) {return m_shaderMgr.GetLightDirection();}
 
 	inline void ToggleClipMethod() {m_sceneMgr.SetNextClipStrategy();}
 	inline LPDIRECT3DDEVICE9 GetDevice() {return m_device;}
-	inline CSceneManager &GetSceneManager() {return m_sceneMgr;}
+	inline CSceneManager* GetSceneManager() {return &m_sceneMgr;}
 	inline CShaderManagerEx &GetShaderManager() {return m_shaderMgr;}
 	
 	bool CreateRenderTarget(void);
