@@ -28,7 +28,7 @@ CRenderEngine::CRenderEngine(void) : m_device(NULL),
 									m_nBlurPasses(0),
 									m_pHud(NULL)
 {
-	m_texMgr = CTextureField::GetInstance();
+	m_texMgr = CTextureManager::GetInstance();
 }
 
 CRenderEngine::~CRenderEngine(void)

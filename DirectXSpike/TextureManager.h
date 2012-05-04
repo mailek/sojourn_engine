@@ -48,12 +48,12 @@ typedef struct _TextureInstanceType
 
 } TextureInstanceType;
 
-class CTextureField : public SingleThreadSingleton<CTextureField>
+class CTextureManager : public SingleThreadSingleton<CTextureManager>
 {
-	friend class SingleThreadSingleton<CTextureField>;
+	friend class SingleThreadSingleton<CTextureManager>;
 private:
-	CTextureField(void);
-	~CTextureField(void);
+	CTextureManager(void);
+	~CTextureManager(void);
 
 public:
 	void Init();

@@ -38,7 +38,7 @@ void CSkybox::LoadSkyDome( float radius, UINT slices, UINT stacks )
 	// texture
 	TextureContextIdType texContext;
 	CGameStateStack::GetInstance()->GetCurrentState()->HandleEvent(EVT_GETTEXCONTEXT, &texContext, sizeof(texContext));
-	CTextureField* texMgr = CTextureField::GetInstance();
+	CTextureManager* texMgr = CTextureManager::GetInstance();
 	m_texSkyTexture = texMgr->GetTexture(texContext, "skyTexture.dds");
 
 	// model

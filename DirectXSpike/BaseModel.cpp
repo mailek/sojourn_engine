@@ -170,7 +170,7 @@ class DefaultAllocator : public ID3DXAllocateHierarchy
 
 		TextureContextIdType texContext;
 		CGameStateStack::GetInstance()->GetCurrentState()->HandleEvent(EVT_GETTEXCONTEXT, &texContext, sizeof(texContext));
-		CTextureField* texMgr = CTextureField::GetInstance();
+		CTextureManager* texMgr = CTextureManager::GetInstance();
 
 		container->pMaterials = NULL;
 		for(DWORD dw = 0; dw < NumMaterials; dw++)
@@ -298,7 +298,7 @@ bool BaseModel::LoadXMeshFromFile(LPCSTR pFilename, IDirect3DDevice9* pDevice)
 	m_meshType = eSimpleMesh;
 	TextureContextIdType texContext;
 	CGameStateStack::GetInstance()->GetCurrentState()->HandleEvent(EVT_GETTEXCONTEXT, &texContext, sizeof(texContext));
-	CTextureField* texMgr = CTextureField::GetInstance();
+	CTextureManager* texMgr = CTextureManager::GetInstance();
 
 	D3DXMATERIAL* mats = (D3DXMATERIAL*)matBuffer->GetBufferPointer();
 	for(int i = 0, j = numMats; i < j; i++)
@@ -789,7 +789,7 @@ void BaseModel::SetDrawColor( ColorRGBA32 clr )
 	mat.Diffuse = clr;
 
 	m_arrMats.push_back(mat);
-	m_arrTexs.push_back(CTextureField::GetInstance()->GetTexture(GLOBAL_TEX_CONTEXT, DEFAULT_TEXTURE));
+	m_arrTexs.push_back(CTextureManager::GetInstance()->GetTexture(GLOBAL_TEX_CONTEXT, DEFAULT_TEXTURE));
 }
 
 /*=================================================

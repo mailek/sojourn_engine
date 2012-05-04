@@ -8,27 +8,27 @@
 #include "StdAfx.h"
 #include "TextureManager.h"
 
-int CTextureField::m_nextTextureContextId = 2;
+int CTextureManager::m_nextTextureContextId = 2;
 
 //////////////////////////////////////////////////////////////////////////
 // Setup Functions
 //////////////////////////////////////////////////////////////////////////
 
-CTextureField::CTextureField(void)
+CTextureManager::CTextureManager(void)
 {
 	::ZeroMemory(m_textures, sizeof(m_textures));
 	::ZeroMemory(m_contexts, sizeof(m_contexts));
 }
 
-CTextureField::~CTextureField(void)
+CTextureManager::~CTextureManager(void)
 {
 }
 
 /************************************************
-*   Name:   CTextureField::Init
+*   Name:   CTextureManager::Init
 *   Desc:   
 ************************************************/
-void CTextureField::Init()
+void CTextureManager::Init()
 {
 	// Load the global textures
 	for(int i = 0; i < GLOBAL_TEX_CNT; i++)
@@ -40,10 +40,10 @@ void CTextureField::Init()
 }
 
 /************************************************
-*   Name:   CTextureField::CreateTextureContext
+*   Name:   CTextureManager::CreateTextureContext
 *   Desc:   
 ************************************************/
-TextureContextIdType CTextureField::CreateTextureContext(const char* name)
+TextureContextIdType CTextureManager::CreateTextureContext(const char* name)
 {
 	TextureContextIdType id = m_nextTextureContextId;
 	assert(id < MAX_TEX_CONTEXT_CNT);
@@ -66,10 +66,10 @@ TextureContextIdType CTextureField::CreateTextureContext(const char* name)
 }
 
 /************************************************
-*   Name:   CTextureField::UnloadTextureContext
+*   Name:   CTextureManager::UnloadTextureContext
 *   Desc:   
 ************************************************/
-void CTextureField::UnloadTextureContext(TextureContextIdType contextId)
+void CTextureManager::UnloadTextureContext(TextureContextIdType contextId)
 {
 	TextureContextType* context = NULL;
 	for(int i = 0; i < MAX_TEX_CONTEXT_CNT; i++)
@@ -98,10 +98,10 @@ void CTextureField::UnloadTextureContext(TextureContextIdType contextId)
 }
 
 /************************************************
-*   Name:   CTextureField::InsertNewTextureInMap
+*   Name:   CTextureManager::InsertNewTextureInMap
 *   Desc:   
 ************************************************/
-TextureInstanceType* CTextureField::InsertNewTextureInMap(TextureContextIdType context, const char* filename)
+TextureInstanceType* CTextureManager::InsertNewTextureInMap(TextureContextIdType context, const char* filename)
 {
 	TextureInstanceType* ret = NULL;
 
@@ -152,10 +152,10 @@ TextureInstanceType* CTextureField::InsertNewTextureInMap(TextureContextIdType c
 //////////////////////////////////////////////////////////////////////////
 
 /************************************************
-*   Name:   CTextureField::GetTexture
+*   Name:   CTextureManager::GetTexture
 *   Desc:   
 ************************************************/
-LPDIRECT3DTEXTURE9 CTextureField::GetTexture(TextureContextIdType context, const char* filename)
+LPDIRECT3DTEXTURE9 CTextureManager::GetTexture(TextureContextIdType context, const char* filename)
 {
 	LPDIRECT3DTEXTURE9 ret = NULL;
 

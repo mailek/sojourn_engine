@@ -79,7 +79,7 @@ private:
 	CDoubleLinkedList<SceneObject>	m_staticLevelObjects;
 	CSkybox					        m_skyDome;
 	LightObject						m_lights[MAX_LIGHTS];
-	CTerrainManager					m_terrainMgr;
+	CTerrainField					m_terrainMgr;
 	CSceneManager				   *m_pSceneMgr;
 
 public:
@@ -88,7 +88,7 @@ public:
 
 	bool LoadDefaultLevel(CRenderEngine *renderEngine);
 	void RegisterStaticCollision(CCollisionManager* cm);
-	CTerrainManager* GetTerrain() {return &m_terrainMgr;}
+	CTerrainField* GetTerrain() {return &m_terrainMgr;}
 
 	/* IEventHandler */
 	virtual bool HandleEvent( UINT eventId, void* data, UINT data_sz );

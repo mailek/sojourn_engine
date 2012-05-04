@@ -30,11 +30,11 @@ class CSceneManager;
 //////////////////////////////////////
 // Class
 //////////////////////////////////////
-class CTerrainManager
+class CTerrainField
 {
 public:
-	CTerrainManager(void);
-	~CTerrainManager(void);
+	CTerrainField(void);
+	~CTerrainField(void);
 
 	void Update( float elapsedMillis );
 	CTerrainChunk* GetTerrainByLocation(Vector_3 pos);

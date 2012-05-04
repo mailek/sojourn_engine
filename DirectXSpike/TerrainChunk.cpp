@@ -78,7 +78,7 @@ bool CTerrainChunk::LoadTerrain( LPCSTR pFilename, LPCSTR pTextureFilename, int 
 	   ground textures and materials. */
 	TextureContextIdType texContext;
 	CGameStateStack::GetInstance()->GetCurrentState()->HandleEvent(EVT_GETTEXCONTEXT, &texContext, sizeof(texContext));
-	CTextureField* texMgr = CTextureField::GetInstance();
+	CTextureManager* texMgr = CTextureManager::GetInstance();
 
 	m_texDirtTexture = texMgr->GetTexture(texContext, "dirtTexture.dds");
 	m_texGroundTexture = texMgr->GetTexture(texContext, pTextureFilename);

@@ -55,18 +55,18 @@ ABB_MaxMin CTerrainContainer::CalculateBoundingBox(void)
 }
 
 //////////////////////////////////////////////////////////////////////////
-// CTerrainManager Class
+// CTerrainField Class
 //////////////////////////////////////////////////////////////////////////
 
-CTerrainManager::CTerrainManager(void)
+CTerrainField::CTerrainField(void)
 {
 }
 
-CTerrainManager::~CTerrainManager(void)
+CTerrainField::~CTerrainField(void)
 {
 }
 
-void CTerrainManager::Update( float elapsedMillis )
+void CTerrainField::Update( float elapsedMillis )
 {
 	bool terrainChanged = false;
 
@@ -76,22 +76,22 @@ void CTerrainManager::Update( float elapsedMillis )
 	}
 }
 
-CTerrainChunk* CTerrainManager::GetTerrainByLocation( Vector_3 pos )
+CTerrainChunk* CTerrainField::GetTerrainByLocation( Vector_3 pos )
 {
 	return m_currentTerrain[1][1];
 }
 
-void CTerrainManager::SetAvatar( GameEvents::IEventHandler *avatar )
+void CTerrainField::SetAvatar( GameEvents::IEventHandler *avatar )
 {
 	m_pAvatar = avatar;
 }
 
-void CTerrainManager::SetCollisionMgr( CCollisionManager* cm )
+void CTerrainField::SetCollisionMgr( CCollisionManager* cm )
 {
 	cm->RegisterStaticCollidable((ICollidable*)m_currentTerrain[1][1]);
 }
 
-void CTerrainManager::HandleTerrainGridChanged()
+void CTerrainField::HandleTerrainGridChanged()
 {
 	TerrainGrid temp;
 	memcpy( temp, m_currentTerrain, sizeof(temp));
@@ -106,7 +106,7 @@ void CTerrainManager::HandleTerrainGridChanged()
 	}
 }
 
-void CTerrainManager::SubscribeToTerrainMgrEvents(IEventHandler* listener, bool unsubscribe/*=false*/)
+void CTerrainField::SubscribeToTerrainMgrEvents(IEventHandler* listener, bool unsubscribe/*=false*/)
 {
 	if(!unsubscribe)
 	{
@@ -118,12 +118,12 @@ void CTerrainManager::SubscribeToTerrainMgrEvents(IEventHandler* listener, bool 
 	}
 }
 
-CTerrainContainer CTerrainManager::GetCurrentTerrain()
+CTerrainContainer CTerrainField::GetCurrentTerrain()
 {
 	return CTerrainContainer(m_currentTerrain);
 }
 
-void CTerrainManager::Load(LPCSTR pFilename, LPCSTR pTextureFilename, int rows, int cols, float vertSpacing, float fYScale, float uvScale)
+void CTerrainField::Load(LPCSTR pFilename, LPCSTR pTextureFilename, int rows, int cols, float vertSpacing, float fYScale, float uvScale)
 {
 	memset( m_currentTerrain, 0, sizeof(m_currentTerrain));
 	m_currentTerrain[1][1] = &m_terrainChunk;
