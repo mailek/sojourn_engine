@@ -17,9 +17,9 @@ typedef struct _CollisionPair
 	ICollidable* items[2];
 } CollisionPair;
 
-class CCollisionManager : public SingleThreadSingleton<CCollisionManager>
+class CCollisionManager : public SingleThreadSingleton<CCollisionManager, CCollisionManager>
 {
-	friend class SingleThreadSingleton<CCollisionManager>;
+	friend class SingleThreadSingleton<CCollisionManager, CCollisionManager>;
 private:
 	CCollisionManager(void);
 	~CCollisionManager(void);

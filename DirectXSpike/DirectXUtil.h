@@ -1,12 +1,25 @@
 #pragma once
 /********************************************************************
-	created:	2012/04/16
-	filename: 	c:\git_root\sojourn_engine\DirectXSpike\DirectXUtil.h
+	created:	2012/05/22
+	filename: 	DirectXUtil.h
 	author:		Matthew Alford
 	
-	purpose:	
+	purpose:	DirectX Device Wrapper and API
 *********************************************************************/
+
+#include <d3d9.h>
+#include <d3dx9.h>
+
+//////////////////////////////////////
+// Type Definitions
+//////////////////////////////////////
+
 #define Color_4 D3DXCOLOR
+
+
+//////////////////////////////////////
+// Function Declarations
+//////////////////////////////////////
 
 void dxPowerUp( LPDIRECT3DDEVICE9 device );
 void dxClear(int count,CONST D3DRECT* pRects, DWORD flags, D3DCOLOR color, float z, DWORD stencil);

@@ -97,7 +97,7 @@ bool CGhostCamera::HandleEvent(UINT eventId, void* data, UINT data_sz)
 	case EVT_ATTACH_CAMERA:
 		assert( data_sz == sizeof(CCamera*) );
 		assert( data != NULL );
-		((CCamera*)data)->SetLocalPosition(Vector_3(0.0f, 0.0f, -0.25f));
+		reinterpret_cast<CCamera*>(data)->SetLocalPosition(Vector_3(0.0f, 0.0f, -0.25f));
 		break;
 	default:
 		assert(false);

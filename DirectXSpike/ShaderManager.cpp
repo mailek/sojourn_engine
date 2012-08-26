@@ -17,13 +17,15 @@ const float LightXRotationRateRadianSec = 1.0f;
 
 CShaderManager::CShaderManager(void) : m_iViewportWidth(0),
 										m_iViewportHeight(0),
-										m_device(NULL)
+										m_device(NULL),
+										m_currentPS(PASS_INVALID),
+										m_currentVS(PASS_INVALID)
 {
 }
 
 CShaderManager::~CShaderManager(void)
 {
-	for(std::vector<ShaderPass>::iterator it = m_vecPasses.begin(), _it = m_vecPasses.end(); it != _it; it++)
+	for(std::vector<ShaderPass>::iterator it = m_vecPasses.begin(), _it = m_vecPasses.end(); it != _it; ++it)
 	{
 		COM_SAFERELEASE(it->pPS);
 		COM_SAFERELEASE(it->pVS);

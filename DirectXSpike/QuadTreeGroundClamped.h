@@ -10,7 +10,6 @@
 //////////////////////////////////////
 // Includes
 //////////////////////////////////////
-#include "MathUtil.h"
 
 //////////////////////////////////////
 // Forward Declarations
@@ -85,8 +84,8 @@ private:
 template <typename T, typename U>
 QuadTree_GroundClamped<T,U>::QuadTree_GroundClamped(void)
 {
-	::ZeroMemory(&m_quadTreeArray, sizeof(m_quadTreeArray));
-	::ZeroMemory(&m_def, sizeof(m_def));
+	/*::ZeroMemory(&m_quadTreeArray, sizeof(m_quadTreeArray));
+	::ZeroMemory(&m_def, sizeof(m_def));*/
 }
 
 template <typename T, typename U>
@@ -95,7 +94,7 @@ QuadTree_GroundClamped<T,U>::~QuadTree_GroundClamped(void)
 	long quadSize = GetQuadTreeSize();
 	for(long i = 0; i < quadSize; i++)
 	{
-		PTR_SAFEDELETE(m_quadTreeArray[i].objects);
+		ptr_safedelete(m_quadTreeArray[i].objects);
 	}
 }
 
@@ -104,6 +103,10 @@ QuadTree_GroundClamped<T,U>::~QuadTree_GroundClamped(void)
 template <typename T, typename U>
 bool QuadTree_GroundClamped<T,U>::Setup( ABB_MaxMin bounds, U& heightMap, GCQTDefinition def )
 {
+	// clear out old data
+	::ZeroMemory(&m_quadTreeArray, sizeof(m_quadTreeArray));
+	::ZeroMemory(&m_def, sizeof(m_def));
+
 	m_def = def;
 
 	// build quad tree
@@ -121,7 +124,7 @@ bool QuadTree_GroundClamped<T,U>::Setup( ABB_MaxMin bounds, U& heightMap, GCQTDe
 		
 	for(long i = 0; i < m_def.quadTreeDepth; i++)
 	{
-		for(std::vector<QuadTreeNode*>::iterator it = builtNodes.begin(), _it = builtNodes.end(); it != _it; it++)
+		for(std::vector<QuadTreeNode*>::iterator it = builtNodes.begin(), _it = builtNodes.end(); it != _it; ++it)
 			BuildNextQuadTreeDepth((*it), quadCount, nodesToBuild, heightMap, i == m_def.quadTreeDepth-1); // index to next item
 		
 		builtNodes = nodesToBuild;
@@ -234,7 +237,7 @@ template <typename T, typename U>
 D3DXMATRIX QuadTree_GroundClamped<T,U>::GetWorldTransformByQuadIndex( NODE_INDEX_TYPE quadIndex )
 {
 	const NODE_INDEX_TYPE INVALID_INDEX(-1);
-	assert( quadIndex < MAXQUADS && quadIndex != INVALID_INDEX );
+	DASSERT( quadIndex < MAXQUADS && quadIndex != INVALID_INDEX );
 	return m_quadTreeArray[quadIndex].worldTransform;
 }
 
@@ -259,7 +262,7 @@ int QuadTree_GroundClamped<T,U>::FindLeafQuadByPoint(D3DXVECTOR3 point)
 		} 
 	} while(QuadHasChildren(index) && indexChanged);
 
-	assert(!QuadHasChildren(index));
+	VERIFY(QuadHasChildren(index));
 	return index;
 }
 

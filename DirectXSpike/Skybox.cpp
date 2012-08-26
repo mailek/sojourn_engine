@@ -104,7 +104,7 @@ void CSkybox::Render( CRenderEngine &rndr )
 
 D3DXMATRIX CSkybox::GetWorldTransform() 
 {
-	Vector_3 parentPos;
+	WorldPosition parentPos;
 	m_pAttach->HandleEvent(EVT_GETPOSITIONVEC, &parentPos, sizeof(parentPos));
 
 	D3DXMATRIX worldMatrix;

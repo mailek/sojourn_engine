@@ -9,8 +9,7 @@
 
 #include "SceneManager.h"
 #include "ShaderManager.h"
-#include "TerrainChunk.h"
-#include "MathUtil.h"
+#include "TerrainPatch.h"
 #include "vertextypes.h"
 #include "MeshManager.h"
 #include "renderengine.h"
@@ -159,7 +158,7 @@ void CSceneManager::GetAllObjectsDrawListB2F(SceneMgrSortList &list)
 	list.clear();
 
 	list = m_transparentList;
-	for(SceneMgrRenderList::iterator it = m_opaqueList.begin(), _it = m_opaqueList.end(); it != _it; it++)
+	for(SceneMgrRenderList::iterator it = m_opaqueList.begin(), _it = m_opaqueList.end(); it != _it; ++it)
 	{
 		ZSortableRenderable item;
 		item.p = *it;
@@ -303,11 +302,11 @@ void CSceneManager::SetNextClipStrategy(int strategy/* = -1*/)
 	} 
 }
 
-void CSceneManager::BuildQuadTreeFromCurrentTerrain( CTerrainContainer terrain )
+void CSceneManager::BuildQuadTreeFromCurrentTerrain( CTerrainContainer &terrain )
 {
 	/* Create the quad tree for frustum culling acceleration */
 	ABB_MaxMin abb = terrain.CalculateBoundingBox();
-	QuadTree_GroundClamped<IRenderable, CTerrainContainer>::GCQTDefinition qtdef;
+	CSceneQuadTree::GCQTDefinition qtdef;
 	qtdef.branchHeight = 500.0f;
 	qtdef.leafHeight = 50.0f;
 	qtdef.quadTreeDepth = 5;

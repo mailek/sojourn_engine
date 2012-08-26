@@ -1,7 +1,10 @@
 #pragma once
 
-class CTerrainChunk;
-typedef CTerrainChunk*	TerrainGrid[3][3];
+#define TERRAIN_GRID_COLS (3)
+#define TERRAIN_GRID_ROWS TERRAIN_GRID_COLS
+
+class CTerrainPatch;
+typedef CTerrainPatch*	TerrainGrid[TERRAIN_GRID_ROWS][TERRAIN_GRID_COLS];
 
 class CTerrainContainer
 {

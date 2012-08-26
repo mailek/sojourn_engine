@@ -6,7 +6,6 @@
 	
 	purpose:	
 *********************************************************************/
-#include "mathutil.h"
 
 typedef enum _ECollidableType
 {

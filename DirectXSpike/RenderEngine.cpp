@@ -40,13 +40,12 @@ CRenderEngine::~CRenderEngine(void)
 *   Desc:   Initializes the render engine and
 *           submodules.
 ************************************************/
-bool CRenderEngine::Setup(unsigned int viewportWidth, unsigned int viewportHeight)
+void CRenderEngine::Setup(unsigned int viewportWidth, unsigned int viewportHeight)
 {
 	m_meshMgr.SetDevice(m_device);
 
 	// Create the render targets
-	if(!CreateRenderTarget())
-		return false;
+	CreateRenderTarget();
 
 	// setup the shader manager constants
 	m_shaderMgr.SetViewDimensions(viewportWidth, viewportHeight);
@@ -61,8 +60,6 @@ bool CRenderEngine::Setup(unsigned int viewportWidth, unsigned int viewportHeigh
 	// Setup the Camera (view matrix)
 	m_sceneMgr.GetDefaultCamera().SetViewPort(viewportWidth, viewportHeight);
 	m_device->GetRenderTarget(0, &m_surBackBuffer);
-	
-	return true;
 }
 
 
@@ -75,7 +72,7 @@ void CRenderEngine::SetDevice(LPDIRECT3DDEVICE9 device, unsigned int viewportWid
 {
 	m_device = device;
 	dxPowerUp( m_device );
-	VERIFY(Setup(viewportWidth, viewportHeight));
+	Setup(viewportWidth, viewportHeight);
 }
 
 /************************************************
@@ -92,7 +89,7 @@ void CRenderEngine::SetWireframeMode(bool enable)
 *   Desc:   Initializes the render targets used
 *           by the engine.
 ************************************************/
-bool CRenderEngine::CreateRenderTarget(void)
+void CRenderEngine::CreateRenderTarget()
 {
 	// Create the RT's texture and surface
 	HR(m_device->CreateTexture(SCREEN_RES_H, SCREEN_RES_V, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &m_texRenderTarget1, NULL));
@@ -107,9 +104,7 @@ bool CRenderEngine::CreateRenderTarget(void)
 
 	// Create the render target quad geo
 	m_meshMgr.GetGlobalMesh(eScreenQuad, &m_renderQuadGeo );
-	assert(m_renderQuadGeo);
-
-	return true;
+	DASSERT(m_renderQuadGeo);
 }
 
 /*------------------------------------------------------------------------
@@ -153,7 +148,7 @@ void CRenderEngine::RenderScene()
 	dxCullMode(D3DCULL_CCW);
 	
 	m_sceneMgr.GetOpaqueDrawListF2B(opaqueList);
-	for(RenderList::iterator it = opaqueList.begin(), _it = opaqueList.end(); it != _it; it++)
+	for(RenderList::iterator it = opaqueList.begin(), _it = opaqueList.end(); it != _it; ++it)
 	{
 		(*it)->Render(*this);
 	}
@@ -183,7 +178,7 @@ void CRenderEngine::RenderScene()
 	// TODO:: Split up keyed transparencies and alpha blend transparencies for quicker processing
 
 	m_sceneMgr.GetTransparentDrawListB2F(transList);
-	for(SceneMgrSortList::iterator it = transList.begin(), _it = transList.end(); it != _it; it++)
+	for(SceneMgrSortList::iterator it = transList.begin(), _it = transList.end(); it != _it; ++it)
 	{
 		(*it).p->Render(*this);
 	}
@@ -193,7 +188,7 @@ void CRenderEngine::RenderScene()
 	m_device->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_LESS);
 	m_device->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
 
-	for(SceneMgrSortList::iterator it = transList.begin(), _it = transList.end(); it != _it; it++)
+	for(SceneMgrSortList::iterator it = transList.begin(), _it = transList.end(); it != _it; ++it)
 	{
 		(*it).p->Render(*this);
 	}
@@ -203,12 +198,12 @@ void CRenderEngine::RenderScene()
 	/* (DEBUG) - Render the sphere camera clipping geometry for each scene object */
 	if(Settings_GetBool(DEBUG_SHOW_CLIP_BOUNDS))
 	{
-		ColorRGBA32 clr = {0.5f, 0.1f, 0.1f, 0.45f};
+		Color_4 clr(0.5f, 0.1f, 0.1f, 0.45f);
 		SceneMgrSortList sphereList;
 		m_sceneMgr.GetAllObjectsDrawListB2F(sphereList);
 		sphereList.reverse();
 
-		for(SceneMgrSortList::iterator it = sphereList.begin(), _it = sphereList.end(); it != _it; it++)
+		for(SceneMgrSortList::iterator it = sphereList.begin(), _it = sphereList.end(); it != _it; ++it)
 		{
 			Sphere_PosRad sphere = it->p->GetBoundingSphere();	
 			DrawDebugSphere(sphere, clr);
@@ -292,7 +287,7 @@ void CRenderEngine::RenderScene()
 void CRenderEngine::Update( float elapsedMillis )
 {
 	m_shaderMgr.Update(elapsedMillis);
-	m_meshMgr.Update(elapsedMillis);
+	m_meshMgr.RunAnimations(elapsedMillis);
 }
 
 /*------------------------------------------------------------------------
@@ -303,7 +298,7 @@ void CRenderEngine::Update( float elapsedMillis )
 *   Name:   CRenderEngine::DrawDebugSphere
 *   Desc:   Draws a colored 3D sphere.
 ************************************************/
-void CRenderEngine::DrawDebugSphere(Sphere_PosRad& sphere, ColorRGBA32 color)
+void CRenderEngine::DrawDebugSphere(Sphere_PosRad& sphere, Color_4 color)
 {
 	Matrix4x4 scaling, translation, world;
 
@@ -316,17 +311,20 @@ void CRenderEngine::DrawDebugSphere(Sphere_PosRad& sphere, ColorRGBA32 color)
 	BaseModel *model;
 	m_meshMgr.GetGlobalMesh(eUnitSphere, &model);
 
-	if( color.a < 1.0f )
+	if(model)
 	{
-		model->SetRenderFunc(model->RenderFuncs.xpLightAndColored);
-	}
-	else
-	{
-		model->SetRenderFunc(model->RenderFuncs.lightAndColored);
-	}
+		if( color.a < 1.0f )
+		{
+			model->SetRenderFunc(model->RenderFuncs.xpLightAndColored);
+		}
+		else
+		{
+			model->SetRenderFunc(model->RenderFuncs.lightAndColored);
+		}
 
-	model->SetDrawColor(color);
-	model->Render(*this, world, m_shaderMgr);
+		model->SetDrawColor(color);
+		model->Render(*this, world, m_shaderMgr);
+	}
 }
 
 /************************************************
@@ -337,19 +335,19 @@ void CRenderEngine::DrawDebugSphere(Sphere_PosRad& sphere, ColorRGBA32 color)
 void CRenderEngine::DrawDebugAxes(Vector_3 location)
 {
 	/* draw x axis red */
-	ColorRGBA32 xclr;
+	Color_4 xclr;
 	::ZeroMemory(&xclr, sizeof(xclr));
 	xclr.a = 1.0f;
 	xclr.r = 1.0f;
 
 	/* draw y axis green */
-	ColorRGBA32 yclr;
+	Color_4 yclr;
 	::ZeroMemory(&yclr, sizeof(yclr));
 	yclr.a = 1.0f;
 	yclr.g = 1.0f;
 
 	/* draw z axis blue */
-	ColorRGBA32 zclr;
+	Color_4 zclr;
 	::ZeroMemory(&zclr, sizeof(zclr));
 	zclr.a = 1.0f;
 	zclr.b = 1.0f;
@@ -373,7 +371,7 @@ void CRenderEngine::DrawDebugAxes(Vector_3 location)
 *           start to end.  Optionally draws the
 *           spherical end-points.
 ************************************************/
-void CRenderEngine::DrawDebugLine3D(Vector_3 start, Vector_3 end, ColorRGBA32 color, bool showPoints/*= false*/)
+void CRenderEngine::DrawDebugLine3D(Vector_3 start, Vector_3 end, Color_4 color, bool showPoints/*= false*/)
 {
 	static const float thickness = 0.05f;
 

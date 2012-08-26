@@ -6,7 +6,6 @@
 	
 	purpose:	
 *********************************************************************/
-#include "MathUtil.h"
 
 class CTerrainContainer;
 
@@ -77,7 +76,7 @@ typedef Vector_3 GetFacingEventArgType;
 typedef Vector_3 SetFacingEventArgType;
 
 // EVT_GETPOSITIONVEC
-typedef Vector_3 GetPosEventArgType;
+typedef WorldPosition GetPosEventArgType;
 
 // EVT_SETPOSITIONVEC
 typedef Vector_3 SetPosEventArgType;

@@ -21,13 +21,13 @@ public:
 
 private:
 	D3DXVECTOR3				m_vecEuler; // in radians
-	D3DXVECTOR3				m_vecPos;
+	WorldPosition			m_vecPos;
 	D3DXVECTOR3				m_vecVelocity;
 	D3DXVECTOR3				m_vecRotationVelocity;
 	DWORD					m_movementState;
 
 public:
-	inline D3DXVECTOR3 GetPosition3D() {return m_vecPos;}
+	inline WorldPosition GetPosition3D() {return m_vecPos;}
 
 	// IEventHandler
 	virtual bool HandleEvent( UINT eventId, void* data, UINT data_sz );

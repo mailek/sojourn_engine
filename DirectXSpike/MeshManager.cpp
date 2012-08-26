@@ -7,7 +7,7 @@
 *********************************************************************/
 #include "StdAfx.h"
 #include "MeshManager.h"
-#include "TerrainChunk.h"
+#include "TerrainPatch.h"
 
 /*=================================================
 	MeshManager Class
@@ -15,12 +15,13 @@
 
 CMeshManager::CMeshManager(void) : m_device(NULL)
 {
+	memset( m_arrGlobalMeshes, 0, sizeof(m_arrGlobalMeshes));
 }
 
 CMeshManager::~CMeshManager(void)
 {
-	for(MeshList::iterator it = m_arrMeshes.begin(), _it = m_arrMeshes.end(); it != _it; it++)
-		PTR_SAFEDELETE(*it);
+	for(MeshList::iterator it = m_arrMeshes.begin(), _it = m_arrMeshes.end(); it != _it; ++it)
+		ptr_safedelete(*it);
 }
 
 /*=================================================
@@ -47,7 +48,7 @@ bool CMeshManager::LoadGlobalMeshes(void)
 {
 	BaseModel *model;
 
-	for(int i = 0; i < globalMeshCnt; i++)
+	for(int i = 0; i < EGlobalMeshTypeCnt; i++)
 	{
 		model = new BaseModel();
 
@@ -79,11 +80,11 @@ bool CMeshManager::LoadGlobalMeshes(void)
 }
 
 /************************************************
-*   Name:   CMeshManager::LoadMeshes
+*   Name:   CMeshManager::LoadAllResidentMeshes
 *   Desc:   Loads the level's models.  Currently
 *           all meshes are loaded statically.
 ************************************************/
-bool CMeshManager::LoadMeshes(void)
+bool CMeshManager::LoadAllResidentMeshes(void)
 {
 	assert(m_device);
 
@@ -166,7 +167,7 @@ bool CMeshManager::LoadMeshes(void)
 *   Name:   CMeshManager::GetMesh
 *   Desc:   Retrieve a loaded model.
 ************************************************/
-void CMeshManager::GetMesh(EMeshType meshName, BaseModel **retMesh)
+void CMeshManager::GetMesh(EResidentMeshID meshName, BaseModel **retMesh)
 {
 	(*retMesh) = m_arrMeshes[meshName];
 }
@@ -185,12 +186,12 @@ void CMeshManager::GetGlobalMesh(EGlobalMeshType meshName, BaseModel **retMesh)
 =================================================*/
 
 /************************************************
-*   Name:   CMeshManager::Update
+*   Name:   CMeshManager::RunAnimations
 *   Desc:   Send the animated models the update 
 *           signal.
 ************************************************/
-void CMeshManager::Update( float elapsedMillis )
+void CMeshManager::RunAnimations( float elapsedMillis )
 {
-	for(MeshList::iterator it = m_arrMeshes.begin(), _it = m_arrMeshes.end(); it != _it; it++)
+	for(MeshList::iterator it = m_arrMeshes.begin(), _it = m_arrMeshes.end(); it != _it; ++it)
 		(*it)->Update( elapsedMillis );
 }

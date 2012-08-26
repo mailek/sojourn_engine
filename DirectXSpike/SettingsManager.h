@@ -15,9 +15,9 @@ typedef struct _SettingValueLookupTable
 	ESettingId		key;
 } SettingValueLookupTable[SETTINGS_CNT];
 
-class CSettingsManager : public SingleThreadSingleton<CSettingsManager>
+class CSettingsManager : public SingleThreadSingleton<CSettingsManager, CSettingsManager>
 {
-	friend class SingleThreadSingleton<CSettingsManager>;
+	friend class SingleThreadSingleton<CSettingsManager, CSettingsManager>;
 private:
 	CSettingsManager(void);
 	~CSettingsManager(void);

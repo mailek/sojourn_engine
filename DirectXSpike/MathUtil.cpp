@@ -142,6 +142,12 @@ inline float ABB_CalcDepth( const ABB_MaxMin &abb )
 	return fabs(abb.max.z - abb.min.z);
 }
 
+/* Find the height of the given ABB */
+inline float ABB_CalcHeight( const ABB_MaxMin &abb )
+{
+	return fabs(abb.max.y - abb.min.y);
+}
+
 /* Find the width of the given ABB */
 inline float ABB_CalcWidth( const ABB_MaxMin &abb )
 {
@@ -610,6 +616,11 @@ bool Collide_RayToPlane(const Ray_Vec3Pt &r, const Plane_Vec3PtNorm p)
 {
 	assert(false);
 	return false;
+}
+
+bool Collide_PointToRect(const float x, const float y, const Rect &r)
+{
+	return (x >= r.pos.x && y >= r.pos.y && x < (r.pos.x + r.wh.x) && y < (r.pos.y + r.wh.y));
 }
 
 /* Collide Sphere with Plane */

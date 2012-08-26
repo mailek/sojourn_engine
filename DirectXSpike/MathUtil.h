@@ -18,6 +18,7 @@
 /* DirectX Bindings */
 typedef D3DXVECTOR3 Point_3D;
 typedef D3DXVECTOR2 Point_2D;
+typedef D3DXVECTOR2 Vector_2;
 typedef D3DXVECTOR3 Vector_3;
 typedef D3DXVECTOR4 Vector_4;
 typedef D3DXMATRIX	Matrix4x4;
@@ -108,6 +109,12 @@ typedef struct _Capsule
 	Vector_3		v;
 } Capsule;
 
+typedef struct _Rect
+{
+	Vector_2		pos;
+	Vector_2		wh;
+} Rect;
+
 typedef struct _Frustum_Camera
 {
 	Point_3D		cameraPos;		/* world position of the camera										*/
@@ -170,11 +177,13 @@ bool Collide_SphereToSphere(const Sphere_PosRad &s1, const Sphere_PosRad &s2);
 bool Collide_SphereToCapsule(const Sphere_PosRad &s, const Capsule &c);
 EIntersectType Collide_SphereToPlane(const Sphere_PosRad &s, const Plane_Vec3PtNorm p, /*out*/Point_3D* sphereIntersect);
 bool Collide_RayToPlane(const Ray_Vec3Pt &r, const Plane_Vec3PtNorm p);
+bool Collide_PointToRect(const float x, const float y, const Rect &r);
 
 /* ABB Routines */
 extern inline int ABB_Divide( const ABB_MaxMin target, int xDivs, int yDivs, int zDivs, ABB_MaxMin* out );
 extern inline ABB_MaxMin ABB_Scale( const ABB_MaxMin &abb, float xScale, float yScale, float zScale );
 extern inline float ABB_CalcDepth( const ABB_MaxMin &abb );
+extern inline float ABB_CalcHeight( const ABB_MaxMin &abb );
 extern inline float ABB_CalcWidth( const ABB_MaxMin &abb );
 extern inline void ABB_GrowToInclude3DPoint(const Point_3D &p, ABB_MaxMin &abb);
 extern inline void ABB_GrowToIncludeABB(const ABB_MaxMin &add, ABB_MaxMin &abb);
@@ -211,7 +220,7 @@ inline Point_3D ClosestPoint_PlaneFromPoint(Point_3D pt, Plane_Vec3PtNorm plane)
 class ComplexTransform
 {
 public:
-	enum {
+	typedef enum _ETransformFlags{
 		ROTATE_XYZ			= (1),
 		ROTATE_XZY			= (2),
 		ROTATE_YXZ 			= (3),

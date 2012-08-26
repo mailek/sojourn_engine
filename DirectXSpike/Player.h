@@ -14,7 +14,6 @@
 #include "IRenderable.h"
 #include "ICollidable.h"
 #include "GameEvents.h"
-#include "mathutil.h"
 
 //////////////////////////////////////
 // Forward Declarations
@@ -51,7 +50,7 @@ private:
 	Vector_3				m_vecRotationVelocity;
 
 	BaseModel              *m_pModel;
-	CTerrainField        *m_pTerrain;
+	CTerrainField          *m_pTerrain;
 	PlayerProperties		m_properties;
 	ComplexTransform		m_transform;
 

@@ -8,6 +8,7 @@
 *********************************************************************/
 #include "fileio.h"
 #include "skybox.h"
+#include "Singleton.h"
 
 #define MAX_OBJ_DEF_FILENAME_LEN	(50)
 #define MAX_OBJ_DEF_TYPE_ID_LEN		(40)
@@ -25,36 +26,37 @@ typedef CSkybox LevelSkybox;
 typedef char LevelNameType[MAX_LEVEL_NAME_LEN];
 typedef char LevelVersion[MAX_LEVEL_VER_LEN];
 typedef char LevelTerrainName[MAX_LEVEL_TERRAIN_NAME_LEN];
+typedef std::vector<BYTE> LevelHeightMap;
 
-struct LevelTerrain
+typedef struct _LevelTerrain
 {
 	BYTE					heightMap[MAX_NUM_TERRAIN_SAMPLES];
 	int						rows;
 	int						cols;
 	LevelTerrainName		terrainName;
-};
+} LevelTerrain;
 
-struct LevelObjectDefinitionLink
+typedef struct _LevelObjectDefinitionLink
 {
 	ObjectDefFilenameType	fileName;
 	ObjectDefIDType			typeId;
-};
+} LevelObjectDefinitionLink;
 
-struct LevelObjectDefinition
+typedef struct _LevelObjectDefinition
 {
-};
+} LevelObjectDefinition;
 
-struct LevelObjectPalette
+typedef struct _LevelObjectPalette
 {
 	int						numObjTypes;
 	LevelObjectDefinition	palette[MAX_NUM_OBJ_TYPES];
-};
+} LevelObjectPalette;
 
-struct LevelObjectInstance
+typedef struct _LevelObjectInstance
 {
-};
+} LevelObjectInstance;
 
-struct LevelDefinition
+typedef struct _LevelDefinition
 {
 	LevelSkybox				skybox;
 	LevelObjectPalette		palette;
@@ -64,19 +66,29 @@ struct LevelDefinition
 	LevelVersion			levelVersion;
 	LevelTerrain			terrains[MAX_NUM_TERRAINS];
 	int						numTerrains;
+} LevelDefinition;
+
+interface ILevelLoader
+{
+	virtual void LoadLevelFile(const char* levelFileName, LevelDefinition* level)=0;
+	virtual void ReadTerrainHeightMapFromRaw(LPCSTR pFilename, int width, int height, Rect readArea, LevelHeightMap *outMap)=0;
 };
 
-class LevelLoader
+class LevelLoader : public ILevelLoader, public SingleThreadSingleton<LevelLoader, ILevelLoader>
 {
-public:
-	//LevelLoader(void);
-	//~LevelLoader(void);
-
-	static void LoadLevelFile(const char* levelFileName, LevelDefinition* level);
+	friend class SingleThreadSingleton<LevelLoader, ILevelLoader>;
+private:
+	LevelLoader(void) {};
+	~LevelLoader(void) {};
 
 private:
-	static void ReadLevelObjectPalette(InputFileType* level, LevelObjectPalette* palette);
-	static void ReadTerrain(InputFileType* level, LevelTerrain* terrain);
-	static void ReadObjectInstance(InputFileType* level, LevelObjectInstance* levelObj);
-	static void ReadLevelObjectDefinition(InputFileType* defFile, LevelObjectDefinition* def);
+	static void ReadLevelObjectPalette(InputFile* level, LevelObjectPalette* palette);
+	static void ReadTerrain(InputFile* level, LevelTerrain* terrain);
+	static void ReadObjectInstance(InputFile* level, LevelObjectInstance* levelObj);
+	static void ReadLevelObjectDefinition(InputFile* defFile, LevelObjectDefinition* def);
+
+/* ILevelLoader */
+public:
+	virtual void LoadLevelFile(const char* levelFileName, LevelDefinition* level);
+	virtual void ReadTerrainHeightMapFromRaw(LPCSTR pFilename, int width, int height, Rect readArea, LevelHeightMap *outMap);
 };

@@ -6,7 +6,6 @@
 	
 	purpose:	
 *********************************************************************/
-#include "MathUtil.h"
 
 class CShaderManager;
 class CRenderEngine;

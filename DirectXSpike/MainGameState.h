@@ -42,7 +42,7 @@ private:
 	IEventHandler			   *m_pAvatar;
 	CGhostCamera			    m_cameraGhost;
 
-	bool Init( CRenderEngine *renderEngine );
+	void Init( CRenderEngine *renderEngine );
 	void Update( float elapsedMillis );
 	void Destroy();
 	void KeyUp( UINT vk );

@@ -8,7 +8,7 @@
 #include "StdAfx.h"
 #include "FileIO.h"
 
-bool FileIO::OpenFile(FileNameType name, bool binary, InputFileType* in_file)
+bool FileIO::OpenFile(FileNameType name, EFileReadMode mode, InputFile* in_file)
 {
 	// replace forward slashes with backslashes
 	char filename[MAX_FILENAME_LEN], f[MAX_FILENAME_LEN], *nextToken;
@@ -20,17 +20,22 @@ bool FileIO::OpenFile(FileNameType name, bool binary, InputFileType* in_file)
 		if(strlen(nextToken)) strcat_s(f, "\\");
 	}
 
-	in_file->open(name, (binary ? std::ios_base::binary : 0));
+	in_file->open(name, (mode == FILE_BINARY ? std::ios_base::binary : 0));
 	return !in_file->fail();
 }
 
-bool FileIO::ReadBytes(InputFileType* in, char* out_stream, size_t read_sz)
+bool FileIO::ReadBytes(InputFile* in, char* out_stream, size_t read_sz)
 {
 	in->read(out_stream, read_sz);
 	return !in->fail();
 }
 
-void FileIO::CloseFile(InputFileType* file)
+void FileIO::SeekForward(InputFile* in, int offset)
+{
+	in->seekg(offset, std::ios_base::cur);
+}
+
+void FileIO::CloseFile(InputFile* file)
 {
 	if(file->is_open())
 	{
@@ -38,14 +43,14 @@ void FileIO::CloseFile(InputFileType* file)
 	}
 }
 
-void FileIO::ReadInt16(InputFileType* file, __int16* int16)
+void FileIO::ReadInt16(InputFile* file, __int16* int16)
 {
 	BYTE buffer[2];
 	ReadBytes(file, (char*)buffer, sizeof(__int16));
 	*int16 = (__int16)buffer;
 }
 
-void FileIO::ReadNullTermString(InputFileType* file, char* out)
+void FileIO::ReadNullTermString(InputFile* file, char* out)
 {
 	char readChar = 1;
 	while(readChar != NULL)
@@ -58,31 +63,31 @@ void FileIO::ReadNullTermString(InputFileType* file, char* out)
 	*out = NULL;
 }
 
-void FileIO::ReadInt32(InputFileType* file, __int32* int32)
+void FileIO::ReadInt32(InputFile* file, __int32* int32)
 {
 	BYTE buffer[4];
 	ReadBytes(file, (char*)buffer, sizeof(__int32));
 	*int32 = (__int32)buffer;
 }
 
-void FileIO::ReadUint32(InputFileType* file, unsigned int* uint32)
+void FileIO::ReadUint32(InputFile* file, unsigned int* uint32)
 {
 	ReadInt32(file, (int*)uint32);
 }
 
-void FileIO::ReadVec3(InputFileType* file, IOVector3* out)
+void FileIO::ReadVec3(InputFile* file, IOVector3* out)
 {
 	ReadSinglePrecision(file, &out->x);
 	ReadSinglePrecision(file, &out->y);
 	ReadSinglePrecision(file, &out->z);
 }
 
-void FileIO::ReadSinglePrecision(InputFileType* file, float* out)
+void FileIO::ReadSinglePrecision(InputFile* file, float* out)
 {
 	ReadBytes(file, (char*)out, 2);
 }
 
-void FileIO::ReadDoublePrecision(InputFileType* file, double* out)
+void FileIO::ReadDoublePrecision(InputFile* file, double* out)
 {
 	ReadBytes(file, (char*)out, 4);
 }

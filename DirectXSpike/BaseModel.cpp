@@ -13,7 +13,7 @@
 
 #include "RenderEngine.h"
 #include "BaseModel.h"
-#include "TerrainChunk.h"
+#include "TerrainPatch.h"
 #include "ShaderManagerEx.h"
 #include "vertextypes.h"
 #include "texturemanager.h"
@@ -213,7 +213,7 @@ class DefaultAllocator : public ID3DXAllocateHierarchy
     STDMETHOD(DestroyFrame)(THIS_ LPD3DXFRAME pFrameToFree)
 	{
 
-		Bone* pBoneToFree = (Bone*) pFrameToFree; /* unsafe up-cast */
+		Bone* pBoneToFree = __sc(Bone*, pFrameToFree); /* unsafe up-cast */
 		delete pBoneToFree;
 
 		return S_OK;
@@ -221,7 +221,7 @@ class DefaultAllocator : public ID3DXAllocateHierarchy
 
     STDMETHOD(DestroyMeshContainer)(THIS_ LPD3DXMESHCONTAINER pMeshContainerToFree)
 	{
-		MeshContainer* container = (MeshContainer*)pMeshContainerToFree;
+		MeshContainer* container = __sc(MeshContainer*, pMeshContainerToFree);
 
 		container->MeshData.pMesh->Release();
 		container->MeshData.pMesh = NULL;
@@ -375,7 +375,7 @@ void BaseModel::RecurseFillOutBone( Bone* bone, unsigned int parentIndex )
 	bone->jointIndex = jointIndex;
 
 	/* Link the meshes influences to the actual frame combined matrix */
-	MeshContainer* pMeshContainer = (MeshContainer*)bone->pMeshContainer;
+	MeshContainer* pMeshContainer = __sc(MeshContainer*, bone->pMeshContainer);
 	if(pMeshContainer != NULL)
 	{
 		/* If this is the first mesh container, save it for rendering */
@@ -385,7 +385,7 @@ void BaseModel::RecurseFillOutBone( Bone* bone, unsigned int parentIndex )
 		for( DWORD i = 0; i < numBones; i++ )
 		{
 			assert( i < MAX_INFLUENCES );
-			Bone* boneRef = (Bone*)D3DXFrameFind( (LPD3DXFRAME)m_rootBone, pMeshContainer->pSkinInfo->GetBoneName(i) );
+			Bone* boneRef = __sc(Bone*, D3DXFrameFind( m_rootBone, pMeshContainer->pSkinInfo->GetBoneName(i) ));
 			assert(boneRef);
 			pMeshContainer->_frameMatrices[i] = &boneRef->matCombined;
 
@@ -400,14 +400,14 @@ void BaseModel::RecurseFillOutBone( Bone* bone, unsigned int parentIndex )
 	
 	/* Siblings */
 	if( bone->pFrameSibling != NULL )
-		RecurseFillOutBone( (Bone*) bone->pFrameSibling, parentIndex );
+		RecurseFillOutBone( __sc(Bone*, bone->pFrameSibling), parentIndex );
 
 	/* Kids */
 	if( s_boneDepth < MAX_BONE_DEPTH )
 	{
 		s_boneDepth++;
 		if( bone->pFrameFirstChild != NULL )
-			RecurseFillOutBone( (Bone*) bone->pFrameFirstChild, m_numOfBones );
+			RecurseFillOutBone( __sc(Bone*, bone->pFrameFirstChild), m_numOfBones );
 
 		s_boneDepth--;
 	}
@@ -587,7 +587,8 @@ Sphere_PosRad BaseModel::GetSphereBounds()
 		Sphere_PosRad newSphere;
 		if(m_meshType == eMeshHierarchy)
 		{
-			for(MeshContainer* container = (MeshContainer*)m_headMeshContainer; container != NULL; container = (MeshContainer*)container->pNextMeshContainer)
+			for(MeshContainer* container = __sc(MeshContainer*, m_headMeshContainer); container != NULL; 
+				container = __sc(MeshContainer*, container->pNextMeshContainer))
 			{
 				Sphere_PosRad tempSphere = CalculateMeshBoundSphere(container->_skinnedMesh);
 
@@ -677,9 +678,9 @@ void BaseModel::UpdateBoneMatrices()
 ************************************************/
 void BaseModel::UpdateSkinnedMeshes()
 {
-	MeshContainer *container = (MeshContainer*) this->m_headMeshContainer;
+	MeshContainer *container = __sc(MeshContainer*, this->m_headMeshContainer);
 
-	for( ; container != NULL; container = (MeshContainer*)container->pNextMeshContainer )
+	for( ; container != NULL; container = __sc(MeshContainer*, container->pNextMeshContainer) )
 	{
 		if( container->pSkinInfo == NULL )
 			continue;
@@ -731,14 +732,14 @@ void BaseModel::RecurseCalculateBoneMatrices( Bone* bone, LPD3DXMATRIX parentTra
 
 	/* Siblings */
 	if( bone->pFrameSibling != NULL )
-		RecurseCalculateBoneMatrices( (Bone*) bone->pFrameSibling, parentTransform, arrVertices, arrIndices );
+		RecurseCalculateBoneMatrices( __sc(Bone*, bone->pFrameSibling), parentTransform, arrVertices, arrIndices );
 
 	/* Kids */
 	if( s_boneDepth < MAX_BONE_DEPTH )
 	{
 		s_boneDepth++;
 		if( bone->pFrameFirstChild != NULL )
-			RecurseCalculateBoneMatrices( (Bone*) bone->pFrameFirstChild, &bone->matCombined, arrVertices, arrIndices );
+			RecurseCalculateBoneMatrices( __sc(Bone*, bone->pFrameFirstChild), &bone->matCombined, arrVertices, arrIndices );
 
 		s_boneDepth--;
 	}
@@ -777,7 +778,7 @@ void BaseModel::SetAnimation( DWORD animationId )
 *           can be used to draw a debug mesh with
 *           a particular color.
 ************************************************/
-void BaseModel::SetDrawColor( ColorRGBA32 clr )
+void BaseModel::SetDrawColor( Color_4 clr )
 {
 	assert( m_meshType == eSimpleMesh );
 
@@ -830,7 +831,7 @@ void rfLightAndTexture::Render(CRenderEngine& rndr, D3DXMATRIX worldTransform, C
 		{
 			shaderMgr.Pass(p);
 
-			MeshContainer* pDrawContainer = (MeshContainer*)P->m_headMeshContainer;
+			MeshContainer* pDrawContainer = __sc(MeshContainer*, P->m_headMeshContainer);
 			while( pDrawContainer != NULL )
 			{
 				for( DWORD i = 0; i < pDrawContainer->NumMaterials; i++ )
@@ -842,7 +843,7 @@ void rfLightAndTexture::Render(CRenderEngine& rndr, D3DXMATRIX worldTransform, C
 
 					HR((pDrawContainer->_skinnedMesh->DrawSubset(i)));
 				}
-				pDrawContainer = (MeshContainer*)pDrawContainer->pNextMeshContainer;
+				pDrawContainer = __sc(MeshContainer*, pDrawContainer->pNextMeshContainer);
 			}
 
 			shaderMgr.FinishPass();
@@ -921,7 +922,7 @@ void rfLightAndColored::Render(CRenderEngine& rndr, D3DXMATRIX worldTransform, C
 		{
 			shaderMgr.Pass(p);
 
-			MeshContainer* pDrawContainer = (MeshContainer*)P->m_headMeshContainer;
+			MeshContainer* pDrawContainer = __sc(MeshContainer*, P->m_headMeshContainer);
 			while( pDrawContainer != NULL )
 			{
 				for( DWORD i = 0; i < pDrawContainer->NumMaterials; i++ )
@@ -932,7 +933,7 @@ void rfLightAndColored::Render(CRenderEngine& rndr, D3DXMATRIX worldTransform, C
 
 					HR((pDrawContainer->_skinnedMesh->DrawSubset(i)));
 				}
-				pDrawContainer = (MeshContainer*)pDrawContainer->pNextMeshContainer;
+				pDrawContainer = __sc(MeshContainer*, pDrawContainer->pNextMeshContainer);
 			}
 
 			shaderMgr.FinishPass();
@@ -1009,7 +1010,7 @@ void rfXPLightAndColored::Render(CRenderEngine& rndr, D3DXMATRIX worldTransform,
 		{
 			shaderMgr.Pass(p);
 
-			MeshContainer* pDrawContainer = (MeshContainer*)P->m_headMeshContainer;
+			MeshContainer* pDrawContainer = __sc(MeshContainer*, P->m_headMeshContainer);
 			while( pDrawContainer != NULL )
 			{
 				for( DWORD i = 0; i < pDrawContainer->NumMaterials; i++ )
@@ -1020,7 +1021,7 @@ void rfXPLightAndColored::Render(CRenderEngine& rndr, D3DXMATRIX worldTransform,
 
 					HR((pDrawContainer->_skinnedMesh->DrawSubset(i)));
 				}
-				pDrawContainer = (MeshContainer*)pDrawContainer->pNextMeshContainer;
+				pDrawContainer = __sc(MeshContainer*, pDrawContainer->pNextMeshContainer);
 			}
 
 			shaderMgr.FinishPass();

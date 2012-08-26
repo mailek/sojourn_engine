@@ -48,9 +48,9 @@ typedef struct _TextureInstanceType
 
 } TextureInstanceType;
 
-class CTextureManager : public SingleThreadSingleton<CTextureManager>
+class CTextureManager : public SingleThreadSingleton<CTextureManager, CTextureManager>
 {
-	friend class SingleThreadSingleton<CTextureManager>;
+	friend class SingleThreadSingleton<CTextureManager, CTextureManager>;
 private:
 	CTextureManager(void);
 	~CTextureManager(void);

@@ -9,7 +9,6 @@
 #include "Player.h"
 #include "MeshManager.h"
 #include "TerrainField.h"
-#include "mathutil.h"
 #include "renderengine.h"
 #include "camera.h"
 
@@ -50,7 +49,7 @@ CPlayer::~CPlayer(void)
 
 void CPlayer::Setup(CMeshManager& meshMgr)
 {
-	meshMgr.GetMesh(CMeshManager::eAnimTiny, &m_pModel);
+	meshMgr.GetMesh(eAnimTiny, &m_pModel);
 	//meshMgr.GetMesh(CMeshManager::eMultiAnimTiny, &m_pModel);
 	//meshMgr.GetMesh(CMeshManager::eCherryTreeLow, &m_pModel);
 	SetPosition3D(Vector_3(0.0f, 0.0f, 0.0f));
@@ -126,11 +125,14 @@ void CPlayer::GroundClampTerrain()
 {
 	DASSERT(m_pTerrain);
 
-	Vector_3 pos = m_transform.GetTranslation();
+	WorldPosition pos = m_transform.GetTranslation();
+	pos.y = 0.0f;
 	if(feq(pos.x, m_vecLastPos.x) && feq(pos.z, m_vecLastPos.z))
 		return;
 
-	pos.y = m_pTerrain->GetTerrainByLocation(pos)->GetTerrainHeightAtXZ(pos.x, pos.z);
+	CTerrainPatch *patch = m_pTerrain->GetTerrainByLocation(pos);
+	if(patch)
+		pos.y = patch->GetTerrainHeightAtXZ(pos.x, pos.z);
 	m_transform.SetTranslation(pos);
 }
 
@@ -160,7 +162,7 @@ bool CPlayer::HandleEvent( UINT eventId, void* data, UINT data_sz )
 	case EVT_INIT:
 		assert( data_sz == sizeof(CMeshManager*) );
 		assert( data != NULL );
-		Setup( *(CMeshManager*)data );
+		Setup( *reinterpret_cast<CMeshManager*>(data) );
 		break;
 	case EVT_GETFACINGVEC:
 		{
@@ -202,7 +204,7 @@ bool CPlayer::HandleEvent( UINT eventId, void* data, UINT data_sz )
 	case EVT_ATTACH_CAMERA:
 		assert( data_sz == sizeof(CCamera*) );
 		assert( data != NULL );
-		((CCamera*)data)->SetLocalPosition(Vector_3(-5.0f, 12.0f, -20.0f));
+		reinterpret_cast<CCamera*>(data)->SetLocalPosition(Vector_3(-5.0f, 12.0f, -20.0f));
 		break;
 	default:
 		assert(false);
@@ -236,7 +238,7 @@ void CPlayer::Render( CRenderEngine &rndr )
 	s.radius = 0.15f;
 	s.pos = m_transform.GetTranslation();
 	s.pos.y += 0.5f * s.radius;
-	ColorRGBA32 c;
+	Color_4 c;
 	c.a = 1.0f;
 	c.r = 0.3f;
 	c.g = 0.3f;
@@ -250,7 +252,7 @@ void CPlayer::Render( CRenderEngine &rndr )
 
 D3DXMATRIX CPlayer::GetWorldTransform(void)
 {
-	const float LEANAMOUNT = 0.3f;
+	//const float LEANAMOUNT = 0.3f;
 	D3DXMATRIX worldMatrix = m_transform.GetTransform();
 	//D3DXMATRIX rotate;
 	//D3DXMatrixIdentity(&rotate);

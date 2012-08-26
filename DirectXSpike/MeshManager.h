@@ -15,7 +15,7 @@
 //////////////////////////////////////
 // Forward Declarations
 //////////////////////////////////////
-class CTerrainChunk;
+class CTerrainPatch;
 
 //////////////////////////////////////
 // Type Definitions
@@ -30,8 +30,13 @@ typedef enum _EGlobalMeshType
 	eTeapot, 
 	eCenteredUnitABB, 
 	eScreenQuad,
-	globalMeshCnt
+	EGlobalMeshTypeCnt
 } EGlobalMeshType;
+
+typedef enum _EResidentMeshID
+{ 
+	eTinyX, eAnimTiny, eMultiAnimTiny, eWell, eCherryTreeLow 
+} EResidentMeshID;
 
 //////////////////////////////////////
 // Class Definition
@@ -41,24 +46,21 @@ class CMeshManager
 public:
 	CMeshManager(void);
 	~CMeshManager(void);
-	// Loads the meshes to be rendered
-	bool LoadMeshes(void);
-
-	typedef enum { eTinyX, eAnimTiny, eMultiAnimTiny, eWell, eCherryTreeLow } EMeshType;
 
 private:
 	LPDIRECT3DDEVICE9					m_device;
 	MeshList							m_arrMeshes;
-	BaseModel*							m_arrGlobalMeshes[globalMeshCnt];
+	BaseModel*							m_arrGlobalMeshes[EGlobalMeshTypeCnt];
 	D3DMATERIAL9						m_teapotMaterial;
 
 	bool LoadGlobalMeshes(void);
 
 public:
 	void SetDevice(LPDIRECT3DDEVICE9 device);
-	void GetMesh(EMeshType meshName, BaseModel **retMesh);
+	void GetMesh(EResidentMeshID meshName, BaseModel **retMesh);
 	void GetGlobalMesh(EGlobalMeshType meshName, BaseModel **retMesh);
-	void Update( float elapsedMillis );
+	void RunAnimations( float elapsedMillis );
+	bool LoadAllResidentMeshes(void);// Loads the meshes to be rendered
 	
 	inline MeshList* GetMeshList(void) {return &m_arrMeshes;}
 	

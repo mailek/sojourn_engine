@@ -6,18 +6,20 @@
 	
 	purpose:	
 *********************************************************************/
-template <typename T>
+template <typename T/*concrete type*/, typename A/*abstract type*/>
 class SingleThreadSingleton
 {
 public:
-	static T* GetInstance()
+	static A* GetInstance()
 	{
+		if( _mock_instance )
+			return _mock_instance;
 		if( _instance == NULL )
 		{
 			_instance = new T();
 		}
 
-		return _instance;
+		return static_cast<A*>(_instance);
 	}
 
 	static void DestroySingleton()
@@ -29,8 +31,15 @@ public:
 		}
 	}
 
+	static void SetMockInstance( A *p)
+	{
+		_mock_instance = p;
+	}
+
 private:
 	static T*		_instance;
+	static A*		_mock_instance;
 };
 
-template <typename T> T* SingleThreadSingleton<T>::_instance = NULL;
+template <typename T, typename A> T* SingleThreadSingleton<T, A>::_instance = NULL;
+template <typename T, typename A> A* SingleThreadSingleton<T, A>::_mock_instance = NULL;

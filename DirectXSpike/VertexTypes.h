@@ -11,14 +11,21 @@
 //////////////////////////////////////
 // Terrain.cpp
 //////////////////////////////////////
+#define TEX_LAYERS_CNT 1
+#if ( TEX_LAYERS_CNT == 1 )
+#define TERRAIN_TEX_FVF D3DFVF_TEX1
+#elif ( TEX_LAYERS_CNT == 2 )
+#define TERRAIN_TEX_FVF D3DFVF_TEX2
+#elif ( TEX_LAYERS_CNT == 3 )
+#define TERRAIN_TEX_FVF D3DFVF_TEX3
+#endif
+
 struct TerrainVertex
 {
 	D3DXVECTOR3		_p;
 	D3DXVECTOR3		_n;
-	D3DXVECTOR2		_t1;
-	D3DXVECTOR2		_t2;
-	D3DXVECTOR2		_t3;
-	static const DWORD FVF = D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_TEX3;
+	D3DXVECTOR2		_t[TEX_LAYERS_CNT];
+	static const DWORD FVF = D3DFVF_XYZ | D3DFVF_NORMAL | TERRAIN_TEX_FVF;
 };
 
 //////////////////////////////////////

@@ -17,7 +17,7 @@
 // Forward Declarations
 //////////////////////////////////////
 class CCamera;
-class CTerrainChunk;
+class CTerrainPatch;
 class CMeshManager;
 class BaseModel;
 
@@ -73,5 +73,5 @@ public:
 	virtual void SetLastRenderFrame(UINT frameNum) {};
 	virtual UINT GetLastRenderFrame() {return 0;}
 	virtual Sphere_PosRad GetBoundingSphere() { Sphere_PosRad s; ::ZeroMemory(&s, sizeof(s)); return s; }
-	void BuildQuadTreeFromCurrentTerrain( CTerrainContainer terrain );
+	void BuildQuadTreeFromCurrentTerrain( CTerrainContainer &terrain );
 };

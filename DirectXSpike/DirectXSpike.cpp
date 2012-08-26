@@ -10,6 +10,8 @@
 //////////////////////////////////////
 // Includes
 //////////////////////////////////////
+#include <tchar.h>
+
 #include "RenderEngine.h"
 #include "HUD.h"
 #include "Keyboard.h"
@@ -17,6 +19,7 @@
 #include "GameStateStack.h"
 #include "Player.h"
 #include "Settings.h"
+#include "Testing/TestMain.h"
 
 //////////////////////////////////////
 // Global Constants
@@ -103,6 +106,15 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
                      LPTSTR    lpCmdLine,
                      int       nCmdShow)
 {
+	{
+		TestMain tests;
+		tests.RunSuite();
+
+#if defined(_TEST)
+		return 0;
+#endif
+	}
+
 	MSG msg;
 	::ZeroMemory(&m_appState, sizeof(m_appState));
 
@@ -258,15 +270,14 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	int wmId, wmEvent;
 	//PAINTSTRUCT ps;
 	//HDC hdc;
 
 	switch (message)
 	{
 	case WM_COMMAND:
-		wmId    = LOWORD(wParam);
-		wmEvent = HIWORD(wParam);
+		//int wmId    = LOWORD(wParam);
+		//int wmEvent = HIWORD(wParam);
 		// Parse the menu selections:
 		/*switch (wmId)
 		{
@@ -514,7 +525,7 @@ void Update( LPDIRECT3DDEVICE9 device, float elapsedmills )
 	IEventHandler *avatar = s_gameState->GetAvatar();
 	if( avatar )
 	{
-		Vector_3 avatarPos;
+		WorldPosition avatarPos;
 		avatar->HandleEvent(EVT_GETPOSITIONVEC, &avatarPos, sizeof(avatarPos));
 		s_hud.SetCurrentAvatarPos(avatarPos);
 	}

@@ -164,6 +164,79 @@
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
+		<Configuration
+			Name="Test|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="1"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_TEST"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="3"
+				UsePrecompiledHeader="2"
+				ObjectFile="$(IntDir)\"
+				WarningLevel="3"
+				DebugInformationFormat="4"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				OutputFile="$(OutDir)\Sojourn.exe"
+				LinkIncremental="2"
+				GenerateDebugInformation="true"
+				SubSystem="2"
+				TargetMachine="1"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
 	</Configurations>
 	<References>
 	</References>
@@ -382,6 +455,14 @@
 						UsePrecompiledHeader="1"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Test|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\stdafx.h"
@@ -448,14 +529,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\TerrainChunk.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TerrainChunk.h"
-				>
-			</File>
-			<File
 				RelativePath=".\TerrainField.cpp"
 				>
 			</File>
@@ -467,10 +540,22 @@
 				RelativePath=".\TerrainMiscTypes.h"
 				>
 			</File>
+			<File
+				RelativePath=".\TerrainPatch.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TerrainPatch.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Util"
 			>
+			<File
+				RelativePath=".\AssertUtil.h"
+				>
+			</File>
 			<File
 				RelativePath=".\DoubleLinkedList.h"
 				>
@@ -547,6 +632,62 @@
 				RelativePath=".\small.ico"
 				>
 			</File>
+		</Filter>
+		<Filter
+			Name="Test"
+			>
+			<File
+				RelativePath=".\Testing\HighResTimer.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Testing\HighResTimer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Testing\ITest.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Testing\TestCommon.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Testing\TestMain.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Testing\TestMain.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Testing\TestSuite.h"
+				>
+			</File>
+			<Filter
+				Name="LevelLoader"
+				>
+				<File
+					RelativePath=".\Testing\LevelLoaderTest\LevelLoaderTest.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Testing\LevelLoaderTest\LevelLoaderTest.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="TerrainField"
+				>
+				<File
+					RelativePath=".\Testing\TerrainFieldTest\TerrainFieldTest.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Testing\TerrainFieldTest\TerrainFieldTest.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 	</Files>
 	<Globals>

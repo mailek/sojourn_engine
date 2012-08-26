@@ -14,41 +14,68 @@
 //////////////////////////////////////
 #include "GameEvents.h"
 #include "TerrainMiscTypes.h"
-#include "TerrainChunk.h"
+#include "TerrainPatch.h"
+#include "GameEvents.h"
 
 //////////////////////////////////////
 // Forward Declarations
 //////////////////////////////////////
-class CTerrainChunk;
+class CTerrainPatch;
 class CCollisionManager;
 class CSceneManager;
+
+using namespace GameEvents;
 
 //////////////////////////////////////
 // Types
 //////////////////////////////////////
 
 //////////////////////////////////////
+// Constants
+//////////////////////////////////////
+static const int MAX_LOADED_PATCHES = 14;
+
+//////////////////////////////////////
 // Class
 //////////////////////////////////////
 class CTerrainField
 {
+	friend class TerrainFieldTest;
+	typedef struct _SampleDefinition
+	{
+		unsigned int							width;
+		unsigned int							height;
+		std::string								filename;
+		//int										numOfRows;
+	} SampleDefinition;
+
 public:
 	CTerrainField(void);
 	~CTerrainField(void);
 
 	void Update( float elapsedMillis );
-	CTerrainChunk* GetTerrainByLocation(Vector_3 pos);
-	void SetAvatar( GameEvents::IEventHandler* avatar );
+	CTerrainPatch* GetTerrainByLocation(WorldPosition pos, bool createIfNotFound = false);
+	void SetAvatar( IEventHandler* avatar );
 	void SetCollisionMgr( CCollisionManager* cm );
-	void HandleTerrainGridChanged();
-	void SubscribeToTerrainMgrEvents(GameEvents::IEventHandler* listener, bool unsubscribe=false);
+	void HandleTerrainGridChanged(CTerrainPatch* newCenter);
+	void SubscribeToTerrainMgrEvents(IEventHandler* listener, bool subscribe=true);
 	CTerrainContainer GetCurrentTerrain();
+	void Setup(LPCSTR pFilename, int rows, int cols);
+
 	inline void SetYOffset(float yOffset) {m_fYOffset = yOffset;}
-	void Load(LPCSTR pFilename, LPCSTR pTextureFilename, int rows, int cols, float vertSpacing, float fYScale, float uvScale);
+
 private:
-	TerrainGrid								m_currentTerrain;
-	GameEvents::IEventHandler			   *m_pAvatar;
-	std::list<GameEvents::IEventHandler*>	m_eventListeners;
+	TerrainGrid								m_currentGrid;
+	CTerrainPatch							m_loadedPatches[MAX_LOADED_PATCHES];
+	IEventHandler						   *m_pAvatar;
+	std::list<IEventHandler*>				m_eventListeners;
 	float									m_fYOffset;
-	CTerrainChunk							m_terrainChunk;
+	SampleDefinition						m_sampleDef;
+	//int										m_numOfVerts;
+
+	bool CheckForTerrainChange();
+	CTerrainPatch* GetAvailablePatch();
+
+	inline WorldPosition GetAvatarPosition() {WorldPosition pos; m_pAvatar->HandleEvent(EVT_GETPOSITIONVEC, &pos, sizeof(pos)); return pos;}
+	TerrainTextureBlock CalculatePatchBoundsByPos( WorldPosition pos );
 };

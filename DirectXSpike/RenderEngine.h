@@ -9,7 +9,7 @@
 //////////////////////////////////////
 // Includes
 //////////////////////////////////////
-#include "TerrainChunk.h"
+#include "TerrainPatch.h"
 #include "Skybox.h"
 #include "MeshManager.h"
 #include "ShaderManagerEx.h"
@@ -56,11 +56,11 @@ private:
 //	LPDIRECT3DTEXTURE9				m_texTest;				/* render target testing */
 	CHUD*							m_pHud;					/* pointer to HUD manager */
 
-	bool Setup(unsigned int viewportWidth, unsigned int viewportHeight);
+	void Setup(unsigned int viewportWidth, unsigned int viewportHeight);
 
 public:
-	void DrawDebugSphere(Sphere_PosRad& sphere, ColorRGBA32 color);
-	void DrawDebugLine3D(Vector_3 start, Vector_3 end, ColorRGBA32 color, bool showPoints = false);
+	void DrawDebugSphere(Sphere_PosRad& sphere, Color_4 color);
+	void DrawDebugLine3D(Vector_3 start, Vector_3 end, Color_4 color, bool showPoints = false);
 	void DrawDebugAxes(Vector_3 location);
 
 	void SetDevice(LPDIRECT3DDEVICE9 device, unsigned int viewportWidth, unsigned int viewportHeight);
@@ -80,5 +80,5 @@ public:
 	inline CSceneManager* GetSceneManager() {return &m_sceneMgr;}
 	inline CShaderManagerEx &GetShaderManager() {return m_shaderMgr;}
 	
-	bool CreateRenderTarget(void);
+	void CreateRenderTarget();
 };

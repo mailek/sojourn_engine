@@ -8,7 +8,7 @@
 #include "StdAfx.h"
 #include "Camera.h"
 #include "Player.h"
-#include "TerrainChunk.h"
+#include "TerrainPatch.h"
 
 const float FARPLANEDISTANCE	= DRAW_DIST;
 const float NEARPLANEDISTANCE	= 1.0f;

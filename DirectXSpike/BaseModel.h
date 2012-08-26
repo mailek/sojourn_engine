@@ -9,13 +9,12 @@
 //////////////////////////////////////
 // Includes
 //////////////////////////////////////
-#include "MathUtil.h"
 
 //////////////////////////////////////
 // Forward Declarations
 //////////////////////////////////////
 class CShaderManagerEx;
-class CTerrainChunk;
+class CTerrainPatch;
 class CRenderEngine;
 struct SkeletonVertex;
 struct Bone;
@@ -120,7 +119,7 @@ public:
 	Sphere_PosRad GetSphereBounds();
 	void Update( float elapsedMillis );
 	void SetAnimation( DWORD animationId );
-	void SetDrawColor( ColorRGBA32 clr );
+	void SetDrawColor( Color_4 clr );
 	
 	inline DWORD GetFVF( void ) { assert(m_meshType == eSimpleMesh); return m_mesh->GetFVF(); }
 	inline HRESULT GetVertexBuffer(LPDIRECT3DVERTEXBUFFER9* buffer) { assert(m_meshType == eSimpleMesh); return m_mesh->GetVertexBuffer(buffer); }

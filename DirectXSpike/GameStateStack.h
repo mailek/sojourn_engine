@@ -31,9 +31,9 @@ typedef enum _EGameStates
 //////////////////////////////////////
 // Class Definition
 //////////////////////////////////////
-class CGameStateStack : public SingleThreadSingleton<CGameStateStack>, public IEventHandler
+class CGameStateStack : public SingleThreadSingleton<CGameStateStack, CGameStateStack>, public IEventHandler
 {
-	friend class SingleThreadSingleton<CGameStateStack>;
+	friend class SingleThreadSingleton<CGameStateStack, CGameStateStack>;
 private:
 	CGameStateStack(void);
 	~CGameStateStack(void);
